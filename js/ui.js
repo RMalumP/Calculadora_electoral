@@ -190,6 +190,17 @@ function toggleParamField(fieldName) {
   }
 }
 
+/** Compensación de la calculadora normal: muestra la bolsa y propone el 10 %. */
+function onCompModeChange() {
+  const modo = select('#comp-mode').value;
+  setDisplay(select('#comp-bolsa-wrap'), modo === 'bolsa');
+  const bolsa = select('#comp-bolsa');
+  if (modo === 'bolsa' && bolsa && !(parseInt(bolsa.value) > 0)) {
+    const total = parseInt(select('#seats')?.value) || 0;
+    bolsa.value = Math.max(1, Math.round(total * 0.1));
+  }
+}
+
 function getBonusMode() {
   return select('#bonus-mode-value')?.value || 'included';
 }

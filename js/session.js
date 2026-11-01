@@ -54,7 +54,7 @@ function _sesionAplicaCampos(campos) {
 }
 
 const SESION_CAMPOS_CALC = ['blank-votes', 'null-votes', 'census-total', 'abstention',
-  'seats', 'barrier', 'majority-bonus'];
+  'seats', 'barrier', 'majority-bonus', 'comp-mode', 'comp-bolsa'];
 
 /** Todo lo que hace falta para dejar la calculadora y el pactómetro como están. */
 function sesionAnotar() {

@@ -31,7 +31,19 @@ function advCompActive(comp) {
 function _advCompAllocate(votes, total, formula) {
   const f = ADV_COMP_FORMULAS.includes(formula) ? formula : 'dhondt';
   const parties = votes.map((v, i) => ({ idx: i, votes: v }));
-  return allocateSeats(parties, total, f).map(p => p.seats);
+  // allocateSeats deja el análisis del último escaño en una variable global: la
+  // compensación no debe pisar el del reparto principal.
+  const saved = typeof window !== 'undefined' ? window.lastSeatInfo : undefined;
+  const seats = allocateSeats(parties, total, f).map(p => p.seats);
+  if (typeof window !== 'undefined') window.lastSeatInfo = saved;
+  return seats;
+}
+
+/** Fórmula de compensación que corresponde a una de reparto (la que se hereda). */
+function advCompFormulaFor(formula) {
+  if (['saintlague', 'saintlague_m'].includes(formula)) return 'saintlague';
+  if (['hare', 'imperiali', 'droop', 'hb'].includes(formula)) return 'hare';
+  return 'dhondt';
 }
 
 /**
@@ -150,5 +162,5 @@ function advApplyCompensation(national, comp, totalValid) {
 }
 
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { advCompDefault, advCompActive, advApplyCompensation, ADV_COMP_FORMULAS };
+  module.exports = { advCompFormulaFor, advCompDefault, advCompActive, advApplyCompensation, ADV_COMP_FORMULAS };
 }
