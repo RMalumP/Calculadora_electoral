@@ -644,6 +644,7 @@ function advRun() {
   advUpdateSummaries();
   advRefreshEditBar();
   advRefreshExceptions();
+  if (typeof advPopupRefresh === 'function') advPopupRefresh();
 }
 
 function advRenderSummary() {
@@ -747,7 +748,12 @@ function advNationalCard() {
 
   return `<div class="card">
     <div class="card-header"><span class="dot"></span>Recuento final · ${advEscape(_advConfig.circunscripcion === 'nacional' ? 'circunscripción estatal' : _advConfig.circunscripcion === 'ccaa' ? 'circunscripciones autonómicas' : 'circunscripciones provinciales')}
-      <span class="formula-tag" style="margin-left:auto">${advEscape(FORMULAS.find(f => f.id === _advConfig.formula)?.name || _advConfig.formula)}</span>
+      <span class="adv-card-tools">
+        <button type="button" class="adv-tool-btn" data-adv-popup="hemi">Representación visual</button>
+        <button type="button" class="adv-tool-btn" data-adv-popup="last">Último escaño</button>
+        <button type="button" class="adv-tool-btn" data-adv-popup="coef">Coeficientes</button>
+      </span>
+      <span class="formula-tag">${advEscape(FORMULAS.find(f => f.id === _advConfig.formula)?.name || _advConfig.formula)}</span>
     </div>
     <div style="overflow-x:auto">
     <table id="adv-national-table">

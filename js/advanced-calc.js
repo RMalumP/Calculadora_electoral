@@ -463,9 +463,22 @@ function advAllocateDistrict(d, { config, edits, locks, partyMeta, eligibility, 
   const bonoExtra = bono > 0 && config.bono?.modo === 'extra';
   const aRepartir = bonoExtra ? d.seats : Math.max(0, d.seats - bono);
 
+  // El último escaño y los cocientes se guardan en la circunscripción para las
+  // ventanas de análisis: allocateSeats los deja en una variable global que la
+  // siguiente circunscripción pisaría.
+  window.lastSeatInfo = null;
   const allocated = aRepartir > 0 && contenders.length
     ? allocateSeats(contenders, aRepartir, formula)
     : contenders.map(p => ({ ...p, seats: 0 }));
+  d.lastSeat = aRepartir > 0 && window.lastSeatInfo ? { ...window.lastSeatInfo } : null;
+  d.analysis = {
+    formula,
+    toAllocate: aRepartir,
+    parties: contenders.map(c => ({
+      key: c.key, name: c.name, siglas: c.siglas, votes: c.votes,
+      seats: allocated.find(a => a.key === c.key)?.seats || 0
+    }))
+  };
   if (bono > 0 && contenders.length) applyBonus(allocated, bono);
 
   d.formulaUsada = formula;
