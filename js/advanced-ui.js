@@ -360,6 +360,13 @@ function advSyncConfigToForm() {
     if (n)  n.value = e.escanos ?? 0;
   });
 
+  const comp = { ...advCompDefault(), ...(c.comp || {}) };
+  select('#adv-comp-modo').value    = comp.modo;
+  select('#adv-comp-formula').value = comp.formula;
+  select('#adv-comp-barrera').value = comp.barrera;
+  select('#adv-comp-bolsa').value   = comp.bolsa;
+  select('#adv-comp-tope').value    = comp.tope;
+
   advRefreshFormState();
 }
 
@@ -392,7 +399,14 @@ function advReadForm() {
     extras: Object.fromEntries(Object.keys(ADV_EXTRA_LABEL).map(nivel => [nivel, {
       activa:  !!select(`#adv-extra-${nivel}`)?.checked,
       escanos: parseInt(select(`#adv-extra-${nivel}-seats`)?.value) || 0
-    }]))
+    }])),
+    comp: {
+      modo:    select('#adv-comp-modo').value,
+      formula: select('#adv-comp-formula').value,
+      barrera: parseFloat(select('#adv-comp-barrera').value) || 0,
+      bolsa:   parseInt(select('#adv-comp-bolsa').value) || 0,
+      tope:    parseInt(select('#adv-comp-tope').value) || 0
+    }
   };
 }
 
@@ -402,11 +416,6 @@ const ADV_LEVEL_LABEL = { provincia: 'Provincial', ccaa: 'Autonómica', nacional
 const ADV_BARRIER_LABEL = { circunscripcion: 'circunscripción', ccaa: 'comunidad', nacional: 'nacional' };
 
 /** Abre o pliega una sección de configuración. */
-function advToggleSection(section, open) {
-  const willOpen = open !== undefined ? open : !section.classList.contains('open');
-  section.classList.toggle('open', willOpen);
-}
-
 /** Resumen de una línea con el estado de cada sección, visible al plegarla. */
 function advUpdateSummaries() {
   const c = _advConfig;
@@ -449,19 +458,93 @@ function advUpdateSummaries() {
     ? `${c.totalSeats} personalizados · mín. ${c.minPorCircunscripcion}`
     : `${_advResult?.summary?.baseSeats ?? '—'} originales`) + extrasTxt + bonoTxt + lockTxt;
   updateText(select('#adv-sum-escanos'), seatsTxt);
+
+  const comp = c.comp || {};
+  const compNames = { dhondt: "D'Hondt", saintlague: 'Sainte-Laguë', hare: 'Hare' };
+  const r = _advResult?.compensation;
+  updateText(select('#adv-sum-comp'),
+    !advCompActive(comp) ? 'Ninguna'
+    : `${comp.modo === 'bolsa' ? `Bolsa de ${comp.bolsa}` : 'Ampliación'} · ${compNames[comp.formula] || comp.formula}` +
+      (r ? ` · +${r.added} (total ${r.size})` : ''));
 }
 
-/** Conecta el plegado de todas las secciones de configuración. */
-function advInitSections() {
-  selectAll('.adv-cfg').forEach(section => {
-    section.querySelector('.adv-cfg-toggle')?.addEventListener('click', () => advToggleSection(section));
-  });
+/* ── MODO SENCILLO / AVANZADO Y PESTAÑAS DE CONFIGURACIÓN ────
+   Los mismos controles sirven a los dos modos: el sencillo oculta lo marcado
+   con .adv-only y muestra las secciones apiladas; el avanzado las reparte en
+   pestañas a todo el ancho. */
 
-  select('#adv-cfg-collapse')?.addEventListener('click', () => {
-    const anyOpen = selectAll('.adv-cfg').some(s => s.classList.contains('open'));
-    selectAll('.adv-cfg').forEach(s => advToggleSection(s, !anyOpen));
-    updateText(select('#adv-cfg-collapse'), anyOpen ? 'Abrir todo' : 'Plegar todo');
+const ADV_MODE_KEY = 'adv-mode';
+const ADV_TAB_KEY  = 'adv-tab';
+
+function advStoreGet(key) {
+  try { return localStorage.getItem(key); } catch (e) { return null; }
+}
+function advStoreSet(key, value) {
+  try { localStorage.setItem(key, value); } catch (e) { /* sin almacenamiento */ }
+}
+
+function advGetMode() {
+  return select('.adv-workspace')?.dataset.mode === 'simple' ? 'simple' : 'advanced';
+}
+
+function advSetMode(mode) {
+  const ws = select('.adv-workspace');
+  if (!ws) return;
+  ws.dataset.mode = mode === 'simple' ? 'simple' : 'advanced';
+  selectAll('.adv-mode-btn').forEach(b => {
+    const on = b.dataset.mode === ws.dataset.mode;
+    b.classList.toggle('active', on);
+    b.setAttribute('aria-pressed', String(on));
   });
+  advStoreSet(ADV_MODE_KEY, ws.dataset.mode);
+  advSelectTab(select('.adv-cfg.active')?.dataset.section || advStoreGet(ADV_TAB_KEY) || 'eleccion');
+}
+
+function advSelectTab(name) {
+  const sections = selectAll('.adv-cfg');
+  if (!sections.some(s => s.dataset.section === name)) name = sections[0]?.dataset.section;
+  sections.forEach(s => {
+    const on = s.dataset.section === name;
+    s.classList.toggle('active', on);
+    s.setAttribute('role', 'tabpanel');
+  });
+  selectAll('#adv-tabs .adv-tab').forEach(t => {
+    const on = t.dataset.section === name;
+    t.classList.toggle('active', on);
+    t.setAttribute('aria-selected', String(on));
+    t.tabIndex = on ? 0 : -1;
+  });
+  advStoreSet(ADV_TAB_KEY, name);
+}
+
+/** Conecta el modo sencillo/avanzado y las pestañas de configuración. */
+function advInitSections() {
+  const tabs = select('#adv-tabs');
+  if (tabs) {
+    tabs.innerHTML = '';
+    selectAll('.adv-cfg').forEach(section => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'adv-tab' + (section.classList.contains('adv-only') ? ' adv-only' : '');
+      btn.dataset.section = section.dataset.section;
+      btn.setAttribute('role', 'tab');
+      btn.textContent = section.querySelector('.adv-cfg-name')?.textContent || section.dataset.section;
+      btn.addEventListener('click', () => advSelectTab(btn.dataset.section));
+      tabs.appendChild(btn);
+    });
+    tabs.addEventListener('keydown', e => {
+      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+      const list = selectAll('#adv-tabs .adv-tab');
+      const i = list.findIndex(t => t.classList.contains('active'));
+      const next = list[(i + (e.key === 'ArrowRight' ? 1 : list.length - 1)) % list.length];
+      advSelectTab(next.dataset.section);
+      next.focus();
+      e.preventDefault();
+    });
+  }
+  selectAll('.adv-mode-btn').forEach(b =>
+    b.addEventListener('click', () => advSetMode(b.dataset.mode)));
+  advSetMode(advStoreGet(ADV_MODE_KEY) === 'simple' ? 'simple' : 'advanced');
 }
 
 /** Habilita/deshabilita bloques del formulario según su estado. */
@@ -485,6 +568,12 @@ function advRefreshFormState() {
 
   advRefreshExtraState(level);
   advRefreshBonoState();
+
+  const modo = select('#adv-comp-modo')?.value;
+  setDisplay(select('#adv-comp-formula-field'), modo !== 'ninguna');
+  setDisplay(select('#adv-comp-barrera-field'), modo !== 'ninguna');
+  setDisplay(select('#adv-comp-bolsa-field'),   modo === 'bolsa');
+  setDisplay(select('#adv-comp-tope-field'),    modo === 'ampliacion');
 }
 
 /**
@@ -565,7 +654,12 @@ function advRenderSummary() {
     ['Votos válidos', advNum(s.totalValid), true],
     ['Votos en blanco', advNum(s.totalBlanco), true],
     ['Participación', s.participacion > 0 ? advPct(s.participacion) : '—', true],
-    ['Desproporción (Gallagher)', s.gallagher.toFixed(2), false]
+    ...(_advResult.compensation
+      ? [['Compensatorios', `+${advNum(_advResult.compensation.added)}`, false]] : []),
+    ['Desproporción (Gallagher)',
+     _advResult.compensation
+       ? `${s.gallagherBefore.toFixed(2)} → ${s.gallagher.toFixed(2)}`
+       : s.gallagher.toFixed(2), false]
   ];
   select('#adv-summary').innerHTML =
     `<div class="adv-summary">` +
@@ -619,6 +713,7 @@ function advNationalCard() {
   const without   = r.national.filter(p => p.seats === 0 && p.votes > 0);
   const maxSeats  = Math.max(1, ...withSeats.map(p => p.seats));
   const showReal  = r.config.seatsMode === 'sheet' && r.national.some(p => p.realSeats > 0);
+  const showComp  = !!r.compensation;
 
   const row = p => {
     const color = advPartyColor(p);
@@ -631,6 +726,7 @@ function advNationalCard() {
       </div></td>
       <td class="adv-num">${advNum(p.votes)}</td>
       <td class="adv-num">${advPct(p.votePct)}</td>
+      ${showComp ? `<td class="adv-num">${p.directSeats}</td><td class="adv-num">${p.compSeats > 0 ? `<b>+${p.compSeats}</b>` : '·'}</td>` : ''}
       <td><div class="adv-seat-wrap">
         <span class="adv-seat-badge" style="background:${color}">${p.seats}</span>
         <div class="adv-bar-outer"><div class="adv-bar" style="width:${(p.seats / maxSeats * 100).toFixed(1)}%;background:${color}"></div></div>
@@ -658,12 +754,13 @@ function advNationalCard() {
         <th style="width:34%">Candidatura</th>
         <th class="adv-num" style="width:12%">Votos</th>
         <th class="adv-num" style="width:9%">% votos</th>
+        ${showComp ? `<th class="adv-num" title="Escaños obtenidos en las circunscripciones">Directos</th><th class="adv-num" title="Escaños compensatorios">Comp.</th>` : ''}
         <th style="width:19%">${advEscape(seatWord.charAt(0).toUpperCase() + seatWord.slice(1))}</th>
         <th class="adv-num" style="width:9%">% esc.</th>
         <th class="adv-num" style="width:8%">Dif. %</th>
         ${showReal ? `<th class="adv-num" style="width:9%" title="Escaños registrados en los datos originales">Reales</th>` : ''}
       </tr></thead>
-      <tbody>${withSeats.map(row).join('') || `<tr><td colspan="7" class="adv-empty">Ninguna candidatura obtiene representación.</td></tr>`}</tbody>
+      <tbody>${withSeats.map(row).join('') || `<tr><td colspan="9" class="adv-empty">Ninguna candidatura obtiene representación.</td></tr>`}</tbody>
     </table>
     </div>
     ${tailNote}
@@ -1848,7 +1945,8 @@ function advInit() {
    '#adv-seats-mode', '#adv-total-seats', '#adv-min-seats', '#adv-reparto-base',
    '#adv-bono-on', '#adv-bono-modo', '#adv-bono-seats',
    '#adv-extra-ccaa', '#adv-extra-ccaa-seats',
-   '#adv-extra-nacional', '#adv-extra-nacional-seats'
+   '#adv-extra-nacional', '#adv-extra-nacional-seats',
+   '#adv-comp-modo', '#adv-comp-formula', '#adv-comp-barrera', '#adv-comp-bolsa', '#adv-comp-tope'
   ].forEach(sel => {
     const el = select(sel);
     if (el) el.addEventListener('change', advOnConfigChange);

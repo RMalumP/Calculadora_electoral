@@ -9,40 +9,28 @@
  */
 
 registerTab('advanced', 'tab-content', String.raw`
-    <div class="adv-workspace">
+    <div class="adv-workspace" data-mode="advanced">
 
-      <!-- ══ COLUMNA IZQUIERDA: resultados ══ -->
-      <main class="adv-main">
-
-        <div class="adv-head">
-          <div>
-            <h2 class="adv-title">Calculadora Avanzada</h2>
-            <div class="adv-subtitle" id="adv-subtitle">Cargando datos electorales…</div>
-          </div>
+      <div class="adv-head">
+        <div>
+          <h2 class="adv-title">Calculadora Avanzada</h2>
+          <div class="adv-subtitle" id="adv-subtitle">Cargando datos electorales…</div>
         </div>
-
-        <div class="adv-editbar" id="adv-editbar" hidden>
-          <span class="adv-edit-icon">✎</span>
-          <span class="adv-edit-note" id="adv-edit-note"></span>
-          <span class="adv-edit-badge" id="adv-edit-badge" hidden>0 cambios</span>
+        <div class="adv-mode" role="group" aria-label="Modo de la calculadora">
+          <button type="button" class="adv-mode-btn" data-mode="simple">Sencillo</button>
+          <button type="button" class="adv-mode-btn" data-mode="advanced">Avanzado</button>
         </div>
+      </div>
 
-        <div id="adv-status"></div>
-        <div id="adv-summary"></div>
-        <div id="adv-results"></div>
-
-      </main>
-
-      <!-- ══ COLUMNA DERECHA: configuración ══ -->
-      <!-- Cada sección se pliega en un resumen de una línea para que el
-           panel no se alargue ni se corte. -->
+      <!-- ══ CONFIGURACIÓN (a todo el ancho): pestañas en modo avanzado,
+           una sola tarjeta con lo básico en modo sencillo ══ -->
       <aside class="adv-config">
         <div class="param-card">
           <div class="param-card-header">
             Configuración
-            <button type="button" class="adv-collapse-all" id="adv-cfg-collapse">Plegar todo</button>
           </div>
           <div class="param-body adv-cfg-body">
+            <div class="adv-tabs" id="adv-tabs" role="tablist" aria-label="Secciones de la configuración"></div>
 
             <section class="adv-cfg" data-section="eleccion">
               <header class="adv-cfg-head">
@@ -91,7 +79,7 @@ registerTab('advanced', 'tab-content', String.raw`
 
                 <!-- Niveles superpuestos a la circunscripción base. Los
                      escaños de cada uno se ponen en la sección «Escaños». -->
-                <div class="adv-fieldset" id="adv-extra-fs">
+                <div class="adv-fieldset adv-only" id="adv-extra-fs">
                   <label class="adv-check" id="adv-extra-ccaa-row">
                     <input type="checkbox" id="adv-extra-ccaa"> Añadir circunscripción autonómica
                   </label>
@@ -100,7 +88,7 @@ registerTab('advanced', 'tab-content', String.raw`
                   </label>
                   <small id="adv-extra-hint"></small>
                 </div>
-                <div class="adv-exc" data-exc-section="reparto">
+                <div class="adv-exc adv-only" data-exc-section="reparto">
                   <button type="button" class="adv-exc-btn">
                     <span class="adv-exc-check" aria-hidden="true"></span>
                     <span class="adv-exc-label">Excepciones: <b class="adv-exc-count">ninguna</b></span>
@@ -133,7 +121,7 @@ registerTab('advanced', 'tab-content', String.raw`
                   <small id="adv-b1-hint" style="display:none"></small>
                 </div>
 
-                <div class="adv-fieldset" id="adv-b2-fs">
+                <div class="adv-fieldset adv-only" id="adv-b2-fs">
                   <label class="adv-check"><input type="checkbox" id="adv-b2-on"> Segunda barrera</label>
                   <div class="adv-row">
                     <div class="adv-select-wrap">
@@ -148,8 +136,8 @@ registerTab('advanced', 'tab-content', String.raw`
                   <small id="adv-b2-hint" style="display:none"></small>
                 </div>
 
-                <label class="adv-check"><input type="checkbox" id="adv-blanco" checked> Contar votos en blanco en la barrera</label>
-                <div class="adv-exc" data-exc-section="barreras">
+                <label class="adv-check adv-only"><input type="checkbox" id="adv-blanco" checked> Contar votos en blanco en la barrera</label>
+                <div class="adv-exc adv-only" data-exc-section="barreras">
                   <button type="button" class="adv-exc-btn">
                     <span class="adv-exc-check" aria-hidden="true"></span>
                     <span class="adv-exc-label">Excepciones: <b class="adv-exc-count">ninguna</b></span>
@@ -181,11 +169,11 @@ registerTab('advanced', 'tab-content', String.raw`
                     <label for="adv-total-seats">Total de escaños</label>
                     <input type="number" id="adv-total-seats" min="1" max="2000" value="350">
                   </div>
-                  <div class="adv-field">
+                  <div class="adv-field adv-only">
                     <label for="adv-min-seats">Mínimo por circunscripción</label>
                     <input type="number" id="adv-min-seats" min="0" max="20" value="2">
                   </div>
-                  <div class="adv-field">
+                  <div class="adv-field adv-only">
                     <label for="adv-reparto-base">Repartir el resto según</label>
                     <div class="adv-select-wrap">
                       <select id="adv-reparto-base">
@@ -199,18 +187,18 @@ registerTab('advanced', 'tab-content', String.raw`
 
                 <!-- Escaños de las circunscripciones que se hayan añadido en
                      «Circunscripción y fórmula». -->
-                <div class="adv-field" id="adv-extra-ccaa-seats-field" style="display:none">
+                <div class="adv-field adv-only" id="adv-extra-ccaa-seats-field" style="display:none">
                   <label for="adv-extra-ccaa-seats">Escaños de la circunscripción autonómica</label>
                   <input type="number" id="adv-extra-ccaa-seats" min="0" max="2000" value="0">
                   <small>Se reparten entre las comunidades por población o censo y se suman a los de la base.</small>
                 </div>
-                <div class="adv-field" id="adv-extra-nacional-seats-field" style="display:none">
+                <div class="adv-field adv-only" id="adv-extra-nacional-seats-field" style="display:none">
                   <label for="adv-extra-nacional-seats">Escaños de la circunscripción estatal</label>
                   <input type="number" id="adv-extra-nacional-seats" min="0" max="2000" value="0">
                   <small>Se reparten en una única circunscripción de todo el país y se suman a los de la base.</small>
                 </div>
 
-                <div class="adv-fieldset" id="adv-bono-fs">
+                <div class="adv-fieldset adv-only" id="adv-bono-fs">
                   <label class="adv-check"><input type="checkbox" id="adv-bono-on"> Bono de mayoría</label>
                   <div class="adv-row">
                     <div class="adv-select-wrap">
@@ -224,7 +212,7 @@ registerTab('advanced', 'tab-content', String.raw`
                   <small id="adv-bono-hint" style="display:none"></small>
                 </div>
 
-                <div class="adv-exc" data-exc-section="escanos">
+                <div class="adv-exc adv-only" data-exc-section="escanos">
                   <button type="button" class="adv-exc-btn">
                     <span class="adv-exc-check" aria-hidden="true"></span>
                     <span class="adv-exc-label">Excepciones: <b class="adv-exc-count">ninguna</b></span>
@@ -234,7 +222,54 @@ registerTab('advanced', 'tab-content', String.raw`
               </div>
             </section>
 
-            <section class="adv-cfg" data-section="datos">
+            <section class="adv-cfg adv-only" data-section="comp">
+              <header class="adv-cfg-head">
+                <button type="button" class="adv-cfg-toggle">
+                  <span class="adv-cfg-titleline"><span class="adv-cfg-caret">▸</span><span class="adv-cfg-name">Compensación</span></span>
+                  <span class="adv-cfg-summary" id="adv-sum-comp">—</span>
+                </button>
+              </header>
+              <div class="adv-cfg-content">
+                <div class="adv-field">
+                  <label for="adv-comp-modo">Escaños compensatorios</label>
+                  <div class="adv-select-wrap">
+                    <select id="adv-comp-modo">
+                      <option value="ninguna">Ninguno</option>
+                      <option value="bolsa">Bolsa fija (nórdico)</option>
+                      <option value="ampliacion">Ampliación (alemán)</option>
+                    </select>
+                  </div>
+                  <small id="adv-comp-hint">Corrige la desproporción del reparto por circunscripciones con escaños añadidos a nivel nacional.</small>
+                </div>
+                <div class="adv-field" id="adv-comp-formula-field">
+                  <label for="adv-comp-formula">Fórmula de la compensación</label>
+                  <div class="adv-select-wrap">
+                    <select id="adv-comp-formula">
+                      <option value="dhondt">D'Hondt</option>
+                      <option value="saintlague">Sainte-Laguë</option>
+                      <option value="hare">Hare (restos mayores)</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="adv-field" id="adv-comp-barrera-field">
+                  <label for="adv-comp-barrera">Barrera de acceso (% nacional)</label>
+                  <input type="number" id="adv-comp-barrera" min="0" max="100" step="0.1" value="0">
+                  <small>Las candidaturas por debajo conservan sus escaños directos, pero no reciben compensación.</small>
+                </div>
+                <div class="adv-field" id="adv-comp-bolsa-field">
+                  <label for="adv-comp-bolsa">Escaños de la bolsa</label>
+                  <input type="number" id="adv-comp-bolsa" min="0" max="500" value="0">
+                  <small>Se suman a los escaños directos (para reducir la base, usa «Total personalizado» en Escaños).</small>
+                </div>
+                <div class="adv-field" id="adv-comp-tope-field">
+                  <label for="adv-comp-tope">Tamaño máximo del parlamento</label>
+                  <input type="number" id="adv-comp-tope" min="0" max="5000" value="0">
+                  <small>0 = sin límite. Si se alcanza, la compensación queda incompleta.</small>
+                </div>
+              </div>
+            </section>
+
+            <section class="adv-cfg adv-only" data-section="datos">
               <header class="adv-cfg-head">
                 <button type="button" class="adv-cfg-toggle">
                   <span class="adv-cfg-titleline"><span class="adv-cfg-caret">▸</span><span class="adv-cfg-name">Datos</span></span>
@@ -247,7 +282,7 @@ registerTab('advanced', 'tab-content', String.raw`
                 </button>
                 <small>Cambia los votos de cada candidatura y los escaños de cada circunscripción. Los cambios son sólo de esta sesión y se pueden deshacer.</small>
                 <button type="button" class="adv-mini-btn" id="adv-edit-reset" hidden>Restaurar originales</button>
-                <div class="adv-exc" data-exc-section="datos">
+                <div class="adv-exc adv-only" data-exc-section="datos">
                   <button type="button" class="adv-exc-btn">
                     <span class="adv-exc-check" aria-hidden="true"></span>
                     <span class="adv-exc-label">Excepciones: <b class="adv-exc-count">ninguna</b></span>
@@ -267,6 +302,23 @@ registerTab('advanced', 'tab-content', String.raw`
           </div>
         </div>
       </aside>
+
+      <!-- ══ RESULTADOS ══ -->
+      <main class="adv-main">
+
+        <div class="adv-editbar" id="adv-editbar" hidden>
+          <span class="adv-edit-icon">✎</span>
+          <span class="adv-edit-note" id="adv-edit-note"></span>
+          <span class="adv-edit-badge" id="adv-edit-badge" hidden>0 cambios</span>
+        </div>
+
+        <div id="adv-status"></div>
+        <div id="adv-summary"></div>
+        <div id="adv-results"></div>
+
+      </main>
+
+
 
     </div>
 `);
