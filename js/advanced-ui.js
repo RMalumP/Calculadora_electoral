@@ -400,13 +400,7 @@ function advReadForm() {
       activa:  !!select(`#adv-extra-${nivel}`)?.checked,
       escanos: parseInt(select(`#adv-extra-${nivel}-seats`)?.value) || 0
     }])),
-    comp: {
-      modo:    select('#adv-comp-modo').value,
-      formula: select('#adv-comp-formula').value,
-      barrera: parseFloat(select('#adv-comp-barrera').value) || 0,
-      bolsa:   parseInt(select('#adv-comp-bolsa').value) || 0,
-      tope:    parseInt(select('#adv-comp-tope').value) || 0
-    }
+    comp: advReadCompForm()
   };
 }
 
@@ -543,7 +537,11 @@ function advInitSections() {
     });
   }
   selectAll('.adv-mode-btn').forEach(b =>
-    b.addEventListener('click', () => advSetMode(b.dataset.mode)));
+    b.addEventListener('click', () => {
+      advSetMode(b.dataset.mode);
+      // El modo sencillo hereda fórmula y barrera en la compensación.
+      if (_advLoaded) advOnConfigChange();
+    }));
   // Por defecto, el modo sencillo.
   advSetMode(advStoreGet(ADV_MODE_KEY) === 'advanced' ? 'advanced' : 'simple');
 }
@@ -615,6 +613,38 @@ function advRefreshBonoState() {
     : `La candidatura más votada en cada circunscripción se lleva ${n} por encima de su tamaño. El total sube.`;
   updateText(hint, msg);
   setDisplay(hint, !!msg);
+}
+
+/** Fórmula de compensación que corresponde a una de reparto (en modo sencillo). */
+function advCompFormulaFor(formula) {
+  if (['saintlague', 'saintlague_m'].includes(formula)) return 'saintlague';
+  if (['hare', 'imperiali', 'droop', 'hb'].includes(formula)) return 'hare';
+  return 'dhondt';
+}
+
+/**
+ * Lee la compensación del formulario. En el modo sencillo sólo se ven el modo
+ * y la bolsa: la fórmula y la barrera se heredan del reparto, y se vuelcan en
+ * los campos ocultos para que al pasar a avanzado todo siga cuadrando.
+ */
+function advReadCompForm() {
+  const modo = select('#adv-comp-modo').value;
+  if (advGetMode() === 'simple') {
+    select('#adv-comp-formula').value = advCompFormulaFor(select('#adv-formula').value);
+    select('#adv-comp-barrera').value = select('#adv-b1-on').checked ? (parseFloat(select('#adv-b1-val').value) || 0) : 0;
+    // La bolsa nórdica arranca en el 10 % del total, y se puede cambiar.
+    if (modo === 'bolsa' && !(parseInt(select('#adv-comp-bolsa').value) > 0)) {
+      const base = _advResult?.summary?.baseSeats || 0;
+      select('#adv-comp-bolsa').value = Math.max(1, Math.round(base * 0.1));
+    }
+  }
+  return {
+    modo,
+    formula: select('#adv-comp-formula').value,
+    barrera: parseFloat(select('#adv-comp-barrera').value) || 0,
+    bolsa:   parseInt(select('#adv-comp-bolsa').value) || 0,
+    tope:    parseInt(select('#adv-comp-tope').value) || 0
+  };
 }
 
 function advOnConfigChange() {
