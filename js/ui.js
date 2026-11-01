@@ -62,14 +62,71 @@ function toggleHideNames() {
 
 /* ── TABS ─────────────────────────────────────────────────── */
 
-function switchTab(tabName) {
+/**
+ * Dirección de cada pestaña. Se usa el fragmento de la URL (#...) y no el
+ * historial: así la dirección funciona igual servida y al abrir el archivo
+ * directamente desde el disco, donde cambiar la ruta no está permitido.
+ */
+const TAB_SLUGS = {
+  calculator: 'calculadora',
+  pactometer: 'pactometro',
+  advanced:   'avanzada',
+  theory:     'teoria'
+};
+const SLUG_TO_TAB = Object.fromEntries(Object.entries(TAB_SLUGS).map(([k, v]) => [v, k]));
+
+/**
+ * Los botones de guardar de la cabecera cambian con la pestaña, porque cada
+ * una guarda una cosa distinta: la calculadora y el pactómetro se llevan una
+ * copia de la página; la avanzada, sólo los datos de su sesión, porque los
+ * resultados los reconstruye a partir de la hoja de cálculo. La teoría no
+ * tiene nada que guardar.
+ */
+function updateHeaderActions(tabName) {
+  const guardarPagina = tabName === 'calculator' || tabName === 'pactometer';
+  const el = select('#save-html-btn');
+  if (el) el.hidden = !guardarPagina;
+  selectAll('.adv-session-btn').forEach(b => { b.hidden = tabName !== 'advanced'; });
+}
+
+function switchTab(tabName, updateHash = true) {
   selectAll('.tab-content').forEach(t => t.classList.remove('active'));
   selectAll('.tab').forEach(b => b.classList.remove('active'));
-  const tabMap = { calculator: 'calculator-tab', advanced: 'advanced-tab', pactometer: 'pactometer-tab', theory: 'theory-tab' };
-  const tabId = tabMap[tabName];
-  if (!tabId) return;
+  const tabId = `${tabName}-tab`;
+  if (!TAB_SLUGS[tabName] || !select(`#${tabId}`)) return;
   select(`#${tabId}`)?.classList.add('active');
   select(`.tab[data-tab="${tabName}"]`)?.classList.add('active');
+  updateHeaderActions(tabName);
+
+  if (updateHash) {
+    const slug = TAB_SLUGS[tabName];
+    if (location.hash.slice(1) !== slug) {
+      // replaceState evita llenar el historial con cada cambio de pestaña;
+      // si no está disponible (file:// en algunos navegadores) se recurre al
+      // fragmento directamente.
+      try { history.replaceState(null, '', `#${slug}`); }
+      catch (e) { location.hash = slug; }
+    }
+  }
+
+  if (tabName === 'advanced' && typeof advEnsureLoaded === 'function') advEnsureLoaded();
+}
+
+/** Pestaña indicada en la URL, si la hay. */
+function tabFromHash() {
+  return SLUG_TO_TAB[decodeURIComponent(location.hash.replace(/^#/, ''))] || null;
+}
+
+/** Abre la pestaña de la URL al cargar y al navegar atrás o adelante. */
+function initTabRouting() {
+  const initial = tabFromHash();
+  if (initial) switchTab(initial, false);
+  else switchTab('calculator');
+
+  window.addEventListener('hashchange', () => {
+    const t = tabFromHash();
+    if (t) switchTab(t, false);
+  });
 }
 
 /* ── FÓRMULA ─────────────────────────────────────────────── */
@@ -137,14 +194,14 @@ function getBonusMode() {
   return select('#bonus-mode-value')?.value || 'included';
 }
 
-function setBonusMode(mode) {
+function setBonusMode(mode, recalcular = true) {
   const bonusModeValue = select('#bonus-mode-value');
   if (bonusModeValue) bonusModeValue.value = mode;
   toggleClass(select('#bonus-btn-included'), 'bonus-active', mode === 'included');
   toggleClass(select('#bonus-btn-extra'), 'bonus-active', mode !== 'included');
   setDisplay(select('#bonus-desc-included'), mode === 'included');
   setDisplay(select('#bonus-desc-extra'), mode !== 'included');
-  calculate();
+  if (recalcular) calculate();
 }
 
 /* ── NOMBRES DE ESCAÑOS ──────────────────────────────────── */
@@ -291,29 +348,6 @@ function showTheorySystem(systemId) {
   });
 }
 
-/* ── GUARDAR HTML ────────────────────────────────────────── */
-
-function saveHTML() {
-  selectAll('input, select').forEach(el => {
-    if (el.type === 'checkbox' || el.type === 'radio') {
-      el.checked ? el.setAttribute('checked', '') : el.removeAttribute('checked');
-    } else if (el.tagName === 'SELECT') {
-      [...el.options].forEach(opt => opt.selected ? opt.setAttribute('selected', '') : opt.removeAttribute('selected'));
-    } else {
-      el.setAttribute('value', el.value);
-    }
-  });
-
-  const html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
-  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  const ts = new Date().toISOString().slice(0, 16).replace('T', '_').replace(':', '-');
-  a.download = 'calculadora_electoral_' + ts + '.html';
-  a.click();
-  URL.revokeObjectURL(a.href);
-}
-
 /* ── DRAG & DROP ─────────────────────────────────────────── */
 
 (function initDragDrop() {
@@ -399,7 +433,13 @@ function saveHTML() {
 /* ── INIT ────────────────────────────────────────────────── */
 
 document.addEventListener('DOMContentLoaded', function () {
+  initTabRouting();
   buildFormulaSelect();
+
+  // Las copias guardadas traen anotado su propio contenido (session.js); el
+  // resto arranca con filas en blanco.
+  if (typeof sesionRecuperar === 'function' && sesionRecuperar(window.CE_SESION)) return;
+
   for (let i = 0; i < 5; i++) addRow();
   addRow('Otros partidos', '', '#474747', true);
   for (let i = 0; i < 5; i++) addPactometerRow();

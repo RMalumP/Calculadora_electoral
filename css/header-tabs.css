@@ -39,8 +39,25 @@ header span {
   letter-spacing: 0.06em;
 }
 
-.save-icon-btn {
+/* Bloque de controles de la derecha: renombrar escaños y guardar. */
+.header-actions {
   margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-actions #seat-rename {
+  background: none;
+  border: 1px solid #4a3f3a;
+  border-radius: var(--radius);
+  color: #7a6f6a;
+  font-size: 0.7rem;
+  padding: 3px 6px;
+  cursor: pointer;
+}
+
+.save-icon-btn {
   align-self: center;
   background: none;
   border: 1px solid rgba(255,255,255,0.12);
@@ -56,6 +73,14 @@ header span {
   background: rgba(255,255,255,0.08);
   color: #d0c8c0;
   border-color: rgba(255,255,255,0.2);
+}
+
+/* Los de la avanzada llevan texto, así que necesitan la tipografía del resto. */
+.adv-session-btn {
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 /* ── TABS ─────────────────────────────────────────────────── */

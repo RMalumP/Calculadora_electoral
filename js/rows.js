@@ -102,8 +102,9 @@ function _buildRow(name, votes, color, isOtros) {
     ? '<span style="width:18px;display:inline-block"></span>'
     : '<span class="drag-handle" title="Arrastrar para reordenar">⠿</span>';
 
-  const votesFmt = getVoteValue(votes) > 0
-    ? formatVotes(Math.min(getVoteValue(votes), 9000000000)) : '';
+  // «votes» llega como número o como texto ya formateado, nunca como campo.
+  const votesNum = parseVoteValue(votes);
+  const votesFmt = votesNum > 0 ? formatVotes(Math.min(votesNum, 9000000000)) : '';
 
   const groupCell = isOtros
     ? `<td class="group-col"></td>`
@@ -210,25 +211,26 @@ function _insertBeforeOtros(name, votes, color, isOtros) {
 }
 
 /**
- * API pública:
+ * API pública. Devuelve la fila, para poder terminar de ajustarla.
  * - isOtros=true  → coloca "Otros partidos" al final (idempotente)
  * - isOtros=false → inserta una fila antes de "Otros partidos"
  */
 function addRow(name = '', votes = '', color = '', isOtros = false) {
   if (isOtros) {
     const tbody = document.getElementById('votes-body');
-    const existing = tbody.querySelector('tr[data-is-otros="true"]');
-    if (!existing) {
-      const tr = _buildRow(name, votes, color, true);
+    let tr = tbody.querySelector('tr[data-is-otros="true"]');
+    if (!tr) {
+      tr = _buildRow(name, votes, color, true);
       tbody.appendChild(tr);
     }
     enforceOtrosLast();
     updateTotals();
-    return;
+    return tr;
   }
-  _insertBeforeOtros(name, votes, color, false);
+  const tr = _insertBeforeOtros(name, votes, color, false);
   enforceOtrosLast();
   updateTotals();
+  return tr;
 }
 
 function delRow(btn) {

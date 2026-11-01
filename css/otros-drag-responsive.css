@@ -342,7 +342,7 @@ tr.drag-over-below       { border-bottom: 2px solid var(--accent) !important; }
   }
   header h1 { font-size: 1.25rem; }
   header span { font-size: 0.78rem; }
-  header #seat-rename { margin-left: 0; margin-top: 4px; }
+  header .header-actions { margin-left: 0; margin-top: 4px; flex-wrap: wrap; }
 
   .main { padding: 10px 8px 40px; }
 
