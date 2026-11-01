@@ -54,9 +54,13 @@ function _onHemicycleUp() {
 
 /* ── DIBUJO DEL HEMICICLO ──────────────────────────────────────── */
 
-function drawHemicycle() {
-  const results = getResults();
-  const chart   = document.getElementById('hemicycle-chart');
+/**
+ * Dibuja el hemiciclo. Sin argumentos lee la tabla de la calculadora básica;
+ * la avanzada le pasa sus propios resultados y el contenedor de su ventana.
+ */
+function drawHemicycle(resultsArg, chartEl) {
+  const results = resultsArg || getResults();
+  const chart   = chartEl || document.getElementById('hemicycle-chart');
   chart.innerHTML = '';
 
   const totalSeats = results.reduce((s, r) => s + r.seats, 0);

@@ -1,11 +1,40 @@
-const CACHE = 'calculadora-electoral-v1';
+const CACHE = 'calculadora-electoral-v2';
 const ASSETS = [
-  './', './index.html', './manifest.webmanifest',
-  './css/variables.css', './css/header-tabs.css', './css/layout.css',
-  './css/components.css', './css/otros-drag-responsive.css',
-  './js/helpers.js', './js/constants.js', './js/algorithms.js', './js/rows.js',
-  './js/totals.js', './js/calculator.js', './js/hemicycle.js', './js/pactometer.js', './js/ui.js',
-  './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png', './icons/apple-touch-icon.png'
+  './',
+  './index.html',
+  './manifest.webmanifest',
+  './css/advanced.css',
+  './css/components.css',
+  './css/header-tabs.css',
+  './css/layout.css',
+  './css/otros-drag-responsive.css',
+  './css/variables.css',
+  './js/advanced-calc.js',
+  './js/advanced-compensation.js',
+  './js/advanced-data.js',
+  './js/advanced-popups.js',
+  './js/advanced-ui.js',
+  './js/algorithms.js',
+  './js/autosave.js',
+  './js/calculator.js',
+  './js/constants.js',
+  './js/groupings.js',
+  './js/helpers.js',
+  './js/hemicycle.js',
+  './js/pactometer.js',
+  './js/rows.js',
+  './js/session.js',
+  './js/tabs.js',
+  './js/totals.js',
+  './js/ui.js',
+  './tabs/avanzada.js',
+  './tabs/calculadora.js',
+  './tabs/pactometro.js',
+  './tabs/teoria.js',
+  './icons/apple-touch-icon.png',
+  './icons/icon-192.png',
+  './icons/icon-512.png',
+  './icons/icon-maskable-512.png'
 ];
 
 self.addEventListener('install', e => {

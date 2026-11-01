@@ -34,6 +34,10 @@
       <option value="congresistas">Congresistas</option>
     </select>
 
+    <!-- Sesión guardada automáticamente en este navegador. -->
+    <button class="save-icon-btn" id="auto-clear-btn"
+            title="Borrar la sesión guardada en este navegador y empezar de cero">🗑 Nueva sesión</button>
+
     <!-- Calculadora y pactómetro: copia autónoma de la página. -->
     <button class="save-icon-btn" id="save-html-btn" onclick="saveHTML()"
             title="Guardar la calculadora y el pactómetro en un archivo HTML que funciona por sí solo">💾</button>
@@ -82,7 +86,9 @@
 <script src="js/advanced-compensation.js?v=12"></script>
 <script src="js/advanced-calc.js?v=12"></script>
 <script src="js/advanced-ui.js?v=12"></script>
+<script src="js/advanced-popups.js?v=12"></script>
 <script src="js/session.js"></script>
+<script src="js/autosave.js"></script>
 <script src="js/ui.js"></script>
 <script>
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {

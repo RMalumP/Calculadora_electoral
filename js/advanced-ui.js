@@ -400,13 +400,7 @@ function advReadForm() {
       activa:  !!select(`#adv-extra-${nivel}`)?.checked,
       escanos: parseInt(select(`#adv-extra-${nivel}-seats`)?.value) || 0
     }])),
-    comp: {
-      modo:    select('#adv-comp-modo').value,
-      formula: select('#adv-comp-formula').value,
-      barrera: parseFloat(select('#adv-comp-barrera').value) || 0,
-      bolsa:   parseInt(select('#adv-comp-bolsa').value) || 0,
-      tope:    parseInt(select('#adv-comp-tope').value) || 0
-    }
+    comp: advReadCompForm()
   };
 }
 
@@ -543,7 +537,11 @@ function advInitSections() {
     });
   }
   selectAll('.adv-mode-btn').forEach(b =>
-    b.addEventListener('click', () => advSetMode(b.dataset.mode)));
+    b.addEventListener('click', () => {
+      advSetMode(b.dataset.mode);
+      // El modo sencillo hereda fórmula y barrera en la compensación.
+      if (_advLoaded) advOnConfigChange();
+    }));
   // Por defecto, el modo sencillo.
   advSetMode(advStoreGet(ADV_MODE_KEY) === 'advanced' ? 'advanced' : 'simple');
 }
@@ -617,6 +615,38 @@ function advRefreshBonoState() {
   setDisplay(hint, !!msg);
 }
 
+/** Fórmula de compensación que corresponde a una de reparto (en modo sencillo). */
+function advCompFormulaFor(formula) {
+  if (['saintlague', 'saintlague_m'].includes(formula)) return 'saintlague';
+  if (['hare', 'imperiali', 'droop', 'hb'].includes(formula)) return 'hare';
+  return 'dhondt';
+}
+
+/**
+ * Lee la compensación del formulario. En el modo sencillo sólo se ven el modo
+ * y la bolsa: la fórmula y la barrera se heredan del reparto, y se vuelcan en
+ * los campos ocultos para que al pasar a avanzado todo siga cuadrando.
+ */
+function advReadCompForm() {
+  const modo = select('#adv-comp-modo').value;
+  if (advGetMode() === 'simple') {
+    select('#adv-comp-formula').value = advCompFormulaFor(select('#adv-formula').value);
+    select('#adv-comp-barrera').value = select('#adv-b1-on').checked ? (parseFloat(select('#adv-b1-val').value) || 0) : 0;
+    // La bolsa nórdica arranca en el 10 % del total, y se puede cambiar.
+    if (modo === 'bolsa' && !(parseInt(select('#adv-comp-bolsa').value) > 0)) {
+      const base = _advResult?.summary?.baseSeats || 0;
+      select('#adv-comp-bolsa').value = Math.max(1, Math.round(base * 0.1));
+    }
+  }
+  return {
+    modo,
+    formula: select('#adv-comp-formula').value,
+    barrera: parseFloat(select('#adv-comp-barrera').value) || 0,
+    bolsa:   parseInt(select('#adv-comp-bolsa').value) || 0,
+    tope:    parseInt(select('#adv-comp-tope').value) || 0
+  };
+}
+
 function advOnConfigChange() {
   advRefreshFormState();
   if (_advLoaded) advRun();
@@ -644,6 +674,7 @@ function advRun() {
   advUpdateSummaries();
   advRefreshEditBar();
   advRefreshExceptions();
+  if (typeof advPopupRefresh === 'function') advPopupRefresh();
 }
 
 function advRenderSummary() {
@@ -747,19 +778,24 @@ function advNationalCard() {
 
   return `<div class="card">
     <div class="card-header"><span class="dot"></span>Recuento final · ${advEscape(_advConfig.circunscripcion === 'nacional' ? 'circunscripción estatal' : _advConfig.circunscripcion === 'ccaa' ? 'circunscripciones autonómicas' : 'circunscripciones provinciales')}
-      <span class="formula-tag" style="margin-left:auto">${advEscape(FORMULAS.find(f => f.id === _advConfig.formula)?.name || _advConfig.formula)}</span>
+      <span class="adv-card-tools">
+        <button type="button" class="adv-tool-btn" data-adv-popup="hemi">Representación visual</button>
+        <button type="button" class="adv-tool-btn" data-adv-popup="last">Último escaño</button>
+        <button type="button" class="adv-tool-btn" data-adv-popup="coef">Coeficientes</button>
+      </span>
+      <span class="formula-tag">${advEscape(FORMULAS.find(f => f.id === _advConfig.formula)?.name || _advConfig.formula)}</span>
     </div>
     <div style="overflow-x:auto">
     <table id="adv-national-table">
       <thead><tr>
-        <th style="width:34%">Candidatura</th>
-        <th class="adv-num" style="width:12%">Votos</th>
-        <th class="adv-num" style="width:9%">% votos</th>
-        ${showComp ? `<th class="adv-num" title="Escaños obtenidos en las circunscripciones">Directos</th><th class="adv-num" title="Escaños compensatorios">Comp.</th>` : ''}
-        <th style="width:19%">${advEscape(seatWord.charAt(0).toUpperCase() + seatWord.slice(1))}</th>
-        <th class="adv-num" style="width:9%">% esc.</th>
-        <th class="adv-num" style="width:8%">Dif. %</th>
-        ${showReal ? `<th class="adv-num" style="width:9%" title="Escaños registrados en los datos originales">Reales</th>` : ''}
+        <th>Candidatura</th>
+        <th class="adv-num" style="width:96px">Votos</th>
+        <th class="adv-num" style="width:76px">% votos</th>
+        ${showComp ? `<th class="adv-num" style="width:76px" title="Escaños obtenidos en las circunscripciones">Directos</th><th class="adv-num" style="width:62px" title="Escaños compensatorios">Comp.</th>` : ''}
+        <th style="width:150px">${advEscape(seatWord.charAt(0).toUpperCase() + seatWord.slice(1))}</th>
+        <th class="adv-num" style="width:72px">% esc.</th>
+        <th class="adv-num" style="width:68px">Dif. %</th>
+        ${showReal ? `<th class="adv-num" style="width:72px" title="Escaños registrados en los datos originales">Reales</th>` : ''}
       </tr></thead>
       <tbody>${withSeats.map(row).join('') || `<tr><td colspan="9" class="adv-empty">Ninguna candidatura obtiene representación.</td></tr>`}</tbody>
     </table>
@@ -1973,7 +2009,13 @@ function advInit() {
 
 /** Carga perezosa: sólo se descargan los datos al abrir la pestaña. */
 function advEnsureLoaded() {
-  if (!_advLoaded && !_advLoading) advLoadElection(false);
+  if (!_advLoaded && !_advLoading) {
+    // Si el navegador guardaba una sesión de esta pestaña, se repone en cuanto
+    // llegan los datos (autosave.js).
+    advLoadElection(false).then(() => {
+      if (typeof autoRestoreAdvanced === 'function') autoRestoreAdvanced();
+    });
+  }
 }
 
 document.addEventListener('DOMContentLoaded', advInit);

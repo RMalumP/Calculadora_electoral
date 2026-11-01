@@ -222,7 +222,7 @@ registerTab('advanced', 'tab-content', String.raw`
               </div>
             </section>
 
-            <section class="adv-cfg adv-only" data-section="comp">
+            <section class="adv-cfg" data-section="comp">
               <header class="adv-cfg-head">
                 <button type="button" class="adv-cfg-toggle">
                   <span class="adv-cfg-titleline"><span class="adv-cfg-caret">▸</span><span class="adv-cfg-name">Compensación</span></span>
@@ -239,9 +239,9 @@ registerTab('advanced', 'tab-content', String.raw`
                       <option value="ampliacion">Ampliación (alemán)</option>
                     </select>
                   </div>
-                  <small id="adv-comp-hint">Corrige la desproporción del reparto por circunscripciones con escaños añadidos a nivel nacional.</small>
+                  <small id="adv-comp-hint">Corrige la desproporción del reparto por circunscripciones con escaños añadidos a nivel nacional. En el modo sencillo usa la fórmula y la barrera del reparto; la bolsa nórdica se propone como el 10 % del total.</small>
                 </div>
-                <div class="adv-field" id="adv-comp-formula-field">
+                <div class="adv-field adv-only" id="adv-comp-formula-field">
                   <label for="adv-comp-formula">Fórmula de la compensación</label>
                   <div class="adv-select-wrap">
                     <select id="adv-comp-formula">
@@ -251,7 +251,7 @@ registerTab('advanced', 'tab-content', String.raw`
                     </select>
                   </div>
                 </div>
-                <div class="adv-field" id="adv-comp-barrera-field">
+                <div class="adv-field adv-only" id="adv-comp-barrera-field">
                   <label for="adv-comp-barrera">Barrera de acceso (% nacional)</label>
                   <input type="number" id="adv-comp-barrera" min="0" max="100" step="0.1" value="0">
                   <small>Las candidaturas por debajo conservan sus escaños directos, pero no reciben compensación.</small>
@@ -261,7 +261,7 @@ registerTab('advanced', 'tab-content', String.raw`
                   <input type="number" id="adv-comp-bolsa" min="0" max="500" value="0">
                   <small>Se suman a los escaños directos (para reducir la base, usa «Total personalizado» en Escaños).</small>
                 </div>
-                <div class="adv-field" id="adv-comp-tope-field">
+                <div class="adv-field adv-only" id="adv-comp-tope-field">
                   <label for="adv-comp-tope">Tamaño máximo del parlamento</label>
                   <input type="number" id="adv-comp-tope" min="0" max="5000" value="0">
                   <small>0 = sin límite. Si se alcanza, la compensación queda incompleta.</small>
