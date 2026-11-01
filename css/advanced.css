@@ -1,23 +1,30 @@
 /* ── CALCULADORA AVANZADA ───────────────────────────────────── */
 
 .adv-workspace {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 300px;
+  display: flex;
+  flex-direction: column;
   gap: 16px;
-  align-items: start;
   padding: 20px;
   max-width: 1500px;
   margin: 0 auto;
 }
 .adv-main { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
-.adv-config { position: sticky; top: 12px; }
-
-@media (max-width: 1100px) {
-  .adv-workspace { grid-template-columns: 1fr; }
-  .adv-config { position: static; }
-}
+.adv-config { min-width: 0; }
 
 /* ── Cabecera ───────────────────────────────────────────────── */
+.adv-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.adv-mode { display: inline-flex; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: #fff; }
+.adv-mode-btn {
+  border: none; background: none; cursor: pointer;
+  padding: 7px 16px;
+  font-family: 'Source Sans 3', sans-serif; font-size: 0.82rem; font-weight: 600;
+  color: var(--text-muted);
+  transition: background 0.15s, color 0.15s;
+}
+.adv-mode-btn + .adv-mode-btn { border-left: 1px solid var(--border); }
+.adv-mode-btn:hover { color: var(--accent); }
+.adv-mode-btn.active { background: var(--accent); color: #fff; }
+
 .adv-title {
   font-family: 'Libre Baskerville', serif;
   color: var(--text);
@@ -406,91 +413,81 @@
   .adv-summary-item { flex-basis: 50%; }
 }
 
-/* ── PANEL DE CONFIGURACIÓN PLEGABLE ─────────────────────────
-   Cada sección se muestra plegada con un resumen de su estado y sólo
-   admite cambios tras pulsar «Editar», para que el panel no crezca de
-   más ni se corte en pantallas bajas. */
+/* ── PANEL DE CONFIGURACIÓN: PESTAÑAS A TODO EL ANCHO ────────
+   Modo avanzado: una pestaña por sección, con el contenido en rejilla que se
+   adapta al ancho. Modo sencillo: las secciones apiladas, sin lo marcado como
+   .adv-only. */
 
 .adv-cfg-body { gap: 0; padding: 0; }
 
-.param-card-header { display: flex; align-items: center; gap: 8px; }
-
-.adv-collapse-all {
-  margin-left: auto;
-  background: none;
-  border: 1px solid rgba(255,255,255,0.2);
-  color: #bcb4aa;
-  border-radius: var(--radius);
-  padding: 2px 7px;
-  font-family: 'Source Sans 3', sans-serif;
-  font-size: 0.62rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: none;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+.adv-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  scrollbar-width: thin;
 }
-.adv-collapse-all:hover { background: rgba(255,255,255,0.12); color: #fff; }
+.adv-tab {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  padding: 11px 16px;
+  cursor: pointer;
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s;
+}
+.adv-tab:hover { color: var(--accent); }
+.adv-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.adv-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
 .adv-cfg { border-bottom: 1px solid var(--border-light); }
 .adv-cfg:last-of-type { border-bottom: none; }
 
 .adv-cfg-head {
-  /* Anula el estilo del <header> global de la página, que es un selector de
-     elemento y alcanzaría también a estas cabeceras de sección. */
+  /* Anula el estilo del <header> global de la página. */
   background: none;
   border: none;
   box-shadow: none;
-  padding: 0 10px 0 4px;
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
+  padding: 10px 16px 0;
   color: var(--text);
 }
-
 .adv-cfg-toggle {
-  flex: 1;
-  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 2px;
+  width: 100%;
   background: none;
   border: none;
-  cursor: pointer;
-  padding: 9px 4px;
+  padding: 0;
+  cursor: default;
+  pointer-events: none;
   font-family: 'Source Sans 3', sans-serif;
   text-align: left;
   color: var(--text);
 }
-.adv-cfg-toggle:hover .adv-cfg-name { color: var(--accent); }
-
-.adv-cfg-caret {
-  flex-shrink: 0;
-  font-size: 0.65rem;
-  color: var(--accent);
-  transition: transform 0.18s ease;
-  display: inline-block;
-}
-.adv-cfg.open .adv-cfg-caret { transform: rotate(90deg); }
-
+.adv-cfg-caret { display: none; }
+.adv-cfg-titleline { display: flex; align-items: center; }
 .adv-cfg-name {
   font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-muted);
-  white-space: nowrap;
-  transition: color 0.15s;
 }
-
-/* El resumen va en su propia línea: en un panel estrecho, compartirla con el
-   título obligaba a recortarlo casi siempre. */
 .adv-cfg-summary {
   display: block;
   width: 100%;
-  padding-left: 15px;
-  font-size: 0.74rem;
+  font-size: 0.78rem;
   color: var(--accent);
   font-weight: 600;
   line-height: 1.35;
@@ -498,56 +495,45 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.adv-cfg.open .adv-cfg-summary { display: none; }
-
-.adv-cfg-edit {
-  flex-shrink: 0;
-  background: none;
-  border: 1px solid var(--border);
-  color: var(--text-muted);
-  border-radius: var(--radius);
-  padding: 3px 9px;
-  font-family: 'Source Sans 3', sans-serif;
-  font-size: 0.66rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
-}
-.adv-cfg-edit:hover { border-color: var(--accent); color: var(--accent); }
-.adv-cfg.editing .adv-cfg-edit {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
-}
 
 .adv-cfg-content {
-  display: none;
-  flex-direction: column;
-  gap: 12px;
-  padding: 2px 12px 14px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  align-items: start;
+  gap: 14px 18px;
+  padding: 12px 16px 16px;
 }
-.adv-cfg.open .adv-cfg-content { display: flex; }
-
-/* Mientras no se pulsa «Editar», la sección se ve pero no se toca. */
+.adv-cfg-content > .adv-exc,
+.adv-cfg-content > .adv-divider,
+.adv-cfg-content > small { grid-column: 1 / -1; }
+.adv-custom-seats { display: contents; }
+.adv-custom-seats[style*="display: none"] { display: none; }
 .adv-cfg-content[data-locked="true"] { opacity: 0.55; pointer-events: none; }
 
-.adv-cfg-actions { padding: 12px; border-top: 1px solid var(--border-light); }
+.adv-cfg-actions { padding: 12px 16px; border-top: 1px solid var(--border-light); justify-content: flex-end; }
 .adv-cfg-actions .adv-mini-btn {
-  flex: 1;
+  flex: 0 0 auto;
   border-color: var(--border);
   color: var(--text-muted);
-  padding: 6px 8px;
+  padding: 6px 14px;
 }
 
-/* El panel no debe crecer más que la ventana: se desplaza por dentro. */
-.adv-config .param-card {
-  max-height: calc(100vh - 90px);
-  display: flex;
-  flex-direction: column;
-}
-.adv-config .adv-cfg-body { overflow-y: auto; flex: 1; min-height: 0; }
+/* Modo avanzado: sólo la pestaña activa. */
+.adv-workspace[data-mode="advanced"] .adv-cfg:not(.active) { display: none; }
+.adv-workspace[data-mode="advanced"] .adv-cfg { border-bottom: none; }
 
-.adv-cfg-titleline { display: flex; align-items: center; gap: 7px; }
+/* Modo sencillo: sin pestañas, sin lo avanzado y sin resúmenes. */
+.adv-workspace[data-mode="simple"] .adv-tabs { display: none; }
+.adv-workspace[data-mode="simple"] .adv-only { display: none !important; }
+.adv-workspace[data-mode="simple"] .adv-cfg-summary { display: none; }
+.adv-workspace[data-mode="simple"] .adv-cfg-head { padding-top: 12px; }
+
+@media (max-width: 640px) {
+  .adv-cfg-content { grid-template-columns: 1fr; padding: 10px 12px 14px; }
+  .adv-cfg-head { padding: 10px 12px 0; }
+  .adv-tabs { padding: 0 6px; }
+  .adv-tab { padding: 10px 12px; }
+}
 
 /* ── EDICIÓN DE LOS DATOS DE LA SESIÓN ───────────────────────
    Permite cambiar votos y escaños de cada circunscripción sobre los datos
@@ -1263,3 +1249,6 @@ tr.drag-over-below td { box-shadow: inset 0 -2px 0 var(--accent); }
   font-weight: 700;
   letter-spacing: 0.02em;
 }
+
+/* En pestañas el nombre ya está en la pestaña: sólo queda el resumen. */
+.adv-workspace[data-mode="advanced"] .adv-cfg-titleline { display: none; }

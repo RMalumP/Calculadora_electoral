@@ -402,11 +402,6 @@ const ADV_LEVEL_LABEL = { provincia: 'Provincial', ccaa: 'Autonómica', nacional
 const ADV_BARRIER_LABEL = { circunscripcion: 'circunscripción', ccaa: 'comunidad', nacional: 'nacional' };
 
 /** Abre o pliega una sección de configuración. */
-function advToggleSection(section, open) {
-  const willOpen = open !== undefined ? open : !section.classList.contains('open');
-  section.classList.toggle('open', willOpen);
-}
-
 /** Resumen de una línea con el estado de cada sección, visible al plegarla. */
 function advUpdateSummaries() {
   const c = _advConfig;
@@ -451,17 +446,83 @@ function advUpdateSummaries() {
   updateText(select('#adv-sum-escanos'), seatsTxt);
 }
 
-/** Conecta el plegado de todas las secciones de configuración. */
-function advInitSections() {
-  selectAll('.adv-cfg').forEach(section => {
-    section.querySelector('.adv-cfg-toggle')?.addEventListener('click', () => advToggleSection(section));
-  });
+/* ── MODO SENCILLO / AVANZADO Y PESTAÑAS DE CONFIGURACIÓN ────
+   Los mismos controles sirven a los dos modos: el sencillo oculta lo marcado
+   con .adv-only y muestra las secciones apiladas; el avanzado las reparte en
+   pestañas a todo el ancho. */
 
-  select('#adv-cfg-collapse')?.addEventListener('click', () => {
-    const anyOpen = selectAll('.adv-cfg').some(s => s.classList.contains('open'));
-    selectAll('.adv-cfg').forEach(s => advToggleSection(s, !anyOpen));
-    updateText(select('#adv-cfg-collapse'), anyOpen ? 'Abrir todo' : 'Plegar todo');
+const ADV_MODE_KEY = 'adv-mode';
+const ADV_TAB_KEY  = 'adv-tab';
+
+function advStoreGet(key) {
+  try { return localStorage.getItem(key); } catch (e) { return null; }
+}
+function advStoreSet(key, value) {
+  try { localStorage.setItem(key, value); } catch (e) { /* sin almacenamiento */ }
+}
+
+function advGetMode() {
+  return select('.adv-workspace')?.dataset.mode === 'simple' ? 'simple' : 'advanced';
+}
+
+function advSetMode(mode) {
+  const ws = select('.adv-workspace');
+  if (!ws) return;
+  ws.dataset.mode = mode === 'simple' ? 'simple' : 'advanced';
+  selectAll('.adv-mode-btn').forEach(b => {
+    const on = b.dataset.mode === ws.dataset.mode;
+    b.classList.toggle('active', on);
+    b.setAttribute('aria-pressed', String(on));
   });
+  advStoreSet(ADV_MODE_KEY, ws.dataset.mode);
+  advSelectTab(select('.adv-cfg.active')?.dataset.section || advStoreGet(ADV_TAB_KEY) || 'eleccion');
+}
+
+function advSelectTab(name) {
+  const sections = selectAll('.adv-cfg');
+  if (!sections.some(s => s.dataset.section === name)) name = sections[0]?.dataset.section;
+  sections.forEach(s => {
+    const on = s.dataset.section === name;
+    s.classList.toggle('active', on);
+    s.setAttribute('role', 'tabpanel');
+  });
+  selectAll('#adv-tabs .adv-tab').forEach(t => {
+    const on = t.dataset.section === name;
+    t.classList.toggle('active', on);
+    t.setAttribute('aria-selected', String(on));
+    t.tabIndex = on ? 0 : -1;
+  });
+  advStoreSet(ADV_TAB_KEY, name);
+}
+
+/** Conecta el modo sencillo/avanzado y las pestañas de configuración. */
+function advInitSections() {
+  const tabs = select('#adv-tabs');
+  if (tabs) {
+    tabs.innerHTML = '';
+    selectAll('.adv-cfg').forEach(section => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'adv-tab' + (section.classList.contains('adv-only') ? ' adv-only' : '');
+      btn.dataset.section = section.dataset.section;
+      btn.setAttribute('role', 'tab');
+      btn.textContent = section.querySelector('.adv-cfg-name')?.textContent || section.dataset.section;
+      btn.addEventListener('click', () => advSelectTab(btn.dataset.section));
+      tabs.appendChild(btn);
+    });
+    tabs.addEventListener('keydown', e => {
+      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+      const list = selectAll('#adv-tabs .adv-tab');
+      const i = list.findIndex(t => t.classList.contains('active'));
+      const next = list[(i + (e.key === 'ArrowRight' ? 1 : list.length - 1)) % list.length];
+      advSelectTab(next.dataset.section);
+      next.focus();
+      e.preventDefault();
+    });
+  }
+  selectAll('.adv-mode-btn').forEach(b =>
+    b.addEventListener('click', () => advSetMode(b.dataset.mode)));
+  advSetMode(advStoreGet(ADV_MODE_KEY) === 'simple' ? 'simple' : 'advanced');
 }
 
 /** Habilita/deshabilita bloques del formulario según su estado. */
