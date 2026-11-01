@@ -4,12 +4,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Calculadora Electoral</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#211c18">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Electoral">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" href="icons/icon-192.png">
   <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/variables.css">
   <link rel="stylesheet" href="css/header-tabs.css">
   <link rel="stylesheet" href="css/layout.css">
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/otros-drag-responsive.css">
+  <link rel="stylesheet" href="css/advanced.css">
 </head>
 <body>
 
@@ -17,14 +25,26 @@
 <header>
   <h1>Calculadora Electoral</h1>
   <span>Sistemas de representación electoral</span>
-  <select id="seat-rename" onchange="updateSeatNames()" style="background:none;border:1px solid #4a3f3a;border-radius:var(--radius);color:#7a6f6a;font-size:0.7rem;padding:3px 6px;cursor:pointer;margin-left:auto;margin-right:8px">
-    <option value="escaños">Escaños</option>
-    <option value="parlamentarios">Parlamentarios</option>
-    <option value="diputados">Diputados</option>
-    <option value="concejales">Concejales</option>
-    <option value="congresistas">Congresistas</option>
-  </select>
-  <button class="save-icon-btn" onclick="saveHTML()" title="Guardar HTML con los datos actuales">💾</button>
+  <div class="header-actions">
+    <select id="seat-rename" onchange="updateSeatNames()">
+      <option value="escaños">Escaños</option>
+      <option value="parlamentarios">Parlamentarios</option>
+      <option value="diputados">Diputados</option>
+      <option value="concejales">Concejales</option>
+      <option value="congresistas">Congresistas</option>
+    </select>
+
+    <!-- Calculadora y pactómetro: copia autónoma de la página. -->
+    <button class="save-icon-btn" id="save-html-btn" onclick="saveHTML()"
+            title="Guardar la calculadora y el pactómetro en un archivo HTML que funciona por sí solo">💾</button>
+
+    <!-- Calculadora avanzada: sólo los datos de la sesión, en un .json. -->
+    <button class="save-icon-btn adv-session-btn" id="adv-save-btn" hidden
+            title="Guardar en un archivo la configuración, las ediciones y los candados de esta sesión">💾 Guardar información</button>
+    <button class="save-icon-btn adv-session-btn" id="adv-load-btn" hidden
+            title="Cargar una sesión guardada">📂 Cargar</button>
+    <input type="file" id="adv-session-file" accept=".json,application/json" hidden>
+  </div>
 </header>
 
 <!-- ══ TABS ══ -->
@@ -37,569 +57,37 @@
 
 <div class="main">
 
-  <!-- ══════════════════════════════════════════════════════
-       TAB: CALCULADORA
-  ══════════════════════════════════════════════════════ -->
-  <div id="calculator-tab" class="tab-content active">
-  <div class="workspace">
-
-    <!-- ══ COLUMNA IZQUIERDA: tabla de votos + desglose ══ -->
-    <div class="left-column">
-
-      <!-- ── MAIN IZQUIERDA: tabla de votos + abstención + totales ── -->
-      <main class="main-left">
-
-      <!-- Tabla de votos -->
-      <div class="card">
-        <div class="card-header">
-          <span class="dot"></span>Resultados electorales
-          <button onclick="resetCalculator()" class="ghost-btn" style="margin-left:auto">Reiniciar</button>
-        </div>
-        <div class="votes-table-scroll">
-        <table id="votes-table">
-          <thead>
-            <tr>
-              <th style="width:10px"></th>
-              <th style="width:10px;text-align:center"></th>
-              <th style="text-align:center;padding:2px 4px"><button id="siglas-toggle-btn" onclick="toggleSiglasVisibility()" style="font-size:0.6rem;font-weight:700;letter-spacing:0.02em;padding:2px 5px;border:1px solid var(--border);border-radius:3px;background:none;cursor:pointer;color:var(--text-muted);white-space:nowrap;line-height:1.5">Siglas ▼</button></th>
-              <th>Candidatura / Partido <button id="hide-names-btn" onclick="toggleHideNames()" style="display:none;font-size:0.58rem;font-weight:700;letter-spacing:0.02em;padding:2px 5px;border:1px solid #8b3131;border-radius:3px;background:none;cursor:pointer;color:#8b3131;white-space:nowrap;line-height:1.5;margin-left:6px">Ocultar nombre</button></th>
-              <th style="text-align:right;width:120px">Votos</th>
-              <th style="text-align:right;width:70px">%</th>
-            </tr>
-          </thead>
-          <tbody id="votes-body"></tbody>
-          <tbody id="special-rows">
-            <tr class="special-row">
-              <td></td><td></td><td></td>
-              <td>Votos en blanco</td>
-              <td><input type="text" id="blank-votes" class="votes-input" placeholder="0" min="0" max="9000000000" oninput="formatVoteInput(this);updateTotals()" onfocus="onVoteFocus(this)" onblur="onVoteBlur(this)"></td>
-              <td class="pct-cell" id="blank-pct">—</td>
-            </tr>
-            <tr class="special-row">
-              <td></td><td></td><td></td>
-              <td>Votos nulos</td>
-              <td><input type="text" id="null-votes" class="votes-input" placeholder="0" min="0" max="9000000000" oninput="formatVoteInput(this);updateTotals()" onfocus="onVoteFocus(this)" onblur="onVoteBlur(this)"></td>
-              <td class="pct-cell" id="null-pct">—</td>
-            </tr>
-          </tbody>
-        </table>
-        </div>
-        <button class="add-row-btn" onclick="addRow()">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="5.5" stroke="currentColor" stroke-width="1.1"/><path d="M6 3v6M3 6h6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
-          Añadir partido
-        </button>
-      </div>
-
-      <!-- Segunda vuelta (oculta por defecto) -->
-      <div id="second-round-container" style="display:none">
-        <div class="card">
-          <div class="card-header"><span class="dot"></span>Segunda vuelta</div>
-          <table>
-            <thead>
-              <tr>
-                <th style="width:36px;text-align:center">Color</th>
-                <th>Candidatura</th>
-                <th style="text-align:right">Votos</th>
-                <th style="text-align:right">%</th>
-              </tr>
-            </thead>
-            <tbody id="second-round-body">
-              <tr id="sr-row-1"></tr>
-              <tr id="sr-row-2"></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Censo y abstención -->
-      <div class="abstention-block">
-        <table>
-          <thead>
-            <tr>
-              <th>Censo</th>
-              <th style="text-align:right;width:120px">Personas</th>
-              <th style="text-align:right;width:70px">%</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td style="font-style:italic;color:var(--text-muted);font-size:0.85rem">Censo total</td>
-              <td><input type="text" id="census-total" placeholder="0" style="text-align:right" oninput="formatVoteInput(this);updateCensus('total')" onfocus="onVoteFocus(this)" onblur="onVoteBlur(this)"></td>
-              <td class="pct-cell">100%</td>
-            </tr>
-            <tr class="special-row">
-              <td style="font-style:italic;color:var(--text-muted);font-size:0.85rem">No votantes (abstención)</td>
-              <td><input type="text" id="abstention" placeholder="0" style="text-align:right" oninput="formatVoteInput(this);updateCensus('abstention')" onfocus="onVoteFocus(this)" onblur="onVoteBlur(this)"></td>
-              <td class="pct-cell" id="abstention-pct">—</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Totales -->
-      <div class="totals-strip">
-        <div class="label">Totales</div>
-        <div class="values">
-          <div class="value-item">
-            <small>Votos válidos</small>
-            <div class="total-num" id="total-valid">0</div>
-          </div>
-          <div class="value-item">
-            <small>Total emitidos</small>
-            <div class="total-num" id="total-all" style="color:var(--text-muted);font-size:1rem">0</div>
-          </div>
-          <div class="value-item">
-            <small>Participación</small>
-            <div class="total-num" id="total-participation" style="color:var(--text-muted);font-size:1rem">—</div>
-          </div>
-        </div>
-      </div>
-
-      </main><!-- /main-left -->
-
-      <!-- ── ASIDE: desglose de cocientes ── -->
-      <aside class="breakdown-aside">
-        <div id="breakdown-section" style="display:none">
-          <button id="breakdown-toggle" onclick="toggleBreakdown()"
-            style="width:100%;background:none;color:var(--text-muted);border:none;padding:8px 12px;font-family:'Source Sans 3',sans-serif;font-size:0.8rem;font-weight:600;cursor:pointer;margin-bottom:8px;text-align:left;transition:color 0.15s">
-            ▼ Mostrar desglose de cocientes
-          </button>
-          <div class="card" id="breakdown-content" style="display:none">
-            <div class="card-header"><span class="dot"></span>Desglose de cocientes</div>
-            <div style="overflow-x:auto">
-              <table id="breakdown-table" style="font-size:0.75rem">
-                <thead id="breakdown-head"></thead>
-                <tbody id="breakdown-body"></tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </aside><!-- /breakdown-aside -->
-
-    </div><!-- /left-column -->
-
-    <!-- ══ MAIN DERECHA: parámetros + resultados ══ -->
-    <main class="main-right">
-
-      <!-- Parámetros -->
-      <article class="param-area">
-        <div class="param-card">
-          <div class="param-card-header">Parámetros</div>
-          <div class="param-body">
-
-            <div class="param-field">
-              <label id="seats-label-toggle" style="cursor:pointer;user-select:none" onclick="toggleParamField('seats')">▲ Número de escaños</label>
-              <div id="seats-input-wrap">
-                <input type="number" id="seats" value="350" min="1" max="9999" oninput="updateTotals()">
-                <small>Representantes a asignar</small>
-              </div>
-            </div>
-
-            <div class="param-field">
-              <label id="barrier-label-toggle" style="cursor:pointer;user-select:none" onclick="toggleParamField('barrier')">▲ Barrera electoral (%)</label>
-              <div id="barrier-input-wrap">
-                <input type="number" id="barrier" value="3" min="0" max="100" step="0.1" oninput="updateTotals()">
-                <small>Umbral mínimo de votos válidos</small>
-              </div>
-            </div>
-
-            <div class="param-field" id="bonus-field" style="display:none">
-              <label id="bonus-label-toggle" style="cursor:pointer;user-select:none" onclick="toggleParamField('bonus')">▼ Bono mayoría</label>
-              <div id="bonus-input-wrap" style="display:none">
-                <input type="number" id="majority-bonus" value="0" min="0" max="100">
-                <div style="margin-top:8px;display:flex;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;font-size:0.72rem;font-weight:600;letter-spacing:0.03em;">
-                  <button id="bonus-btn-included" onclick="setBonusMode('included')" class="bonus-active"
-                    style="flex:1;padding:5px 4px;border:none;cursor:pointer;font-family:'Source Sans 3',sans-serif;font-size:0.72rem;font-weight:600;letter-spacing:0.03em;border-right:1px solid var(--border);transition:background 0.15s,color 0.15s;">
-                    Incluido
-                  </button>
-                  <button id="bonus-btn-extra" onclick="setBonusMode('extra')"
-                    style="flex:1;padding:5px 4px;border:none;cursor:pointer;font-family:'Source Sans 3',sans-serif;font-size:0.72rem;font-weight:600;letter-spacing:0.03em;transition:background 0.15s,color 0.15s;">
-                    Extra
-                  </button>
-                </div>
-                <div id="bonus-desc-included" style="margin-top:5px;font-size:0.68rem;color:var(--text-muted);font-style:italic;line-height:1.4;">El bono se descuenta del total: se reparten <em>N−bono</em> <span class="seat-name-ref">escaños</span> y el partido más votado recibe el bono adicional.</div>
-                <div id="bonus-desc-extra"    style="display:none;margin-top:5px;font-size:0.68rem;color:var(--text-muted);font-style:italic;line-height:1.4;">Se reparten los <em>N</em> <span class="seat-name-ref">escaños</span> completos y el partido más votado recibe el bono por encima del total.</div>
-                <input type="hidden" id="bonus-mode-value" value="included">
-                <small id="bonus-seats-label" style="margin-top:4px;display:block;font-size:0.68rem;color:var(--text-muted);font-style:italic;"></small>
-              </div>
-            </div>
-
-            <div class="formula-field">
-              <label>Fórmula de reparto</label>
-              <div class="formula-select-wrap">
-                <select id="formula-select" onchange="updateFormulaDesc()"></select>
-              </div>
-              <div class="formula-desc" id="formula-desc"></div>
-            </div>
-
-            <button class="calc-btn" onclick="calculate()">▶ Calcular</button>
-
-          </div>
-        </div>
-      </article><!-- /param-area -->
-
-      <!-- Resultados -->
-      <article class="results-area">
-        <div id="last-seat-container" style="display:none;margin-bottom:8px">
-          <button id="last-seat-toggle" onclick="toggleLastSeat()"
-            style="width:100%;background:none;color:var(--text-muted);border:none;padding:8px 12px;font-family:'Source Sans 3',sans-serif;font-size:0.8rem;font-weight:600;cursor:pointer;text-align:left;transition:color 0.15s"
-            onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">
-            ▼ Mostrar análisis del último <span id="last-seat-word-toggle">escaño</span>
-          </button>
-          <div class="last-seat-info" id="last-seat-info" style="display:none"></div>
-        </div>
-        <div class="card" id="results-card">
-          <div class="card-header">
-            <span class="dot"></span><span id="results-title">Distribución de escaños</span>
-            <span id="formula-tag-display" class="formula-tag" style="margin-left:auto"></span>
-          </div>
-          <table id="results-table">
-            <thead>
-              <tr>
-                <th style="width:40%">Candidatura / Partido</th>
-                <th style="width:14%;text-align:right">Votos</th>
-                <th style="width:10%;text-align:right">% votos</th>
-                <th style="width:200px" id="seats-col-header">Escaños</th>
-                <th style="width:10%;text-align:right" id="seats-pct-header">% esc.</th>
-                <th style="width:8%;text-align:right">Dif. %</th>
-              </tr>
-            </thead>
-            <tbody id="results-body"></tbody>
-          </table>
-        </div>
-      </article><!-- /results-area -->
-
-      <!-- Hemiciclo Representación visual - Toggle -->
-      <div id="hemicycle-toggle-container" style="display:none;margin-bottom:8px">
-        <button id="hemicycle-toggle" onclick="toggleHemicycleVisual()"
-          style="width:100%;background:none;color:var(--text-muted);border:none;padding:8px 12px;font-family:'Source Sans 3',sans-serif;font-size:0.8rem;font-weight:600;cursor:pointer;text-align:left;transition:color 0.15s"
-          onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">
-          ▼ Representación visual
-        </button>
-      </div>
-
-      <!-- Hemiciclo Ventana Flotante -->
-      <div id="hemicycle-window" class="hemicycle-window" style="display:none">
-        <div id="hemicycle-header" class="hemicycle-window-header">
-          <span>Representación visual</span>
-          <button onclick="closeHemicycleWindow()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1rem;padding:0;line-height:1">✕</button>
-        </div>
-        <div style="padding:20px 20px 24px">
-          <div id="hemicycle-chart"></div>
-        </div>
-      </div>
-
-    </main><!-- /main-right -->
-
-  </div><!-- /workspace -->
-  </div><!-- /calculator-tab -->
-
-
-  <!-- ══════════════════════════════════════════════════════
-       TAB: CALCULADORA AVANZADA
-  ══════════════════════════════════════════════════════ -->
-  <div id="advanced-tab" class="tab-content">
-    <div style="padding:40px;max-width:1200px;margin:0 auto">
-      <h2 style="font-family:'Libre Baskerville',serif;color:var(--text);margin-bottom:20px;font-size:1.8rem">Calculadora Avanzada</h2>
-      <div style="padding:60px 20px;text-align:center;background:var(--accent-bg);border:1px solid var(--border);border-radius:var(--radius)">
-        <p style="color:var(--text-muted);font-size:1.1rem">Próximamente: funcionalidades avanzadas de simulación electoral</p>
-      </div>
-    </div>
-  </div><!-- /advanced-tab -->
-
-
-  <!-- ══════════════════════════════════════════════════════
-       TAB: PACTÓMETRO
-  ══════════════════════════════════════════════════════ -->
-  <div id="pactometer-tab" class="tab-content">
-    <div style="padding:40px;max-width:900px;margin:0 auto">
-
-      <div style="display:flex;align-items:center;gap:15px;margin-bottom:20px">
-        <h2 style="font-family:'Libre Baskerville',serif;color:var(--text);font-size:1.8rem;margin:0">Pactómetro</h2>
-        <div style="display:flex;align-items:center;gap:8px;margin-left:auto">
-          <label style="font-size:0.85rem;color:var(--text-muted);font-weight:600">Etiquetas bloques:</label>
-          <select id="block-labels" onchange="updateBlockLabels()" style="padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:0.85rem;font-family:'Source Sans 3',sans-serif;background:white;cursor:pointer">
-            <option value="izq-der">IZQ / DER</option>
-            <option value="no-si">NO / SÍ</option>
-            <option value="custom">Personalizado...</option>
-          </select>
-          <input type="text" id="custom-left-label"  placeholder="Etiq. izq." value="IZQ" style="width:80px;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:0.75rem;display:none" oninput="updateCustomBlockLabels()">
-          <input type="text" id="custom-right-label" placeholder="Etiq. der." value="DER" style="width:80px;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:0.75rem;display:none" oninput="updateCustomBlockLabels()">
-        </div>
-      </div>
-
-      <!-- Tabla de partidos -->
-      <div class="card">
-        <div class="card-header">
-          <span class="dot"></span>Partidos con representación
-          <div style="margin-left:auto;display:flex;gap:8px">
-            <button id="pact-lock-btn" onclick="togglePactLock()" class="ghost-btn" title="Bloquear actualización desde calculadora">🔓 Bloquear</button>
-            <button onclick="resetPactometer()"       class="ghost-btn">Reiniciar</button>
-            <button onclick="clearPactometerSeats()"  class="ghost-btn">Borrar <span class="seat-name-ref">escaños</span></button>
-            <button onclick="clearPactometerBlocks()" class="ghost-btn">Borrar bloques</button>
-          </div>
-        </div>
-        <table id="pactometer-table">
-          <thead>
-            <tr>
-              <th style="width:30px"></th>
-              <th style="width:50px;text-align:center"><button id="pact-siglas-toggle-btn" onclick="togglePactSiglasVisibility()" style="font-size:0.6rem;font-weight:700;letter-spacing:0.02em;padding:2px 5px;border:1px solid var(--border);border-radius:3px;background:none;cursor:pointer;color:var(--text-muted);white-space:nowrap;line-height:1.5">Siglas ▼</button></th>
-              <th>Partido <button id="pact-hide-names-btn" onclick="togglePactHideNames()" style="display:none;font-size:0.58rem;font-weight:700;letter-spacing:0.02em;padding:2px 5px;border:1px solid #8b3131;border-radius:3px;background:none;cursor:pointer;color:#8b3131;white-space:nowrap;line-height:1.5;margin-left:6px">Ocultar nombre</button></th>
-              <th style="text-align:center;width:120px" id="pact-seats-header">Escaños</th>
-              <th style="width:100px;text-align:center">Bloque</th>
-            </tr>
-          </thead>
-          <tbody id="pactometer-body"></tbody>
-        </table>
-        <button class="add-row-btn" onclick="addPactometerRow()">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="5.5" stroke="currentColor" stroke-width="1.1"/><path d="M6 3v6M3 6h6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
-          Añadir partido
-        </button>
-        <div style="padding:10px 14px;border-top:1px solid var(--border);background:var(--accent-bg);display:flex;align-items:center;gap:8px">
-          <label style="font-size:0.8rem;color:var(--text-muted);font-weight:600">Total <span class="seat-name-ref">escaños</span> fijo:</label>
-          <input type="number" id="pact-total-seats" min="0" placeholder="Automático: 0" value=""
-            style="width:150px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:0.85rem;text-align:center"
-            oninput="updateHemicycle()" onchange="validateAndUpdatePactTotal()">
-          <div style="display:flex;align-items:center;gap:6px;margin-left:20px;padding:6px 10px;background:var(--accent-bg);border:1px solid var(--border);border-radius:var(--radius)">
-            <label style="font-size:0.8rem;color:var(--text-muted);font-weight:600" for="pact-remaining-seats">Escaños libres:</label>
-            <input type="number" id="pact-remaining-seats" readonly value="0"
-              style="width:80px;padding:4px 8px;border:none;background:transparent;font-size:0.85rem;text-align:center;color:var(--accent);font-weight:600">
-          </div>
-          <small style="color:var(--text-muted);font-size:0.75rem;margin-left:auto">Dejar vacío para usar el total automático</small>
-        </div>
-      </div>
-
-      <!-- Hemiciclo -->
-      <div class="card" style="margin-top:20px">
-        <div class="card-header"><span class="dot"></span>Hemiciclo</div>
-        <div style="padding:30px;display:flex;flex-direction:column;align-items:center;gap:20px">
-
-          <button id="voting-panel-toggle" onclick="toggleVotingPanel()"
-            style="display:none;width:700px;background:none;color:var(--text-muted);border:none;padding:2px 4px;font-family:'Source Sans 3',sans-serif;font-size:0.78rem;font-weight:600;cursor:pointer;text-align:left;transition:color 0.15s;margin:0"
-            onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">&#9650; Configuración de votación</button>
-          <div id="voting-panel-wrapper" style="display:none;flex-direction:column;align-items:center;gap:10px;width:700px">
-            <div id="combined-settings" style="display:none;width:700px;padding:4px 20px;background:var(--accent-bg);border:1px solid var(--border);border-radius:var(--radius)">
-              <div style="display:flex;align-items:center;gap:15px">
-                <span id="settings-label" style="font-size:0.85rem;font-weight:600;color:var(--text-muted)">Mayoría requerida:</span>
-                <select id="settings-select" onchange="updateHemicycle()" style="padding:6px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:0.85rem;background:white;font-family:'Source Sans 3',sans-serif">
-                  <option value="simple">Mayoría simple (&gt; 50%)</option>
-                  <option value="absolute">Mayoría absoluta (≥ mitad + 1)</option>
-                  <option value="3/5">Mayoría cualificada 3/5 (≥ 60%)</option>
-                  <option value="2/3">Mayoría cualificada 2/3 (≥ 66.67%)</option>
-                </select>
-              </div>
-            </div>
-            <div id="voting-result" style="display:none;padding:10px 20px;background:rgba(0,0,0,0.8);color:white;border-radius:6px;font-size:1rem;font-weight:700"></div>
-          </div>
-
-          <div style="display:flex;flex-direction:column;gap:0">
-            <div id="hemicycle-legend" style="width:700px;display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
-              <div style="display:flex;align-items:center;gap:6px">
-                <span id="hemicycle-left-label" style="font-size:0.7rem;font-weight:700;color:var(--text-muted);letter-spacing:0.05em">IZQ</span>
-                <div id="hemicycle-left-swatches" style="display:flex;gap:3px;flex-wrap:wrap"></div>
-              </div>
-              <div style="display:flex;align-items:center;gap:6px">
-                <div id="hemicycle-right-swatches" style="display:flex;gap:3px;flex-wrap:wrap;justify-content:flex-end"></div>
-                <span id="hemicycle-right-label" style="font-size:0.7rem;font-weight:700;color:var(--text-muted);letter-spacing:0.05em">DER</span>
-              </div>
-            </div>
-
-            <div id="hemicycle-container" style="width:700px;height:120px;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);position:relative;overflow:hidden">
-              <div id="left-block"  style="position:absolute;left:0;bottom:0;height:100%;background:transparent;transition:width 0.3s"></div>
-              <div id="right-block" style="position:absolute;right:0;bottom:0;height:100%;background:transparent;transition:width 0.3s"></div>
-              <div id="majority-line" style="position:absolute;top:0;bottom:0;width:2px;background:var(--accent);z-index:10;left:50%"></div>
-              <div id="left-label"  style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:1.2rem;font-weight:700;color:white;text-shadow:0 0 4px rgba(0,0,0,0.9);z-index:20"></div>
-              <div id="right-label" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:1.2rem;font-weight:700;color:white;text-shadow:0 0 4px rgba(0,0,0,0.9);z-index:20"></div>
-              <div id="majority-label" style="position:absolute;top:50%;left:50%;background:var(--accent);color:white;padding:4px 8px;border-radius:3px;font-size:0.75rem;font-weight:700;z-index:20;white-space:nowrap;transform:translate(-50%,-50%)"></div>
-              <div id="majority-status" style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);color:white;padding:6px 12px;border-radius:4px;font-size:0.8rem;font-weight:700;z-index:20;white-space:nowrap;display:none"></div>
-              <div id="block-separator" style="display:none;position:absolute;top:0;bottom:0;z-index:15;pointer-events:none">
-                <div style="position:absolute;top:0;bottom:0;left:0;width:2px;background:white;opacity:0.9"></div>
-                <div style="position:absolute;top:0;bottom:0;left:4px;width:2px;background:white;opacity:0.9"></div>
-              </div>
-              <div id="hemicycle-segments" style="position:absolute;top:0;left:0;right:0;bottom:0;z-index:5"></div>
-            </div>
-          </div>
-
-          <div id="abstentions-box" style="display:flex;align-items:center;gap:10px;padding:10px 20px;background:var(--accent-bg);border:1px solid var(--border);border-radius:var(--radius);flex-wrap:wrap">
-            <div style="display:flex;align-items:center;gap:10px">
-              <span style="font-size:0.85rem;font-weight:600;color:var(--text-muted)">Abstenciones:</span>
-              <span id="abstentions-count"   style="font-size:1.1rem;font-weight:700;color:var(--text)">0</span>
-              <span id="abstentions-percent" style="font-size:0.8rem;color:var(--text-muted);margin-left:4px"></span>
-            </div>
-            <div id="hemicycle-abstentions-swatches" style="display:flex;gap:4px;margin-left:10px;flex-wrap:wrap"></div>
-          </div>
-
-        </div>
-      </div>
-
-      <div style="margin-top:20px;padding:20px;background:var(--accent-bg);border-radius:var(--radius);border:1px solid var(--border)">
-        <p style="color:var(--text-muted);font-size:0.85rem;margin:0">
-          <strong>Nota:</strong> Estos datos son una copia independiente de la calculadora. Puedes editarlos libremente sin afectar los resultados originales.
-        </p>
-      </div>
-
-    </div>
-  </div><!-- /pactometer-tab -->
-
-
-  <!-- ══════════════════════════════════════════════════════
-       TAB: TEORÍA ELECTORAL
-  ══════════════════════════════════════════════════════ -->
-  <div id="theory-tab" class="tab-content">
-    <div style="padding:40px;max-width:1200px;margin:0 auto">
-      <h2 style="font-family:'Libre Baskerville',serif;color:var(--text);margin-bottom:30px;font-size:1.8rem">Teoría Electoral</h2>
-
-      <div style="display:grid;grid-template-columns:200px 1fr;gap:20px">
-
-        <!-- Sidebar: lista de sistemas -->
-        <div>
-          <div class="card">
-            <div class="card-header"><span class="dot"></span>Fórmulas de reparto</div>
-            <div style="padding:8px">
-
-              <div style="padding:5px 8px 3px;font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);border-bottom:1px solid var(--border-light);margin-bottom:4px">Sistemas mayoritarios</div>
-              <button class="theory-system-btn" data-system="majority"        onclick="showTheorySystem('majority')"        style="width:100%;text-align:left;padding:7px 8px;margin-bottom:2px;border:1px solid var(--border);background:white;color:var(--text);border-radius:var(--radius);cursor:pointer;font-family:'Source Sans 3',sans-serif;font-size:0.82rem;font-weight:600;transition:all 0.15s">Mayoritario (1ª vuelta)</button>
-              <button class="theory-system-btn" data-system="majority-round2" onclick="showTheorySystem('majority-round2')" style="width:100%;text-align:left;padding:7px 8px;margin-bottom:6px;border:1px solid var(--border);background:white;color:var(--text);border-radius:var(--radius);cursor:pointer;font-family:'Source Sans 3',sans-serif;font-size:0.82rem;font-weight:600;transition:all 0.15s">Mayoritario (2ª vuelta)</button>
-
-              <div style="padding:5px 8px 3px;font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);border-bottom:1px solid var(--border-light);margin-bottom:4px">Proporcionales · Resto mayor</div>
-              <button class="theory-system-btn" data-system="imperiali"  onclick="showTheorySystem('imperiali')"  style="width:100%;text-align:left;padding:7px 8px;margin-bottom:2px;border:1px solid var(--border);background:white;color:var(--text);border-radius:var(--radius);cursor:pointer;font-family:'Source Sans 3',sans-serif;font-size:0.82rem;font-weight:600;transition:all 0.15s">Cuota Imperiali</button>
-              <button class="theory-system-btn" data-system="droop"      onclick="showTheorySystem('droop')"      style="width:100%;text-align:left;padding:7px 8px;margin-bottom:2px;border:1px solid var(--border);background:white;color:var(--text);border-radius:var(--radius);cursor:pointer;font-family:'Source Sans 3',sans-serif;font-size:0.82rem;font-weight:600;transition:all 0.15s">Cuota de Droop</button>
-              <button class="theory-system-btn" data-system="hagenbach"  onclick="showTheorySystem('hagenbach')"  style="width:100%;text-align:left;padding:7px 8px;margin-bottom:2px;border:1px solid var(--border);background:white;color:var(--text);border-radius:var(--radius);cursor:pointer;font-family:'Source Sans 3',sans-serif;font-size:0.82rem;font-weight:600;transition:all 0.15s">Hagenbach-Bischoff</button>
-              <button class="theory-system-btn" data-system="hare"       onclick="showTheorySystem('hare')"       style="width:100%;text-align:left;padding:7px 8px;margin-bottom:6px;border:1px solid var(--border);background:white;color:var(--text);border-radius:var(--radius);cursor:pointer;font-family:'Source Sans 3',sans-serif;font-size:0.82rem;font-weight:600;transition:all 0.15s">Cociente Hare</button>
-
-              <div style="padding:5px 8px 3px;font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);border-bottom:1px solid var(--border-light);margin-bottom:4px">Proporcionales · Media más alta</div>
-              <button class="theory-system-btn" data-system="dhondt"          onclick="showTheorySystem('dhondt')"          style="width:100%;text-align:left;padding:7px 8px;margin-bottom:2px;border:none;background:var(--accent);color:white;border-radius:var(--radius);cursor:pointer;font-family:'Source Sans 3',sans-serif;font-size:0.82rem;font-weight:600;transition:all 0.15s">D'Hondt</button>
-              <button class="theory-system-btn" data-system="sainte-lague-mod" onclick="showTheorySystem('sainte-lague-mod')" style="width:100%;text-align:left;padding:7px 8px;margin-bottom:2px;border:1px solid var(--border);background:white;color:var(--text);border-radius:var(--radius);cursor:pointer;font-family:'Source Sans 3',sans-serif;font-size:0.82rem;font-weight:600;transition:all 0.15s">Sainte-Laguë mod.</button>
-              <button class="theory-system-btn" data-system="sainte-lague"     onclick="showTheorySystem('sainte-lague')"     style="width:100%;text-align:left;padding:7px 8px;margin-bottom:2px;border:1px solid var(--border);background:white;color:var(--text);border-radius:var(--radius);cursor:pointer;font-family:'Source Sans 3',sans-serif;font-size:0.82rem;font-weight:600;transition:all 0.15s">Sainte-Laguë</button>
-              <button class="theory-system-btn" data-system="adams"            onclick="showTheorySystem('adams')"            style="width:100%;text-align:left;padding:7px 8px;margin-bottom:2px;border:1px solid var(--border);background:white;color:var(--text);border-radius:var(--radius);cursor:pointer;font-family:'Source Sans 3',sans-serif;font-size:0.82rem;font-weight:600;transition:all 0.15s">Media más elevada (Adams)</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Contenido principal de teoría -->
-        <div class="card">
-          <div id="theory-content" style="padding:30px">
-
-            <div id="theory-dhondt" class="theory-content-section" style="display:block">
-              <h3 style="font-family:'Libre Baskerville',serif;color:var(--accent);margin-bottom:15px;font-size:1.5rem">Método D'Hondt</h3>
-              <h4 style="color:var(--text);margin-top:25px;margin-bottom:10px;font-size:1.1rem;font-weight:600">Descripción</h4>
-              <p style="line-height:1.6;color:var(--text);margin-bottom:15px">Sistema de representación proporcional que utiliza el método de la media más alta. Los votos de cada partido se dividen sucesivamente por 1, 2, 3, 4… y los escaños se asignan a las medias más altas. Favorece ligeramente a los partidos grandes.</p>
-              <h4 style="color:var(--text);margin-top:25px;margin-bottom:10px;font-size:1.1rem;font-weight:600">Fórmula</h4>
-              <div style="background:var(--accent-bg);padding:15px;border-radius:var(--radius);margin-bottom:15px;font-family:monospace">Cociente = Votos / Divisor<br>Divisores: 1, 2, 3, 4, 5, 6…</div>
-              <h4 style="color:var(--text);margin-top:25px;margin-bottom:10px;font-size:1.1rem;font-weight:600">Ejemplo</h4>
-              <p style="line-height:1.6;color:var(--text);margin-bottom:10px">Con 7 escaños y estos votos: A: 340.000 | B: 280.000 | C: 160.000 | D: 60.000</p>
-              <p style="line-height:1.6;color:var(--text)">Resultado: A obtiene 3 escaños, B obtiene 3 escaños, C obtiene 1 escaño, D obtiene 0 escaños.</p>
-            </div>
-
-            <div id="theory-hare" class="theory-content-section">
-              <h3 style="font-family:'Libre Baskerville',serif;color:var(--accent);margin-bottom:15px;font-size:1.5rem">Método Hare (Restos Mayores)</h3>
-              <h4 style="color:var(--text);margin-top:25px;margin-bottom:10px;font-size:1.1rem;font-weight:600">Descripción</h4>
-              <p style="line-height:1.6;color:var(--text);margin-bottom:15px">También conocido como Hare-Niemeyer o método de Hamilton. Se calcula un cociente natural dividiendo el total de votos entre los escaños. Cada partido obtiene inicialmente la parte entera de dividir sus votos entre el cociente. Los escaños restantes se asignan a los partidos con mayores restos.</p>
-              <h4 style="color:var(--text);margin-top:25px;margin-bottom:10px;font-size:1.1rem;font-weight:600">Fórmula</h4>
-              <div style="background:var(--accent-bg);padding:15px;border-radius:var(--radius);margin-bottom:15px;font-family:monospace">Cociente = Total votos / Escaños<br>Escaños iniciales = Votos partido / Cociente (parte entera)<br>Escaños restantes se asignan por orden de restos mayores</div>
-              <h4 style="color:var(--text);margin-top:25px;margin-bottom:10px;font-size:1.1rem;font-weight:600">Ejemplo</h4>
-              <p style="line-height:1.6;color:var(--text)">Con 10 escaños y 1.000.000 votos totales, cociente = 100.000. Si A tiene 416.000 votos obtiene 4 escaños directos más uno por resto.</p>
-            </div>
-
-            <div id="theory-imperiali" class="theory-content-section">
-              <h3 style="font-family:'Libre Baskerville',serif;color:var(--accent);margin-bottom:15px;font-size:1.5rem">Cuota Imperiali</h3>
-              <h4 style="color:var(--text);margin-top:25px;margin-bottom:10px;font-size:1.1rem;font-weight:600">Descripción</h4>
-              <p style="line-height:1.6;color:var(--text);margin-bottom:15px">Sistema de resto mayor que utiliza una cuota más baja que Hare. El cociente se calcula dividiendo los votos totales entre el número de escaños más 2. Favorece especialmente a los partidos grandes.</p>
-              <h4 style="color:var(--text);margin-top:25px;margin-bottom:10px;font-size:1.1rem;font-weight:600">Fórmula</h4>
-              <div style="background:var(--accent-bg);padding:15px;border-radius:var(--radius);margin-bottom:15px;font-family:monospace">Cuota = Total votos / (Escaños + 2)<br>Se asignan escaños enteros y luego por restos mayores</div>
-              <h4 style="color:var(--text);margin-top:25px;margin-bottom:10px;font-size:1.1rem;font-weight:600">Ejemplo</h4>
-              <p style="line-height:1.6;color:var(--text)">Con 10 escaños y 1.000.000 votos: Cuota = 1.000.000/(10+2) = 83.333. Genera más escaños por resto que otros métodos.</p>
-            </div>
-
-            <div id="theory-droop" class="theory-content-section">
-              <h3 style="font-family:'Libre Baskerville',serif;color:var(--accent);margin-bottom:15px;font-size:1.5rem">Cuota de Droop</h3>
-              <h4 style="color:var(--text);margin-top:25px;margin-bottom:10px;font-size:1.1rem;font-weight:600">Descripción</h4>
-              <p style="line-height:1.6;color:var(--text);margin-bottom:15px">Sistema de resto mayor con cuota intermedia entre Hare e Imperiali. Equilibra proporcionalidad con gobernabilidad, beneficiando moderadamente a partidos grandes.</p>
-              <h4 style="color:var(--text);margin-top:25px;margin-bottom:10px;font-size:1.1rem;font-weight:600">Fórmula</h4>
-              <div style="background:var(--accent-bg);padding:15px;border-radius:var(--radius);margin-bottom:15px;font-family:monospace">Cuota = Total votos / (Escaños + 1)<br>Se reparten escaños enteros y luego por restos</div>
-              <h4 style="color:var(--text);margin-top:25px;margin-bottom:10px;font-size:1.1rem;font-weight:600">Ejemplo</h4>
-              <p style="line-height:1.6;color:var(--text)">Con 10 escaños y 1.000.000 votos: Cuota = 90.909. Usado en Irlanda y Malta.</p>
-            </div>
-
-            <div id="theory-hagenbach" class="theory-content-section">
-              <h3 style="font-family:'Libre Baskerville',serif;color:var(--accent);margin-bottom:15px;font-size:1.5rem">Hagenbach-Bischoff</h3>
-              <h4 style="color:var(--text);margin-top:25px;margin-bottom:10px;font-size:1.1rem;font-weight:600">Descripción</h4>
-              <p style="line-height:1.6;color:var(--text);margin-bottom:15px">Variante del método de resto mayor muy similar a la cuota de Droop. Usado en Suiza y Luxemburgo.</p>
-              <h4 style="color:var(--text);margin-top:25px;margin-bottom:10px;font-size:1.1rem;font-weight:600">Fórmula</h4>
-              <div style="background:var(--accent-bg);padding:15px;border-radius:var(--radius);margin-bottom:15px;font-family:monospace">Cuota = Total votos / (Escaños + 1)<br>Reparto por escaños enteros y restos mayores</div>
-              <h4 style="color:var(--text);margin-top:25px;margin-bottom:10px;font-size:1.1rem;font-weight:600">Ejemplo</h4>
-              <p style="line-height:1.6;color:var(--text)">Funciona de manera prácticamente idéntica a Droop. Se aplica en sistemas multipartidistas con circunscripciones medianas.</p>
-            </div>
-
-            <div id="theory-adams" class="theory-content-section">
-              <h3 style="font-family:'Libre Baskerville',serif;color:var(--accent);margin-bottom:15px;font-size:1.5rem">Media más elevada (Adams)</h3>
-              <h4 style="color:var(--text);margin-top:25px;margin-bottom:10px;font-size:1.1rem;font-weight:600">Descripción</h4>
-              <p style="line-height:1.6;color:var(--text);margin-bottom:15px">Método de promedio mayor que usa divisores 0, 1, 2, 3… Garantiza al menos un escaño a todo partido con votos. Favorece fuertemente a partidos pequeños y es el opuesto matemático de D'Hondt.</p>
-              <h4 style="color:var(--text);margin-top:25px;margin-bottom:10px;font-size:1.1rem;font-weight:600">Fórmula</h4>
-              <div style="background:var(--accent-bg);padding:15px;border-radius:var(--radius);margin-bottom:15px;font-family:monospace">Cociente = Votos / Escaños obtenidos<br>Divisores: 0, 1, 2, 3, 4, 5…</div>
-              <h4 style="color:var(--text);margin-top:25px;margin-bottom:10px;font-size:1.1rem;font-weight:600">Ejemplo</h4>
-              <p style="line-height:1.6;color:var(--text)">Distribuye más escaños a los partidos más pequeños, produciendo parlamentos más fragmentados y representativos de minorías.</p>
-            </div>
-
-            <div id="theory-sainte-lague" class="theory-content-section">
-              <h3 style="font-family:'Libre Baskerville',serif;color:var(--accent);margin-bottom:15px;font-size:1.5rem">Sainte-Laguë</h3>
-              <h4 style="color:var(--text);margin-top:25px;margin-bottom:10px;font-size:1.1rem;font-weight:600">Descripción</h4>
-              <p style="line-height:1.6;color:var(--text);margin-bottom:15px">También llamado método Webster o divisores impares. Considerado el más proporcional de los métodos divisores. Usado en Alemania, Noruega y Suecia.</p>
-              <h4 style="color:var(--text);margin-top:25px;margin-bottom:10px;font-size:1.1rem;font-weight:600">Fórmula</h4>
-              <div style="background:var(--accent-bg);padding:15px;border-radius:var(--radius);margin-bottom:15px;font-family:monospace">Cociente = Votos / (2s + 1)<br>donde s = escaños ya obtenidos<br>Divisores: 1, 3, 5, 7, 9, 11…</div>
-              <h4 style="color:var(--text);margin-top:25px;margin-bottom:10px;font-size:1.1rem;font-weight:600">Ejemplo</h4>
-              <p style="line-height:1.6;color:var(--text)">Produce resultados más proporcionales que D'Hondt, distribuyendo escaños más equitativamente entre partidos grandes y pequeños.</p>
-            </div>
-
-            <div id="theory-sainte-lague-mod" class="theory-content-section">
-              <h3 style="font-family:'Libre Baskerville',serif;color:var(--accent);margin-bottom:15px;font-size:1.5rem">Sainte-Laguë Modificada</h3>
-              <h4 style="color:var(--text);margin-top:25px;margin-bottom:10px;font-size:1.1rem;font-weight:600">Descripción</h4>
-              <p style="line-height:1.6;color:var(--text);margin-bottom:15px">Variante de Sainte-Laguë que cambia el primer divisor de 1 a 1,4. Dificulta que partidos muy pequeños obtengan su primer escaño fácilmente. Usada en Noruega y Suecia.</p>
-              <h4 style="color:var(--text);margin-top:25px;margin-bottom:10px;font-size:1.1rem;font-weight:600">Fórmula</h4>
-              <div style="background:var(--accent-bg);padding:15px;border-radius:var(--radius);margin-bottom:15px;font-family:monospace">Primer divisor: 1,4<br>Siguientes divisores: 3, 5, 7, 9, 11…<br>Secuencia completa: 1,4 · 3 · 5 · 7 · 9…</div>
-              <h4 style="color:var(--text);margin-top:25px;margin-bottom:10px;font-size:1.1rem;font-weight:600">Ejemplo</h4>
-              <p style="line-height:1.6;color:var(--text)">Reduce la fragmentación parlamentaria comparada con Sainte-Laguë estándar, manteniendo buena proporcionalidad para partidos medianos y grandes.</p>
-            </div>
-
-            <div id="theory-majority" class="theory-content-section">
-              <h3 style="font-family:'Libre Baskerville',serif;color:var(--accent);margin-bottom:15px;font-size:1.5rem">Sistema Mayoritario (Primera vuelta)</h3>
-              <h4 style="color:var(--text);margin-top:25px;margin-bottom:10px;font-size:1.1rem;font-weight:600">Descripción</h4>
-              <p style="line-height:1.6;color:var(--text);margin-bottom:15px">Sistema no proporcional donde el candidato o partido con más votos obtiene todos los escaños. También llamado «el ganador se lleva todo» o «first past the post». Usado en Reino Unido, Estados Unidos y Canadá.</p>
-              <h4 style="color:var(--text);margin-top:25px;margin-bottom:10px;font-size:1.1rem;font-weight:600">Fórmula</h4>
-              <div style="background:var(--accent-bg);padding:15px;border-radius:var(--radius);margin-bottom:15px;font-family:monospace">El candidato con más votos gana<br>Escaños totales = 100% al ganador<br>No requiere mayoría absoluta</div>
-              <h4 style="color:var(--text);margin-top:25px;margin-bottom:10px;font-size:1.1rem;font-weight:600">Ejemplo</h4>
-              <p style="line-height:1.6;color:var(--text)">Con A: 40%, B: 35%, C: 25%, el candidato A gana todos los escaños aunque no tenga mayoría absoluta.</p>
-            </div>
-
-            <div id="theory-majority-round2" class="theory-content-section">
-              <h3 style="font-family:'Libre Baskerville',serif;color:var(--accent);margin-bottom:15px;font-size:1.5rem">Sistema Mayoritario (Segunda vuelta)</h3>
-              <h4 style="color:var(--text);margin-top:25px;margin-bottom:10px;font-size:1.1rem;font-weight:600">Descripción</h4>
-              <p style="line-height:1.6;color:var(--text);margin-bottom:15px">Sistema a dos vueltas. Si ningún candidato obtiene mayoría absoluta en primera vuelta, los dos más votados pasan a segunda vuelta. Usado en Francia y en elecciones presidenciales de muchos países.</p>
-              <h4 style="color:var(--text);margin-top:25px;margin-bottom:10px;font-size:1.1rem;font-weight:600">Fórmula</h4>
-              <div style="background:var(--accent-bg);padding:15px;border-radius:var(--radius);margin-bottom:15px;font-family:monospace">Primera vuelta: Si alguien &gt; 50%, gana<br>Segunda vuelta: Los 2 más votados<br>Gana quien obtenga más votos</div>
-              <h4 style="color:var(--text);margin-top:25px;margin-bottom:10px;font-size:1.1rem;font-weight:600">Ejemplo</h4>
-              <p style="line-height:1.6;color:var(--text)">Primera vuelta: A: 40%, B: 35%, C: 25%. Segunda vuelta entre A y B. Si B obtiene 52%, gana aunque tuvo menos votos inicialmente.</p>
-            </div>
-
-          </div>
-        </div>
-
-      </div>
-    </div>
-  </div><!-- /theory-tab -->
+  <!-- El contenido de cada pestaña vive en tabs/ y lo inyecta js/tabs.js -->
 
 </div><!-- /main -->
+
+<!-- ══ PESTAÑAS: registro (js/tabs.js) y marcado de cada sección ══ -->
+<script src="js/tabs.js"></script>
+<script src="tabs/calculadora.js"></script>
+<script src="tabs/pactometro.js"></script>
+<script src="tabs/avanzada.js"></script>
+<script src="tabs/teoria.js"></script>
 
 <!-- ══ SCRIPTS (orden de dependencias) ══ -->
 <script src="js/helpers.js"></script>
 <script src="js/constants.js"></script>
 <script src="js/algorithms.js"></script>
+<script src="js/groupings.js"></script>
 <script src="js/rows.js"></script>
 <script src="js/totals.js"></script>
 <script src="js/calculator.js"></script>
 <script src="js/hemicycle.js"></script>
 <script src="js/pactometer.js"></script>
+<script src="js/advanced-data.js?v=12"></script>
+<script src="js/advanced-calc.js?v=12"></script>
+<script src="js/advanced-ui.js?v=12"></script>
+<script src="js/session.js"></script>
 <script src="js/ui.js"></script>
+<script>
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+  }
+</script>
 
 </body>
 </html>

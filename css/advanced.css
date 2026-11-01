@@ -1,0 +1,1265 @@
+/* ── CALCULADORA AVANZADA ───────────────────────────────────── */
+
+.adv-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 16px;
+  align-items: start;
+  padding: 20px;
+  max-width: 1500px;
+  margin: 0 auto;
+}
+.adv-main { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.adv-config { position: sticky; top: 12px; }
+
+@media (max-width: 1100px) {
+  .adv-workspace { grid-template-columns: 1fr; }
+  .adv-config { position: static; }
+}
+
+/* ── Cabecera ───────────────────────────────────────────────── */
+.adv-title {
+  font-family: 'Libre Baskerville', serif;
+  color: var(--text);
+  font-size: 1.6rem;
+  margin: 0;
+}
+.adv-subtitle {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-top: 2px;
+}
+.adv-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+
+/* ── Avisos ─────────────────────────────────────────────────── */
+.adv-notice {
+  border-radius: var(--radius-lg);
+  padding: 10px 14px;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+}
+.adv-notice.warn   { background: #fdf6e3; border-color: #e8d9a8; border-left: 3px solid #c99a2e; color: #6b5518; }
+.adv-notice.error  { background: #fdeaea; border-color: #e8bcbc; border-left: 3px solid var(--accent); color: #7a2020; }
+.adv-notice.info   { border-left: 3px solid var(--accent); }
+.adv-notice strong { color: inherit; font-weight: 700; }
+.adv-notice + .adv-notice { margin-top: -6px; }
+
+/* ── Cinta de totales ───────────────────────────────────────── */
+.adv-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.adv-summary-item {
+  flex: 1 1 120px;
+  padding: 9px 14px;
+  border-right: 1px solid var(--border-light);
+}
+.adv-summary-item:last-child { border-right: none; }
+.adv-summary-item small {
+  display: block;
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  font-weight: 700;
+  margin-bottom: 1px;
+}
+.adv-summary-item .v {
+  font-family: 'Libre Baskerville', serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.adv-summary-item .v.muted { color: var(--text-muted); font-size: 0.92rem; }
+
+/* ── Panel de configuración ─────────────────────────────────── */
+.adv-config .param-body { gap: 11px; }
+
+.adv-field label {
+  display: block;
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.adv-field select,
+.adv-field input[type=number],
+.adv-fieldset select,
+.adv-fieldset input[type=number] {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 6px 8px;
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 0.82rem;
+  color: var(--text);
+  outline: none;
+  transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
+}
+.adv-field select,
+.adv-fieldset select { appearance: none; -webkit-appearance: none; cursor: pointer; padding-right: 24px; }
+.adv-fieldset input[type=number] { text-align: right; }
+.adv-select-wrap { position: relative; }
+.adv-select-wrap::after {
+  content: '▾';
+  position: absolute; right: 9px; top: 50%;
+  transform: translateY(-50%);
+  color: var(--accent);
+  pointer-events: none;
+  font-size: 0.75rem;
+}
+.adv-field select:focus,
+.adv-field input[type=number]:focus,
+.adv-fieldset select:focus,
+.adv-fieldset input[type=number]:focus {
+  border-color: var(--accent);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px var(--accent-pale);
+}
+.adv-field small {
+  display: block;
+  font-size: 0.66rem;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-top: 3px;
+  line-height: 1.4;
+}
+.adv-row { display: flex; gap: 6px; }
+.adv-row > * { flex: 1; min-width: 0; }
+
+.adv-custom-seats { display: flex; flex-direction: column; gap: 9px; }
+
+.adv-check {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.76rem;
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+}
+.adv-check input { accent-color: var(--accent); cursor: pointer; margin: 0; }
+
+.adv-fieldset {
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  padding: 9px 10px;
+  background: var(--bg);
+}
+.adv-fieldset > .adv-check { margin-bottom: 7px; font-weight: 600; }
+.adv-fieldset[data-disabled="true"] > *:not(.adv-check) { opacity: 0.4; pointer-events: none; }
+
+.adv-divider { height: 1px; background: var(--border-light); margin: 1px 0; }
+
+/* ── Recuento final ─────────────────────────────────────────── */
+#adv-national-table { width: 100%; }
+#adv-national-table td, #adv-national-table th { font-size: 0.8rem; }
+.adv-party-cell { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.adv-party-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.adv-party-siglas { font-weight: 700; color: var(--text); }
+.adv-num { text-align: right; font-variant-numeric: tabular-nums; }
+.adv-diff-pos { color: #6b2020; }
+.adv-diff-neg { color: #20506b; }
+
+.adv-seat-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  border-radius: 3px;
+  padding: 1px 7px;
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  min-width: 28px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.adv-bar-outer { flex: 1; min-width: 30px; overflow: hidden; }
+.adv-bar { height: 6px; border-radius: 3px; opacity: 0.55; min-width: 2px; transition: width 0.4s cubic-bezier(0.4,0,0.2,1); }
+.adv-seat-wrap { display: flex; align-items: center; gap: 6px; }
+
+.adv-real-delta {
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+.adv-real-delta.up   { color: #6b2020; font-weight: 600; }
+.adv-real-delta.down { color: #20506b; font-weight: 600; }
+
+/* ── Circunscripciones ──────────────────────────────────────── */
+.adv-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+.adv-mini-btn {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 3px 8px;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 3px;
+  background: none;
+  cursor: pointer;
+  color: #a09890;
+  font-family: 'Source Sans 3', sans-serif;
+  transition: background var(--transition), color var(--transition), border-color var(--transition);
+}
+.adv-mini-btn:hover { background: rgba(255,255,255,0.1); color: #d0c8c0; border-color: rgba(255,255,255,0.25); }
+
+.adv-ccaa {
+  border-bottom: 1px solid var(--border-light);
+}
+.adv-ccaa:last-child { border-bottom: none; }
+
+.adv-ccaa-header {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  padding: 8px 12px;
+  background: #f5ede8;
+  border: none;
+  border-left: 3px solid transparent;
+  cursor: pointer;
+  text-align: left;
+  font-family: 'Source Sans 3', sans-serif;
+  transition: background var(--transition), border-color var(--transition);
+}
+.adv-ccaa-header:hover { background: #edddd6; border-left-color: var(--accent); }
+.adv-ccaa-arrow { color: var(--accent); font-size: 0.72rem; width: 10px; flex-shrink: 0; }
+/* Con una fuente más ancha que la de reserva, el nombre y la etiqueta de la
+   comunidad no deben poder empujar la fila entera a una segunda línea: se
+   recortan con puntos suspensivos en vez de forzar el ancho de la fila. */
+.adv-ccaa-name {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--accent);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 20px;
+}
+.adv-ccaa-meta {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-style: italic;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 2;
+  min-width: 0;
+}
+.adv-ccaa-seats {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.adv-ccaa-stat {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.adv-ccaa-stat b { color: var(--text); font-weight: 700; font-size: 0.8rem; }
+
+.adv-ccaa-body { padding: 4px 12px 12px 24px; background: var(--surface); }
+.adv-ccaa-body[hidden] { display: none; }
+
+/* Barra apilada de composición de la CCAA */
+.adv-stack {
+  display: flex;
+  height: 7px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: var(--border-light);
+  width: 130px;
+  flex-shrink: 0;
+}
+.adv-stack span { height: 100%; }
+
+/* ── Tarjeta de circunscripción ─────────────────────────────── */
+.adv-district {
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  margin-top: 8px;
+  overflow: hidden;
+  background: var(--surface);
+}
+.adv-district-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 6px 10px;
+  background: var(--row-alt);
+  border-bottom: 1px solid var(--border-light);
+  flex-wrap: wrap;
+}
+.adv-district-name { font-weight: 700; font-size: 0.82rem; color: var(--text); }
+.adv-district-meta { font-size: 0.7rem; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.adv-district-seats {
+  margin-left: auto;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.adv-district-seats b { color: var(--accent); font-weight: 700; font-size: 0.85rem; }
+
+.adv-district-table-scroll { overflow-x: auto; }
+.adv-district table { width: 100%; min-width: 340px; border-collapse: collapse; }
+.adv-district th {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  font-weight: 700;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--border-light);
+  text-align: left;
+  background: var(--surface);
+}
+.adv-district td {
+  padding: 3px 8px;
+  font-size: 0.78rem;
+  border-bottom: 1px solid var(--border-light);
+}
+.adv-district tr:last-child td { border-bottom: none; }
+.adv-district tr.adv-blocked td { background: #fdeaea; }
+.adv-district tr.adv-noseat td { color: var(--text-muted); }
+
+.adv-blocked-tag {
+  font-size: 0.62rem;
+  background: var(--accent-pale);
+  color: var(--accent);
+  border: 1px solid rgba(139,31,31,0.25);
+  border-radius: 3px;
+  padding: 0 5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.adv-more-btn {
+  width: 100%;
+  background: none;
+  border: none;
+  border-top: 1px solid var(--border-light);
+  padding: 5px;
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition);
+}
+.adv-more-btn:hover { background: var(--row-alt); color: var(--accent); }
+
+/* ── Estado de carga ────────────────────────────────────────── */
+.adv-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 50px 20px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-style: italic;
+}
+.adv-spinner {
+  width: 15px; height: 15px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: advSpin 0.7s linear infinite;
+}
+@keyframes advSpin { to { transform: rotate(360deg); } }
+
+.adv-empty { padding: 40px 20px; text-align: center; color: var(--text-muted); font-style: italic; font-size: 0.88rem; }
+
+/* ── Pantallas estrechas ────────────────────────────────────── */
+@media (max-width: 640px) {
+  .adv-workspace { padding: 12px; gap: 12px; }
+  .adv-ccaa-header { flex-wrap: wrap; row-gap: 4px; }
+  .adv-ccaa-seats { margin-left: 0; width: 100%; padding-left: 19px; }
+  .adv-stack { width: 100%; flex: 1; }
+  .adv-ccaa-body { padding: 4px 8px 10px 12px; }
+  .adv-district-head { row-gap: 3px; }
+  .adv-district-seats { margin-left: 0; }
+  .adv-summary-item { flex-basis: 50%; }
+}
+
+/* ── PANEL DE CONFIGURACIÓN PLEGABLE ─────────────────────────
+   Cada sección se muestra plegada con un resumen de su estado y sólo
+   admite cambios tras pulsar «Editar», para que el panel no crezca de
+   más ni se corte en pantallas bajas. */
+
+.adv-cfg-body { gap: 0; padding: 0; }
+
+.param-card-header { display: flex; align-items: center; gap: 8px; }
+
+.adv-collapse-all {
+  margin-left: auto;
+  background: none;
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #bcb4aa;
+  border-radius: var(--radius);
+  padding: 2px 7px;
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.adv-collapse-all:hover { background: rgba(255,255,255,0.12); color: #fff; }
+
+.adv-cfg { border-bottom: 1px solid var(--border-light); }
+.adv-cfg:last-of-type { border-bottom: none; }
+
+.adv-cfg-head {
+  /* Anula el estilo del <header> global de la página, que es un selector de
+     elemento y alcanzaría también a estas cabeceras de sección. */
+  background: none;
+  border: none;
+  box-shadow: none;
+  padding: 0 10px 0 4px;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  color: var(--text);
+}
+
+.adv-cfg-toggle {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 9px 4px;
+  font-family: 'Source Sans 3', sans-serif;
+  text-align: left;
+  color: var(--text);
+}
+.adv-cfg-toggle:hover .adv-cfg-name { color: var(--accent); }
+
+.adv-cfg-caret {
+  flex-shrink: 0;
+  font-size: 0.65rem;
+  color: var(--accent);
+  transition: transform 0.18s ease;
+  display: inline-block;
+}
+.adv-cfg.open .adv-cfg-caret { transform: rotate(90deg); }
+
+.adv-cfg-name {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+  transition: color 0.15s;
+}
+
+/* El resumen va en su propia línea: en un panel estrecho, compartirla con el
+   título obligaba a recortarlo casi siempre. */
+.adv-cfg-summary {
+  display: block;
+  width: 100%;
+  padding-left: 15px;
+  font-size: 0.74rem;
+  color: var(--accent);
+  font-weight: 600;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.adv-cfg.open .adv-cfg-summary { display: none; }
+
+.adv-cfg-edit {
+  flex-shrink: 0;
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: var(--radius);
+  padding: 3px 9px;
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 0.66rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.adv-cfg-edit:hover { border-color: var(--accent); color: var(--accent); }
+.adv-cfg.editing .adv-cfg-edit {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.adv-cfg-content {
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+  padding: 2px 12px 14px;
+}
+.adv-cfg.open .adv-cfg-content { display: flex; }
+
+/* Mientras no se pulsa «Editar», la sección se ve pero no se toca. */
+.adv-cfg-content[data-locked="true"] { opacity: 0.55; pointer-events: none; }
+
+.adv-cfg-actions { padding: 12px; border-top: 1px solid var(--border-light); }
+.adv-cfg-actions .adv-mini-btn {
+  flex: 1;
+  border-color: var(--border);
+  color: var(--text-muted);
+  padding: 6px 8px;
+}
+
+/* El panel no debe crecer más que la ventana: se desplaza por dentro. */
+.adv-config .param-card {
+  max-height: calc(100vh - 90px);
+  display: flex;
+  flex-direction: column;
+}
+.adv-config .adv-cfg-body { overflow-y: auto; flex: 1; min-height: 0; }
+
+.adv-cfg-titleline { display: flex; align-items: center; gap: 7px; }
+
+/* ── EDICIÓN DE LOS DATOS DE LA SESIÓN ───────────────────────
+   Permite cambiar votos y escaños de cada circunscripción sobre los datos
+   cargados. Los cambios no salen del navegador: la hoja no se toca. */
+
+.adv-editbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 9px 12px;
+  margin-bottom: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+.adv-editbar.editing {
+  border-color: var(--accent);
+  background: var(--accent-pale);
+}
+
+.adv-edit-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: var(--radius);
+  padding: 6px 12px;
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.adv-edit-btn:hover { border-color: var(--accent); color: var(--accent); }
+.adv-edit-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.adv-edit-icon { font-size: 0.9rem; line-height: 1; }
+
+.adv-edit-note {
+  flex: 1;
+  min-width: 180px;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-style: italic;
+  line-height: 1.4;
+}
+
+.adv-editbar .adv-mini-btn {
+  flex-shrink: 0;
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--surface);
+  padding: 5px 10px;
+  font-size: 0.7rem;
+}
+.adv-editbar .adv-mini-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+.adv-edit-badge {
+  flex-shrink: 0;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 10px;
+  padding: 2px 9px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+/* Campos editables dentro de las tablas */
+.adv-edit-votes {
+  width: 108px;
+  max-width: 100%;
+  padding: 3px 6px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--surface);
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: var(--text);
+}
+.adv-edit-votes:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-pale);
+}
+.adv-edit-votes.changed,
+.adv-edit-seats.changed {
+  border-color: var(--accent);
+  background: var(--accent-pale);
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.adv-edit-seats-wrap { display: inline-flex; align-items: center; gap: 5px; }
+/* layout.css da width:100% a todos los input[type=number]; aquí conviene
+   que el campo ocupe sólo lo que necesita. */
+.adv-edit-seats {
+  width: 62px;
+  flex: 0 0 62px;
+  padding: 3px 6px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--surface);
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  color: var(--text);
+}
+.adv-edit-seats:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-pale);
+}
+
+tr.adv-row-edited { background: rgba(139, 31, 31, 0.05); }
+
+/* Total de la circunscripción bajo la tabla editable */
+tr.adv-edit-total td {
+  border-top: 2px solid var(--border);
+  font-weight: 700;
+  font-size: 0.75rem;
+  color: var(--text);
+  background: var(--row-alt);
+}
+
+/* ── CONTROLES DE FILA EN MODO EDICIÓN ───────────────────────
+   Mismos gestos que la tabla de la calculadora básica: arrastrar para
+   reordenar, quitar y elegir color, aquí por circunscripción. */
+
+.adv-row-tools { display: inline-flex; align-items: center; gap: 3px; flex-shrink: 0; }
+
+.adv-drag-handle {
+  cursor: grab;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  line-height: 1;
+  user-select: none;
+  padding: 0 1px;
+}
+.adv-drag-handle:active { cursor: grabbing; }
+
+.adv-row-del {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #c0a8a8;
+  padding: 1px 3px;
+  font-size: 10px;
+  border-radius: 3px;
+  line-height: 1;
+  transition: color var(--transition), background var(--transition);
+}
+.adv-row-del:hover { color: var(--accent); background: var(--accent-pale); }
+
+.adv-row-color {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 1px solid rgba(0,0,0,0.15);
+  border-radius: 3px;
+  cursor: pointer;
+  flex-shrink: 0;
+  background: none;
+}
+
+tr.dragging { opacity: 0.5; }
+tr.drag-over-above td { box-shadow: inset 0 2px 0 var(--accent); }
+tr.drag-over-below td { box-shadow: inset 0 -2px 0 var(--accent); }
+
+.adv-add-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  border-top: 1px dashed var(--border);
+  padding: 7px;
+  cursor: pointer;
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  transition: background var(--transition), color var(--transition);
+}
+.adv-add-btn:hover { background: var(--accent-pale); color: var(--accent); }
+
+/* Diálogo para añadir candidatura */
+.adv-add-pop {
+  position: absolute;
+  z-index: 200;
+  width: 330px;
+  max-width: calc(100vw - 24px);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: 12px 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.adv-add-pop-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text);
+  padding-right: 20px;
+}
+.adv-add-lbl {
+  font-size: 0.64rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+/* Sin min-width:0 el desplegable crece con el texto de las opciones (los
+   nombres de partido son largos), desborda su hueco flexible y acaba
+   tapando el botón de al lado. */
+.adv-add-pop .adv-row { display: flex; align-items: center; gap: 8px; }
+.adv-add-pop .adv-select-wrap { min-width: 0; }
+.adv-add-pop .adv-select-wrap select {
+  width: 100%;
+  min-width: 0;
+  text-overflow: ellipsis;
+}
+
+.adv-add-pop input[type="text"] {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 5px 8px;
+  font-size: 0.8rem;
+  background: var(--bg);
+}
+.adv-add-pop input[type="text"]:focus { border-color: var(--accent); }
+.adv-add-pop .adv-mini-btn {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--surface);
+  padding: 5px 10px;
+  flex-shrink: 0;
+}
+.adv-add-pop .adv-mini-btn:hover { background: var(--accent); color: #fff; }
+.adv-add-close {
+  position: absolute;
+  top: 8px; right: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  line-height: 1;
+}
+.adv-add-close:hover { color: var(--accent); }
+
+/* ── VENTANA DE METADATOS ────────────────────────────────────── */
+
+.adv-meta-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: rgba(0,0,0,0.45);
+  padding: 30px 16px;
+  overflow-y: auto;
+}
+.adv-meta-overlay.open { display: block; }
+
+.adv-meta-dialog {
+  max-width: 620px;
+  margin: 0 auto;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+.adv-meta-head {
+  display: flex;
+  align-items: center;
+  background: #2e2622;
+  color: #cec6bc;
+  padding: 11px 14px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.adv-meta-close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: #cec6bc;
+  cursor: pointer;
+  font-size: 0.95rem;
+  line-height: 1;
+}
+.adv-meta-close:hover { color: #fff; }
+
+.adv-meta-body { padding: 16px 18px 18px; }
+.adv-meta-body section { margin-bottom: 16px; }
+.adv-meta-body h4 {
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  font-weight: 700;
+  margin-bottom: 7px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.adv-meta-list {
+  display: grid;
+  grid-template-columns: minmax(120px, 38%) 1fr;
+  gap: 4px 12px;
+  margin: 0;
+  font-size: 0.8rem;
+}
+.adv-meta-list dt { color: var(--text-muted); }
+.adv-meta-list dd { margin: 0; color: var(--text); font-weight: 600; }
+
+.adv-meta-details { margin-top: 8px; }
+.adv-meta-details summary {
+  cursor: pointer;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.adv-meta-details summary:hover { color: var(--accent); }
+.adv-meta-mono {
+  margin-top: 6px;
+  font-family: monospace;
+  font-size: 0.68rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+  background: var(--bg);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  padding: 8px;
+  max-height: 160px;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.adv-meta-foot {
+  border-top: 1px solid var(--border-light);
+  padding-top: 10px;
+  font-size: 0.78rem;
+}
+.adv-meta-foot a { color: var(--accent); font-weight: 600; text-decoration: none; }
+.adv-meta-foot a:hover { text-decoration: underline; }
+
+.adv-cfg-actions { flex-wrap: wrap; }
+
+/* Los botones secundarios dentro del panel van sobre fondo claro; el estilo
+   base de .adv-mini-btn está pensado para las cabeceras oscuras. */
+.adv-cfg-content .adv-mini-btn {
+  width: 100%;
+  border-color: var(--border);
+  color: var(--accent);
+  background: var(--surface);
+  padding: 6px 10px;
+  font-size: 0.72rem;
+}
+.adv-cfg-content .adv-mini-btn:hover {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.adv-cfg-content .adv-edit-btn { width: 100%; justify-content: center; }
+.adv-cfg-content small {
+  display: block;
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  font-style: italic;
+  line-height: 1.45;
+}
+
+/* Aviso de edición sobre los resultados: informativo, sin controles. */
+.adv-editbar[hidden] { display: none; }
+.adv-editbar { padding: 7px 12px; }
+
+/* ── BLOQUEO DE CIRCUNSCRIPCIONES ────────────────────────────
+   Una circunscripción bloqueada conserva sus escaños cuando cambia el
+   reparto y no admite cambios en sus datos. El candado está siempre a la
+   vista, no sólo al editar, porque afecta al reparto de escaños. */
+
+.adv-lock {
+  flex-shrink: 0;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 1px 4px;
+  font-size: 0.78rem;
+  line-height: 1.3;
+  opacity: 0.4;
+  transition: opacity var(--transition), background var(--transition), border-color var(--transition);
+}
+.adv-lock:hover { opacity: 1; background: var(--accent-pale); border-color: var(--accent); }
+.adv-lock.on { opacity: 1; background: var(--accent-pale); border-color: var(--accent); }
+.adv-lock.partial { opacity: 0.85; border-color: var(--border); border-style: dashed; }
+
+/* nowrap explícito: con esta fila nunca debe caer a una segunda línea, pase
+   lo que pase con el ancho del nombre o de la fuente real cargada. */
+.adv-ccaa-headrow { display: flex; align-items: center; flex-wrap: nowrap; }
+.adv-ccaa-headrow .adv-ccaa-header { flex: 1 1 0%; min-width: 0; }
+.adv-ccaa-lock { margin: 0 10px 0 2px; }
+
+.adv-district-name, .adv-district-meta {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.adv-district-name { flex-shrink: 1; }
+.adv-district-meta { flex-shrink: 2; }
+
+/* Una circunscripción bloqueada se distingue de un vistazo */
+.adv-district.adv-locked > .adv-district-head {
+  background: var(--accent-pale);
+  border-left: 3px solid var(--accent);
+}
+.adv-district.adv-locked .adv-district-name::after {
+  content: ' · fijada';
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--accent);
+  font-style: italic;
+}
+.adv-ccaa.adv-locked > .adv-ccaa-headrow .adv-ccaa-header { border-left-color: var(--accent); }
+
+/* ── MENÚ DEL CANDADO Y EXCEPCIONES ──────────────────────────
+   El candado cubre por defecto todos los aspectos; su menú (botón derecho o
+   pulsación larga) permite elegir cuáles. Las mismas opciones aparecen como
+   «excepciones» en cada sección de la configuración: son dos vistas del
+   mismo estado. */
+
+.adv-lock.partial { opacity: 0.9; border-style: dashed; }
+
+.adv-lock-menu, .adv-exc-pop {
+  position: absolute;
+  z-index: 400;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  font-family: 'Source Sans 3', sans-serif;
+}
+
+.adv-lock-menu { width: 265px; padding: 8px; }
+.adv-lock-menu-title {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  padding: 3px 6px 7px;
+  border-bottom: 1px solid var(--border-light);
+  margin-bottom: 5px;
+}
+.adv-lock-menu-title small {
+  display: block;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.74rem;
+  color: var(--accent);
+  font-weight: 700;
+  margin-top: 2px;
+}
+
+.adv-lock-opt {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  padding: 5px 6px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background var(--transition);
+}
+.adv-lock-opt:hover { background: var(--accent-pale); }
+.adv-lock-opt input { margin-top: 2px; flex-shrink: 0; cursor: pointer; }
+.adv-lock-opt.partial input { opacity: 0.6; }
+.adv-lock-opt-text b { display: block; font-size: 0.78rem; color: var(--text); font-weight: 600; }
+.adv-lock-opt-text small {
+  display: block;
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+  margin-top: 1px;
+}
+.adv-lock-menu-foot {
+  display: flex;
+  gap: 6px;
+  padding-top: 7px;
+  margin-top: 4px;
+  border-top: 1px solid var(--border-light);
+}
+.adv-lock-menu-foot .adv-mini-btn {
+  flex: 1;
+  border-color: var(--border);
+  color: var(--accent);
+  background: var(--surface);
+  padding: 4px 8px;
+}
+.adv-lock-menu-foot .adv-mini-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+/* Línea de excepciones dentro de cada sección de configuración */
+.adv-exc { display: flex; flex-direction: column; gap: 3px; }
+.adv-exc-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 6px 9px;
+  cursor: pointer;
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 0.74rem;
+  color: var(--text);
+  text-align: left;
+  transition: border-color var(--transition), background var(--transition);
+}
+.adv-exc-btn:hover { border-color: var(--accent); background: var(--accent-pale); }
+.adv-exc-check {
+  width: 12px; height: 12px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  flex-shrink: 0;
+  background: var(--surface);
+}
+.adv-exc.has-exceptions .adv-exc-check {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 2px var(--surface);
+}
+.adv-exc.has-exceptions .adv-exc-btn { border-color: var(--accent); }
+.adv-exc-count { color: var(--accent); font-weight: 700; }
+
+/* Desplegable con la lista de circunscripciones */
+.adv-exc-pop { width: 290px; max-width: calc(100vw - 20px); padding: 10px; }
+.adv-exc-pop-title {
+  display: flex;
+  align-items: center;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--text);
+  padding-bottom: 7px;
+  border-bottom: 1px solid var(--border-light);
+}
+.adv-exc-close {
+  margin-left: auto;
+  background: none; border: none; cursor: pointer;
+  color: var(--text-muted); font-size: 0.78rem; line-height: 1;
+}
+.adv-exc-close:hover { color: var(--accent); }
+.adv-exc-pop-actions { display: flex; gap: 6px; padding: 7px 0; }
+.adv-exc-pop-actions .adv-mini-btn {
+  flex: 1;
+  border-color: var(--border);
+  color: var(--accent);
+  background: var(--surface);
+  padding: 4px 8px;
+}
+.adv-exc-pop-actions .adv-mini-btn:hover { background: var(--accent); color: #fff; }
+
+.adv-exc-list { max-height: 300px; overflow-y: auto; }
+.adv-exc-group { border-bottom: 1px solid var(--border-light); padding: 3px 0; }
+.adv-exc-group:last-child { border-bottom: none; }
+.adv-exc-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 3px 5px 3px 18px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  color: var(--text);
+}
+.adv-exc-item:hover { background: var(--accent-pale); }
+.adv-exc-item.group { padding-left: 5px; color: var(--accent); }
+.adv-exc-item.group b { font-size: 0.76rem; }
+.adv-exc-item.group small { color: var(--text-muted); font-weight: 600; }
+.adv-exc-item.partial input { opacity: 0.6; }
+.adv-exc-item input { cursor: pointer; flex-shrink: 0; }
+
+/* ── SELECCIÓN DE CIRCUNSCRIPCIONES DENTRO DEL MENÚ MAESTRO ──
+   En un candado maestro (comunidad o general) cada aspecto puede aplicarse
+   sólo a algunas de sus circunscripciones, no forzosamente a todas. */
+
+.adv-lock-menu.master { width: 300px; }
+
+.adv-lock-row {
+  border-radius: var(--radius);
+  padding-bottom: 2px;
+}
+.adv-lock-row.partial { background: rgba(139, 31, 31, 0.05); }
+.adv-lock-row .adv-lock-opt { width: 100%; }
+
+.adv-lock-pick {
+  display: block;
+  margin: 0 0 3px 28px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: var(--accent);
+  padding: 1px 3px;
+  border-radius: 3px;
+}
+.adv-lock-pick:hover { background: var(--accent-pale); }
+
+.adv-lock-members {
+  margin: 0 4px 6px 28px;
+  padding: 4px 0;
+  border-top: 1px solid var(--border-light);
+  border-bottom: 1px solid var(--border-light);
+  max-height: 190px;
+  overflow-y: auto;
+}
+.adv-lock-members[hidden] { display: none; }
+
+.adv-lock-member {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 5px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.73rem;
+  color: var(--text);
+}
+.adv-lock-member:hover { background: var(--accent-pale); }
+.adv-lock-member input { cursor: pointer; flex-shrink: 0; margin: 0; }
+
+/* Candado maestro general, en la cabecera de resultados */
+.adv-lock-master {
+  opacity: 0.65;
+  font-size: 0.82rem;
+  border-color: rgba(255,255,255,0.2);
+}
+.adv-lock-master:hover {
+  opacity: 1;
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.4);
+}
+
+/* ── CIRCUNSCRIPCIONES AÑADIDAS ──────────────────────────────
+   Se superponen a la base, así que van en su propia tarjeta y con un
+   distintivo lateral que las separa del mapa de circunscripciones. */
+.adv-extra-note {
+  padding: 7px 12px;
+  font-size: 0.7rem;
+  font-style: italic;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-light);
+}
+.adv-extra-tier {
+  border-left: 3px solid var(--accent);
+  margin: 8px 10px 10px;
+}
+.adv-extra-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 5px 10px;
+  background: var(--accent-bg);
+}
+.adv-extra-name {
+  font-weight: 700;
+  font-size: 0.76rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.adv-extra-meta {
+  margin-left: auto;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Distintivo de los escaños que suma el bono de mayoría. */
+.adv-bono-tag {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 1px 5px;
+  border-radius: 999px;
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-pale);
+  color: var(--accent);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}

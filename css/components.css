@@ -260,6 +260,78 @@ tbody tr.barrier-blocked { background: #fdd8d8 !important; }
 tbody tr.no-seats:hover       { background: #fad8d8 !important; }
 tbody tr.barrier-blocked:hover { background: #f8c8c8 !important; }
 
+/* ── GROUPING COLUMN ─────────────────────────────────────────── */
+#votes-table .group-col { display: none; }
+#votes-table.groupings-active .group-col { display: table-cell; }
+
+.group-num-btn {
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--bg);
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+  padding: 0;
+  line-height: 1;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  font-variant-numeric: tabular-nums;
+}
+.group-num-btn:hover { border-color: var(--accent); color: var(--accent); }
+.group-num-btn.group-num-active {
+  background: var(--accent-pale);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* ── GROUP HEADER ROW ────────────────────────────────────────── */
+.group-header-row { background: #f5ede8 !important; }
+.group-header-row:hover { background: #edddd6 !important; }
+.group-header-cell { padding: 4px 8px !important; }
+.group-header-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.group-collapse-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.78rem;
+  color: var(--accent);
+  padding: 2px 5px;
+  border-radius: 3px;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+.group-collapse-btn:hover { background: var(--accent-pale); }
+.group-header-name {
+  font-weight: 700;
+  font-size: 0.82rem;
+  color: var(--accent);
+  letter-spacing: 0.02em;
+}
+.group-header-votes {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+.group-del-btn { margin-left: auto; }
+
+/* ── GROUPED PARTY ROWS ──────────────────────────────────────── */
+tr.in-group > td:first-child { border-left: 3px solid rgba(139,49,49,0.25); }
+tr.in-group { background: #fdf8f6; }
+
+/* ── GROUP ANIMATION ─────────────────────────────────────────── */
+@keyframes groupSlideIn {
+  from { opacity: 0.5; transform: translateX(-6px); }
+  to   { opacity: 1;   transform: translateX(0); }
+}
+.group-anim { animation: groupSlideIn 0.28s ease; }
+
 /* ── ANIMATIONS ─────────────────────────────────────────────── */
 @keyframes fadeSlideIn {
   from { opacity: 0; transform: translateY(6px); }
