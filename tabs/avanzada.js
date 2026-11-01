@@ -9,7 +9,7 @@
  */
 
 registerTab('advanced', 'tab-content', String.raw`
-    <div class="adv-workspace" data-mode="advanced">
+    <div class="adv-workspace" data-mode="simple">
 
       <div class="adv-head">
         <div>
