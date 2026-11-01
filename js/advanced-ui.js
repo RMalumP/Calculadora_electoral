@@ -544,7 +544,8 @@ function advInitSections() {
   }
   selectAll('.adv-mode-btn').forEach(b =>
     b.addEventListener('click', () => advSetMode(b.dataset.mode)));
-  advSetMode(advStoreGet(ADV_MODE_KEY) === 'simple' ? 'simple' : 'advanced');
+  // Por defecto, el modo sencillo.
+  advSetMode(advStoreGet(ADV_MODE_KEY) === 'advanced' ? 'advanced' : 'simple');
 }
 
 /** Habilita/deshabilita bloques del formulario según su estado. */
