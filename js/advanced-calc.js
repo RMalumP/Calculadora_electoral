@@ -44,7 +44,9 @@ function advDefaultConfig(meta) {
     extras: {
       ccaa:     { activa: false, escanos: 0 },
       nacional: { activa: false, escanos: 0 }
-    }
+    },
+    // Escaños compensatorios sobre el recuento nacional (advanced-compensation.js).
+    comp: advCompDefault()
   };
 }
 
@@ -574,7 +576,7 @@ function advCalculate(data, config, edits, locks) {
     d.results.forEach(p => sumarEscanos(p, p.key));
   });
 
-  const national = [...totals.values()].map(t => {
+  let national = [...totals.values()].map(t => {
     const votePct = totalValid  > 0 ? t.votes / totalValid  * 100 : 0;
     const seatPct = totalSeats  > 0 ? t.seats / totalSeats  * 100 : 0;
     return { ...t, votePct, seatPct, diff: seatPct - votePct };
@@ -603,15 +605,25 @@ function advCalculate(data, config, edits, locks) {
       );
     }
   }
+  const gallagherBefore = advGallagherIndex(national);
+  let compensation = null;
+  if (advCompActive(config.comp)) {
+    const comp = advApplyCompensation(national, config.comp, totalValid);
+    national = comp.national;
+    totalSeats = comp.totalSeats;
+    compensation = comp.info;
+    compensation.warnings.forEach(w => warnings.push(w));
+  }
   const disproportion = advGallagherIndex(national);
 
   return {
-    districts, extras, national, warnings, config,
+    districts, extras, national, warnings, config, compensation,
     summary: {
       totalSeats, baseSeats, totalValid, totalBlanco, totalNulos, totalCenso, totalVotantes,
       participacion: totalCenso > 0 ? totalVotantes / totalCenso * 100 : 0,
       numDistricts: districts.length + extraDistricts.length,
-      gallagher: disproportion
+      gallagher: disproportion,
+      gallagherBefore
     }
   };
 }

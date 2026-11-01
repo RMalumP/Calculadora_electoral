@@ -179,7 +179,7 @@ registerTab('theory', 'tab-content', String.raw`
               <h4 style="color:var(--text);margin-top:25px;margin-bottom:10px;font-size:1.1rem;font-weight:600">Fórmula</h4>
               <div style="background:var(--accent-bg);padding:15px;border-radius:var(--radius);margin-bottom:15px;font-family:monospace">Se busca el menor tamaño total T ≥ base tal que, repartiendo T proporcionalmente a los votos,<br>ningún partido tenga menos escaños que sus escaños directos.<br>Compensatorios(partido) = Reparto(T)(partido) − Directos(partido)</div>
               <h4 style="color:var(--text);margin-top:25px;margin-bottom:10px;font-size:1.1rem;font-weight:600">Ejemplo</h4>
-              <p style="line-height:1.6;color:var(--text);margin-bottom:15px">Parlamento base de 20 escaños. Votos: A 40 %, B 35 %, C 25 %. Escaños directos: A 10, B 2, C 1. Proporcionalmente (Hare) les corresponderían A 8, B 7, C 5, así que A tiene 2 excedentes. Para que A conserve sus 10 escaños, el parlamento debe crecer hasta T = 25 (A = 40 % de 25 = 10): reparto A 10, B 9, C 6. Compensatorios: A 0, B 7, C 5. Total: 25 escaños.</p>
+              <p style="line-height:1.6;color:var(--text);margin-bottom:15px">Parlamento base de 20 escaños. Votos: A 40 %, B 35 %, C 25 %. Escaños directos: A 10, B 2, C 1. Proporcionalmente (Hare) les corresponderían A 8, B 7, C 5, así que A tiene 2 excedentes. Para que A conserve sus 10 escaños, el parlamento debe crecer hasta T = 24: con Hare, A tiene cuota 9,6 y el mayor resto le da el décimo (con 23 se quedaría en 9). Reparto final: A 10, B 8, C 6. Compensatorios: A 0, B 6, C 5. Total: 24 escaños.</p>
             </div>
 
             <div id="theory-nordico" class="theory-content-section">
