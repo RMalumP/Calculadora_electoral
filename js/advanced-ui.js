@@ -2009,7 +2009,13 @@ function advInit() {
 
 /** Carga perezosa: sólo se descargan los datos al abrir la pestaña. */
 function advEnsureLoaded() {
-  if (!_advLoaded && !_advLoading) advLoadElection(false);
+  if (!_advLoaded && !_advLoading) {
+    // Si el navegador guardaba una sesión de esta pestaña, se repone en cuanto
+    // llegan los datos (autosave.js).
+    advLoadElection(false).then(() => {
+      if (typeof autoRestoreAdvanced === 'function') autoRestoreAdvanced();
+    });
+  }
 }
 
 document.addEventListener('DOMContentLoaded', advInit);

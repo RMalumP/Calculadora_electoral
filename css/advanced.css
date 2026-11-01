@@ -1392,3 +1392,20 @@ body.adv-popup-open { overflow: hidden; }
   .adv-popup-picker { flex-wrap: wrap; }
 }
 .adv-popup-picker[hidden] { display: none; }
+
+/* Aviso de sesión restaurada. */
+.auto-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  z-index: 500;
+  background: #2e2622;
+  color: #f1ece6;
+  padding: 10px 18px;
+  border-radius: var(--radius);
+  font-size: 0.82rem;
+  box-shadow: var(--shadow-lg);
+  transition: opacity 0.6s;
+}
+.auto-toast.hide { opacity: 0; }
