@@ -752,14 +752,14 @@ function advNationalCard() {
     <div style="overflow-x:auto">
     <table id="adv-national-table">
       <thead><tr>
-        <th style="width:34%">Candidatura</th>
-        <th class="adv-num" style="width:12%">Votos</th>
-        <th class="adv-num" style="width:9%">% votos</th>
-        ${showComp ? `<th class="adv-num" title="Escaños obtenidos en las circunscripciones">Directos</th><th class="adv-num" title="Escaños compensatorios">Comp.</th>` : ''}
-        <th style="width:19%">${advEscape(seatWord.charAt(0).toUpperCase() + seatWord.slice(1))}</th>
-        <th class="adv-num" style="width:9%">% esc.</th>
-        <th class="adv-num" style="width:8%">Dif. %</th>
-        ${showReal ? `<th class="adv-num" style="width:9%" title="Escaños registrados en los datos originales">Reales</th>` : ''}
+        <th>Candidatura</th>
+        <th class="adv-num" style="width:96px">Votos</th>
+        <th class="adv-num" style="width:76px">% votos</th>
+        ${showComp ? `<th class="adv-num" style="width:76px" title="Escaños obtenidos en las circunscripciones">Directos</th><th class="adv-num" style="width:62px" title="Escaños compensatorios">Comp.</th>` : ''}
+        <th style="width:150px">${advEscape(seatWord.charAt(0).toUpperCase() + seatWord.slice(1))}</th>
+        <th class="adv-num" style="width:72px">% esc.</th>
+        <th class="adv-num" style="width:68px">Dif. %</th>
+        ${showReal ? `<th class="adv-num" style="width:72px" title="Escaños registrados en los datos originales">Reales</th>` : ''}
       </tr></thead>
       <tbody>${withSeats.map(row).join('') || `<tr><td colspan="9" class="adv-empty">Ninguna candidatura obtiene representación.</td></tr>`}</tbody>
     </table>
