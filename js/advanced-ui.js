@@ -615,13 +615,6 @@ function advRefreshBonoState() {
   setDisplay(hint, !!msg);
 }
 
-/** Fórmula de compensación que corresponde a una de reparto (en modo sencillo). */
-function advCompFormulaFor(formula) {
-  if (['saintlague', 'saintlague_m'].includes(formula)) return 'saintlague';
-  if (['hare', 'imperiali', 'droop', 'hb'].includes(formula)) return 'hare';
-  return 'dhondt';
-}
-
 /**
  * Lee la compensación del formulario. En el modo sencillo sólo se ven el modo
  * y la bolsa: la fórmula y la barrera se heredan del reparto, y se vuelcan en

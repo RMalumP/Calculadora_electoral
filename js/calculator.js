@@ -182,9 +182,14 @@ function calculate() {
   noVotes2.forEach(p => allocated.push({ ...p, seats: 0, noVotes: true }));
   allocated.sort((a, b) => b.seats - a.seats || b.votes - a.votes);
 
+  // ── PASO 7b: Escaños compensatorios (opcional) ──
+  const compensation = _applyCompensation(allocated, totalValid, formula, barrier);
+
   // ── PASO 8: Mostrar resultados ──
   updateTotals();
-  const effectiveTotalSeats = bonusMode === 'extra' ? totalSeats + bonus : totalSeats;
+  const effectiveTotalSeats = (bonusMode === 'extra' ? totalSeats + bonus : totalSeats) +
+    (compensation ? compensation.added : 0);
+  window.lastCompensation = compensation;
   displayResults(
     allocated, totalValid, effectiveTotalSeats, formula,
     excludedBarrier2,
@@ -192,6 +197,37 @@ function calculate() {
     remainingNormal.map(p => ({ name: p.name, votes: p.votes, color: p.color })),
     seatsToAllocate
   );
+}
+
+/* ── ESCAÑOS COMPENSATORIOS ────────────────────────────────── */
+
+/**
+ * Aplica la compensación elegida sobre el reparto ya hecho (con su bono y su
+ * barrera) y deja en cada partido directSeats / compSeats. Devuelve el resumen,
+ * o null si no hay compensación. Usa la misma lógica que la calculadora avanzada.
+ */
+function _applyCompensation(allocated, totalValid, formula, barrier) {
+  const modo = document.getElementById('comp-mode')?.value || 'none';
+  if (modo === 'none' || typeof advApplyCompensation !== 'function') return null;
+  const bolsa = parseInt(document.getElementById('comp-bolsa')?.value) || 0;
+  if (modo === 'bolsa' && bolsa <= 0) return null;
+
+  const withVotes = allocated.filter(p => p.votes > 0);
+  const result = advApplyCompensation(
+    withVotes.map(p => ({ key: p.name, name: p.name, siglas: p.siglas, votes: p.votes, seats: p.seats, votePct: totalValid > 0 ? p.votes / totalValid * 100 : 0 })),
+    { modo: modo === 'bolsa' ? 'bolsa' : 'ampliacion', formula: advCompFormulaFor(formula), barrera: barrier, bolsa, tope: 0 },
+    totalValid
+  );
+  const byName = new Map(result.national.map(r => [r.name, r]));
+  allocated.forEach(p => {
+    const r = byName.get(p.name);
+    if (!r) return;
+    p.directSeats = r.directSeats;
+    p.compSeats   = r.compSeats;
+    p.seats       = r.seats;
+  });
+  allocated.sort((a, b) => b.seats - a.seats || b.votes - a.votes);
+  return { added: result.info.added, size: result.totalSeats, warnings: result.info.warnings, modo };
 }
 
 /* ── VISUALIZACIÓN DE RESULTADOS ───────────────────────────── */
@@ -226,6 +262,7 @@ function displayResults(allocated, totalValid, totalSeats, formula, excludedBarr
       <td>
         <div class="seats-bar-wrap">
           <span class="result-badge" style="background:${color}">${p.seats}</span>
+          ${p.compSeats > 0 ? `<span class="comp-note" title="Escaños directos + compensatorios">${p.directSeats}+${p.compSeats}</span>` : ''}
           <div class="seats-bar-outer">
             <div class="seats-bar" style="width:${barPct}%;background:${color};opacity:0.6"></div>
           </div>
@@ -238,6 +275,7 @@ function displayResults(allocated, totalValid, totalSeats, formula, excludedBarr
 
   highlightInputTable(allocated, formula);
   displayLastSeatInfo();
+  _showCompensationNote();
 
   if (allParties && allParties.length > 0) {
     buildBreakdownTable(allParties, allocated, baseSeats !== null ? baseSeats : totalSeats, formula);
@@ -254,6 +292,25 @@ function displayResults(allocated, totalValid, totalSeats, formula, excludedBarr
   updateHemicycleIfVisible();
 
   copyResultsToPactometer(allocated, totalSeats);
+}
+
+/** Línea bajo la tabla con lo que ha añadido la compensación. */
+function _showCompensationNote() {
+  const table = document.getElementById('results-table');
+  if (!table) return;
+  let note = document.getElementById('comp-note');
+  const comp = window.lastCompensation;
+  if (!comp) { note?.remove(); return; }
+  if (!note) {
+    note = document.createElement('div');
+    note.id = 'comp-note';
+    note.className = 'comp-summary';
+    table.insertAdjacentElement('afterend', note);
+  }
+  const word = typeof currentSeatName === 'string' ? currentSeatName : 'escaños';
+  note.innerHTML = `Compensación (${comp.modo === 'bolsa' ? 'bolsa fija' : 'ampliación'}): ` +
+    `<strong>+${comp.added}</strong> ${word} · total <strong>${comp.size}</strong>` +
+    (comp.warnings.length ? `<br><em>${comp.warnings.join(' ')}</em>` : '');
 }
 
 function highlightInputTable(allocated, formula) {

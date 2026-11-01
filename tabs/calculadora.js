@@ -196,6 +196,22 @@ registerTab('calculator', 'tab-content active', String.raw`
               </div>
             </div>
 
+            <div class="param-field" id="comp-field">
+              <label id="comp-label-toggle" style="cursor:pointer;user-select:none" onclick="toggleParamField('comp')">▼ Escaños compensatorios</label>
+              <div id="comp-input-wrap" style="display:none">
+                <select id="comp-mode" onchange="onCompModeChange()">
+                  <option value="none">Ninguno</option>
+                  <option value="bolsa">Bolsa fija (nórdico)</option>
+                  <option value="ampliacion">Ampliación (alemán)</option>
+                </select>
+                <div id="comp-bolsa-wrap" style="display:none;margin-top:8px">
+                  <input type="number" id="comp-bolsa" value="0" min="0" max="500">
+                  <small>Escaños de la bolsa (se suman a los del reparto). Por defecto, el 10 % del total.</small>
+                </div>
+                <small id="comp-desc" style="margin-top:6px;display:block;font-size:0.68rem;color:var(--text-muted);font-style:italic;line-height:1.4;">Corrige la desproporción del reparto añadiendo escaños a los partidos perjudicados. Usa la fórmula y la barrera de arriba.</small>
+              </div>
+            </div>
+
             <div class="formula-field">
               <label>Fórmula de reparto</label>
               <div class="formula-select-wrap">
