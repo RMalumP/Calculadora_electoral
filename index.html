@@ -61,7 +61,11 @@
             <tr>
               <th style="width:10px"></th>
               <th style="width:10px;text-align:center"></th>
-              <th style="text-align:center;padding:2px 4px"><button id="siglas-toggle-btn" onclick="toggleSiglasVisibility()" style="font-size:0.6rem;font-weight:700;letter-spacing:0.02em;padding:2px 5px;border:1px solid var(--border);border-radius:3px;background:none;cursor:pointer;color:var(--text-muted);white-space:nowrap;line-height:1.5">Siglas ▼</button></th>
+              <th style="text-align:center;padding:2px 4px">
+                <button id="siglas-toggle-btn" onclick="toggleSiglasVisibility()" style="font-size:0.6rem;font-weight:700;letter-spacing:0.02em;padding:2px 5px;border:1px solid var(--border);border-radius:3px;background:none;cursor:pointer;color:var(--text-muted);white-space:nowrap;line-height:1.5">Siglas ▼</button>
+                <button id="groupings-toggle-btn" onclick="toggleGroupingsVisibility()" style="font-size:0.6rem;font-weight:700;letter-spacing:0.02em;padding:2px 5px;border:1px solid var(--border);border-radius:3px;background:none;cursor:pointer;color:var(--text-muted);white-space:nowrap;line-height:1.5;margin-left:3px">Agrupación ▼</button>
+              </th>
+              <th class="group-col" style="width:28px;text-align:center;padding:2px 2px;font-size:0.6rem;color:var(--text-muted);font-weight:700">#</th>
               <th>Candidatura / Partido <button id="hide-names-btn" onclick="toggleHideNames()" style="display:none;font-size:0.58rem;font-weight:700;letter-spacing:0.02em;padding:2px 5px;border:1px solid #8b3131;border-radius:3px;background:none;cursor:pointer;color:#8b3131;white-space:nowrap;line-height:1.5;margin-left:6px">Ocultar nombre</button></th>
               <th style="text-align:right;width:120px">Votos</th>
               <th style="text-align:right;width:70px">%</th>
@@ -70,13 +74,13 @@
           <tbody id="votes-body"></tbody>
           <tbody id="special-rows">
             <tr class="special-row">
-              <td></td><td></td><td></td>
+              <td></td><td></td><td></td><td class="group-col"></td>
               <td>Votos en blanco</td>
               <td><input type="text" id="blank-votes" class="votes-input" placeholder="0" min="0" max="9000000000" oninput="formatVoteInput(this);updateTotals()" onfocus="onVoteFocus(this)" onblur="onVoteBlur(this)"></td>
               <td class="pct-cell" id="blank-pct">—</td>
             </tr>
             <tr class="special-row">
-              <td></td><td></td><td></td>
+              <td></td><td></td><td></td><td class="group-col"></td>
               <td>Votos nulos</td>
               <td><input type="text" id="null-votes" class="votes-input" placeholder="0" min="0" max="9000000000" oninput="formatVoteInput(this);updateTotals()" onfocus="onVoteFocus(this)" onblur="onVoteBlur(this)"></td>
               <td class="pct-cell" id="null-pct">—</td>
@@ -594,6 +598,7 @@
 <script src="js/helpers.js"></script>
 <script src="js/constants.js"></script>
 <script src="js/algorithms.js"></script>
+<script src="js/groupings.js"></script>
 <script src="js/rows.js"></script>
 <script src="js/totals.js"></script>
 <script src="js/calculator.js"></script>

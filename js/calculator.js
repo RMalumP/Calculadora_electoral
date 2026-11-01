@@ -72,7 +72,33 @@ function calculate() {
     }))
     .filter(p => p.name || p.votes > 0);
 
-  // ── PASO 2: Total válido ──
+  // ── PASO 1b: Construir partidos efectivos (agrupaciones) ──
+  const activeGroupsData = typeof getActiveGroupsData === 'function' ? getActiveGroupsData() : {};
+  const groupedTrSet     = new Set();
+  const syntheticGroups  = [];
+
+  Object.entries(activeGroupsData).forEach(([numStr, trs]) => {
+    const groupNum     = parseInt(numStr);
+    const memberParties = normalParties.filter(p => p.tr && trs.includes(p.tr));
+    memberParties.forEach(m => groupedTrSet.add(m.tr));
+    const totalGroupVotes = memberParties.reduce((s, m) => s + m.votes, 0);
+    syntheticGroups.push({
+      name:    `Agrupación ${groupNum}`,
+      siglas:  `A${groupNum}`,
+      votes:   totalGroupVotes,
+      color:   memberParties[0]?.color || '#888888',
+      isGroup: true,
+      groupNum
+    });
+  });
+
+  // Partidos efectivos: individuales no agrupados + grupos sintéticos
+  const effectiveParties = [
+    ...normalParties.filter(p => !groupedTrSet.has(p.tr)),
+    ...syntheticGroups
+  ];
+
+  // ── PASO 2: Total válido (usa todos los votos reales) ──
   let totalValid = normalParties.reduce((s, p) => s + p.votes, 0) + otrosManualVotes + blank;
   if (totalValid === 0) { alert('Introduce al menos algunos votos.'); return; }
 
@@ -84,9 +110,9 @@ function calculate() {
   const minorThreshold  = totalValid * 0.005;
   const seatsToAllocate = bonusMode === 'included' ? totalSeats - bonus : totalSeats;
 
-  // ── PASO 3: Primera asignación ──
-  const eligible        = normalParties.filter(p => p.votes >= barrierVotes && p.votes > 0);
-  const excludedBarrier = normalParties.filter(p => p.votes > 0 && p.votes < barrierVotes);
+  // ── PASO 3: Primera asignación (sobre partidos efectivos) ──
+  const eligible        = effectiveParties.filter(p => p.votes >= barrierVotes && p.votes > 0);
+  const excludedBarrier = effectiveParties.filter(p => p.votes > 0 && p.votes < barrierVotes);
 
   let allocated = allocateSeats(
     eligible.map(p => ({ name: p.name, siglas: p.siglas, votes: p.votes, color: p.color })),
@@ -97,7 +123,8 @@ function calculate() {
   // ── PASO 4: Identificar partidos minoritarios a absorber ──
   const allocatedSeatsMap = new Map(allocated.map(p => [p.name, p.seats]));
   const toAbsorb = normalParties.filter(p => {
-    if (p.tr.dataset.locked === 'true') return false;
+    if (p.tr?.dataset.locked === 'true') return false;
+    if (groupedTrSet.has(p.tr)) return false; // no absorber partidos en agrupación activa
     return p.votes < minorThreshold && !(allocatedSeatsMap.get(p.name) > 0);
   });
 
@@ -132,14 +159,18 @@ function calculate() {
   updateOtrosDropdown();
 
   // ── PASO 6: Recalcular totalValid final ──
-  const remainingNormal = normalParties.filter(p => !toAbsorb.includes(p));
+  const absorbedSet    = new Set(toAbsorb);
+  const remainingNormal = [
+    ...normalParties.filter(p => !absorbedSet.has(p) && !groupedTrSet.has(p.tr)),
+    ...syntheticGroups
+  ];
   totalValid = remainingNormal.reduce((s, p) => s + p.votes, 0) + otrosAccumulatedVotes + blank;
 
   // ── PASO 7: Segunda asignación con la lista final ──
   const barrierVotes2    = totalValid * barrier / 100;
   const eligible2        = remainingNormal.filter(p => p.votes >= barrierVotes2 && p.votes > 0);
   const excludedBarrier2 = remainingNormal.filter(p => p.votes > 0 && p.votes < barrierVotes2);
-  const noVotes2         = remainingNormal.filter(p => p.votes === 0);
+  const noVotes2         = remainingNormal.filter(p => p.votes === 0 && !p.isGroup);
 
   allocated = allocateSeats(
     eligible2.map(p => ({ name: p.name, siglas: p.siglas, votes: p.votes, color: p.color })),
