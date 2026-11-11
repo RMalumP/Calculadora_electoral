@@ -130,8 +130,8 @@ function drawHemicycle(resultsArg, chartEl) {
     const item = document.createElement('div');
     item.style.cssText = 'display:flex;align-items:center;gap:5px';
     item.innerHTML = `
-      <span style="display:inline-block;width:12px;height:12px;background:${seg.color};border-radius:2px;border:1px solid rgba(0,0,0,.15)"></span>
-      <span style="color:var(--text)">${seg.name} <strong>${seg.seats}</strong></span>`;
+      <span style="display:inline-block;width:12px;height:12px;background:${escapeHtml(seg.color)};border-radius:2px;border:1px solid rgba(0,0,0,.15)"></span>
+      <span style="color:var(--text)">${escapeHtml(seg.name)} <strong>${seg.seats}</strong></span>`;
     legend.appendChild(item);
   });
 

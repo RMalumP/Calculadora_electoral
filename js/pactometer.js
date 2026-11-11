@@ -22,16 +22,16 @@ function addPactometerRow(name = '', seats = '', color = '', block = '', siglas 
   tr.dataset.block = block || '';
   tr.innerHTML = `
     <td><button class="del-btn" onclick="delPactometerRow(this)" title="Eliminar">✕</button></td>
-    <td style="text-align:center;padding:4px 6px"><input type="color" value="${colorVal}" title="Color del partido" onchange="updateHemicycle()"></td>
+    <td style="text-align:center;padding:4px 6px"><input type="color" value="${escapeHtml(colorVal)}" title="Color del partido" onchange="updateHemicycle()"></td>
     <td><div style="display:flex;align-items:center;gap:4px;width:100%">
-      <input type="text" class="pact-siglas-input" placeholder="Sig." maxlength="6" value="${siglas}" style="width:44px;flex-shrink:0;font-size:0.8rem;border:none;background:transparent;font-family:'Source Sans 3',sans-serif;outline:none;text-transform:uppercase;${pactSiglasVisible ? '' : 'display:none'}" oninput="this.value=this.value.toUpperCase()">
-      <input type="text" class="pact-name-input${pactNamesHidden ? (' names-hidden-mode' + (name ? ' names-has-value' : '')) : ''}" placeholder="Nombre del partido" value="${name}" style="flex:1;min-width:0;border:none;background:transparent;font-family:'Source Sans 3',sans-serif;font-size:14px;outline:none;color:inherit">
+      <input type="text" class="pact-siglas-input" placeholder="Sig." maxlength="6" value="${escapeHtml(siglas)}" style="width:44px;flex-shrink:0;font-size:0.8rem;border:none;background:transparent;font-family:'Source Sans 3',sans-serif;outline:none;text-transform:uppercase;${pactSiglasVisible ? '' : 'display:none'}" oninput="this.value=this.value.toUpperCase()">
+      <input type="text" class="pact-name-input${pactNamesHidden ? (' names-hidden-mode' + (name ? ' names-has-value' : '')) : ''}" placeholder="Nombre del partido" value="${escapeHtml(name)}" style="flex:1;min-width:0;border:none;background:transparent;font-family:'Source Sans 3',sans-serif;font-size:14px;outline:none;color:inherit">
     </div></td>
-    <td style="text-align:center"><input type="number" min="0" placeholder="0" value="${seats}" style="text-align:center;font-size:1.1rem;font-weight:600" oninput="updateHemicycle()"></td>
+    <td style="text-align:center"><input type="number" min="0" placeholder="0" value="${escapeHtml(seats)}" style="text-align:center;font-size:1.1rem;font-weight:600" oninput="updateHemicycle()"></td>
     <td style="text-align:center">
       <div style="display:flex;gap:4px;justify-content:center">
-        <button onclick="setBlock(this,'left')"  style="padding:4px 8px;border:1px solid var(--border);background:${block==='left'?'var(--accent)':'white'};color:${block==='left'?'white':'var(--text-muted)'};border-radius:3px;cursor:pointer;font-size:0.7rem;font-weight:600;font-family:'Source Sans 3',sans-serif;min-width:40px" class="block-btn-left">${currentLeftLabel}</button>
-        <button onclick="setBlock(this,'right')" style="padding:4px 8px;border:1px solid var(--border);background:${block==='right'?'var(--accent)':'white'};color:${block==='right'?'white':'var(--text-muted)'};border-radius:3px;cursor:pointer;font-size:0.7rem;font-weight:600;font-family:'Source Sans 3',sans-serif;min-width:40px" class="block-btn-right">${currentRightLabel}</button>
+        <button onclick="setBlock(this,'left')"  style="padding:4px 8px;border:1px solid var(--border);background:${block==='left'?'var(--accent)':'white'};color:${block==='left'?'white':'var(--text-muted)'};border-radius:3px;cursor:pointer;font-size:0.7rem;font-weight:600;font-family:'Source Sans 3',sans-serif;min-width:40px" class="block-btn-left">${escapeHtml(currentLeftLabel)}</button>
+        <button onclick="setBlock(this,'right')" style="padding:4px 8px;border:1px solid var(--border);background:${block==='right'?'var(--accent)':'white'};color:${block==='right'?'white':'var(--text-muted)'};border-radius:3px;cursor:pointer;font-size:0.7rem;font-weight:600;font-family:'Source Sans 3',sans-serif;min-width:40px" class="block-btn-right">${escapeHtml(currentRightLabel)}</button>
       </div>
     </td>`;
   tbody.appendChild(tr);

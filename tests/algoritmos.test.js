@@ -172,3 +172,13 @@ test('Congreso 2023: D\'Hondt por provincia con barrera del 3 % da los escaños 
   assert.equal(escanos, 350);
   assert.deepEqual(fallos, []);
 });
+
+/* ── Escape de HTML ───────────────────────────────────────────── */
+
+test('escapeHtml neutraliza etiquetas y comillas', () => {
+  const c = vm.createContext({ window: {}, document: {} });
+  cargar(c, 'js/helpers.js');
+  assert.equal(c.escapeHtml('"><img src=x onerror=1>&\''), '&quot;&gt;&lt;img src=x onerror=1&gt;&amp;&#39;');
+  assert.equal(c.escapeHtml(null), '');
+  assert.equal(c.escapeHtml(5), '5');
+});

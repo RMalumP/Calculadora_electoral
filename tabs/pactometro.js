@@ -9,11 +9,11 @@
  */
 
 registerTab('pactometer', 'tab-content', String.raw`
-    <div style="padding:40px;max-width:900px;margin:0 auto">
+    <div class="pacto-wrap">
 
-      <div style="display:flex;align-items:center;gap:15px;margin-bottom:20px">
-        <h2 style="font-family:'Libre Baskerville',serif;color:var(--text);font-size:1.8rem;margin:0">Pactómetro</h2>
-        <div style="display:flex;align-items:center;gap:8px;margin-left:auto">
+      <div class="pacto-head">
+        <h2 class="pacto-title">Pactómetro</h2>
+        <div class="pacto-head-tools">
           <label style="font-size:0.85rem;color:var(--text-muted);font-weight:600">Etiquetas bloques:</label>
           <select id="block-labels" onchange="updateBlockLabels()" style="padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:0.85rem;font-family:'Source Sans 3',sans-serif;background:white;cursor:pointer">
             <option value="izq-der">IZQ / DER</option>
@@ -29,7 +29,7 @@ registerTab('pactometer', 'tab-content', String.raw`
       <div class="card">
         <div class="card-header">
           <span class="dot"></span>Partidos con representación
-          <div style="margin-left:auto;display:flex;gap:8px">
+          <div class="pacto-card-actions">
             <button id="pact-lock-btn" onclick="togglePactLock()" class="ghost-btn" title="Bloquear actualización desde calculadora">🔓 Bloquear</button>
             <button onclick="resetPactometer()"       class="ghost-btn">Reiniciar</button>
             <button onclick="clearPactometerSeats()"  class="ghost-btn">Borrar <span class="seat-name-ref">escaños</span></button>
@@ -52,12 +52,12 @@ registerTab('pactometer', 'tab-content', String.raw`
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="5.5" stroke="currentColor" stroke-width="1.1"/><path d="M6 3v6M3 6h6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
           Añadir partido
         </button>
-        <div style="padding:10px 14px;border-top:1px solid var(--border);background:var(--accent-bg);display:flex;align-items:center;gap:8px">
+        <div class="pacto-total-bar">
           <label style="font-size:0.8rem;color:var(--text-muted);font-weight:600">Total <span class="seat-name-ref">escaños</span> fijo:</label>
           <input type="number" id="pact-total-seats" min="0" placeholder="Automático: 0" value=""
             style="width:150px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:0.85rem;text-align:center"
             oninput="updateHemicycle()" onchange="validateAndUpdatePactTotal()">
-          <div style="display:flex;align-items:center;gap:6px;margin-left:20px;padding:6px 10px;background:var(--accent-bg);border:1px solid var(--border);border-radius:var(--radius)">
+          <div class="pacto-free-seats">
             <label style="font-size:0.8rem;color:var(--text-muted);font-weight:600" for="pact-remaining-seats">Escaños libres:</label>
             <input type="number" id="pact-remaining-seats" readonly value="0"
               style="width:80px;padding:4px 8px;border:none;background:transparent;font-size:0.85rem;text-align:center;color:var(--accent);font-weight:600">
@@ -69,7 +69,7 @@ registerTab('pactometer', 'tab-content', String.raw`
       <!-- Hemiciclo -->
       <div class="card" style="margin-top:20px">
         <div class="card-header"><span class="dot"></span>Hemiciclo</div>
-        <div style="padding:30px;display:flex;flex-direction:column;align-items:center;gap:20px">
+        <div class="pacto-hemi-body">
 
           <button id="voting-panel-toggle" onclick="toggleVotingPanel()"
             style="display:none;width:700px;background:none;color:var(--text-muted);border:none;padding:2px 4px;font-family:'Source Sans 3',sans-serif;font-size:0.78rem;font-weight:600;cursor:pointer;text-align:left;transition:color 0.15s;margin:0"
@@ -89,7 +89,7 @@ registerTab('pactometer', 'tab-content', String.raw`
             <div id="voting-result" style="display:none;padding:10px 20px;background:rgba(0,0,0,0.8);color:white;border-radius:6px;font-size:1rem;font-weight:700"></div>
           </div>
 
-          <div style="display:flex;flex-direction:column;gap:0">
+          <div class="pacto-hemi-wrap">
             <div id="hemicycle-legend" style="width:700px;display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
               <div style="display:flex;align-items:center;gap:6px">
                 <span id="hemicycle-left-label" style="font-size:0.7rem;font-weight:700;color:var(--text-muted);letter-spacing:0.05em">IZQ</span>

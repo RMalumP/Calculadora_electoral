@@ -91,7 +91,10 @@ header span {
   display: flex;
   gap: 2px;
   box-shadow: 0 1px 0 var(--border);
+  overflow-x: auto;
+  scrollbar-width: none;
 }
+.tabs-container::-webkit-scrollbar { display: none; }
 
 .tab {
   background: none;
@@ -120,3 +123,8 @@ header span {
 
 .tab-content        { display: none; }
 .tab-content.active { display: block; }
+
+@media (max-width: 760px) {
+  .tabs-container { padding: 0 6px; }
+  .tab { padding: 12px 14px; font-size: 0.84rem; white-space: nowrap; flex: 0 0 auto; }
+}

@@ -89,10 +89,7 @@ function advPartyColor(p) {
 const advNum = n => formatVotes(n || 0);
 const advPct = n => (n || 0).toFixed(2) + '%';
 
-function advEscape(s) {
-  return String(s ?? '').replace(/[&<>"']/g, c =>
-    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-}
+function advEscape(s) { return escapeHtml(s); }
 
 /* ── Carga de datos ────────────────────────────────────────── */
 
