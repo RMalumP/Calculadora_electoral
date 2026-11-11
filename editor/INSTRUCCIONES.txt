@@ -191,6 +191,11 @@
                     comunidad: PSC → PSOE, ECP-GUANYEM EL CANVI → PODEMOS-IU.
        Viene de ... continúa a un partido o coalición anterior:
                     SUMAR → PODEMOS-IU.
+  · «Sugerir enlaces…» propone de golpe los enlaces que faltan: la historia
+    de los partidos (PP viene de AP, CDS de UCD, IU del PCE, EH Bildu de
+    Amaiur…) y las coaliciones y marcas regionales (AP-PDP → AP, PSOE-A →
+    PSOE, IU-LV → IU). Se marcan o desmarcan y se aplican los marcados; un
+    solo «Deshacer» los quita todos.
   · Los enlaces se pueden encadenar. «Familia» es el final de la cadena: el
     espacio político al que pertenece (ECP → PODEMOS-IU → PODEMOS-IU-EQUO).
   · No se admiten círculos ni enlaces a partidos que no existen.

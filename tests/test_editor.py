@@ -407,6 +407,20 @@ class TestEnlaces(BaseCopia):
         self.assertEqual(partidos['SUMAR']['familia'], 'UNIDAS PODEMOS')
         self.assertEqual(partidos['SUMAR']['tipoEnlace'], 'Viene de')
 
+    def test_sugerir_enlaces(self):
+        sug = {(x['siglas'], x['destino'], x['tipo']) for x in self.m.sugerir_enlaces()}
+        self.assertIn(('PP', 'AP', 'Viene de'), sug)
+        self.assertIn(('AP-PDP', 'AP', 'Coalición'), sug)
+        self.assertIn(('PSOE-A', 'PSOE', 'Coalición'), sug)
+        self.assertFalse([x for x in sug if x[0] == 'PSC-PSOE'])   # ya estaba enlazado
+        n = self.m.aplicar_enlaces([x for x in self.m.sugerir_enlaces() if x['siglas'] in ('PP', 'AP-PDP')])
+        self.assertEqual(n, 2)
+        self.assertEqual(self.m.familia('AP-PDP'), 'AP')
+        self.assertEqual(self.m.partido('PP')['Tipo de enlace'], 'Viene de')
+        self.m.deshacer()
+        self.assertFalse(self.m.partido('PP').get('Enlazado con'))
+        self.assertFalse(self.m.comprobar().errores)
+
     def test_enlace_roto_es_error(self):
         self.m.partido('PP')['Enlazado con'] = 'NADA'
         self.assertTrue(any('NADA' in e['msg'] for e in self.m.comprobar().errores))
