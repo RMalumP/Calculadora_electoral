@@ -638,9 +638,18 @@ function advReadCompForm() {
   };
 }
 
+let _advRunPendiente = false;
+
+/** Recalcula en el siguiente fotograma: varios cambios seguidos (cargar una sesión, cambiar de ámbito) dan un solo cálculo. */
+function advRunSoon() {
+  if (_advRunPendiente) return;
+  _advRunPendiente = true;
+  requestAnimationFrame(() => { _advRunPendiente = false; if (_advLoaded) advRun(); });
+}
+
 function advOnConfigChange() {
   advRefreshFormState();
-  if (_advLoaded) advRun();
+  if (_advLoaded) advRunSoon();
 }
 
 /* ── Cálculo y render ──────────────────────────────────────── */

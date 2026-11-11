@@ -109,7 +109,12 @@ function switchTab(tabName, updateHash = true) {
     }
   }
 
-  if (tabName === 'advanced' && typeof advEnsureLoaded === 'function') advEnsureLoaded();
+  if (tabName === 'advanced') {
+    advCargarModulos().then(() => advEnsureLoaded()).catch(() => {
+      const sub = select('#adv-subtitle');
+      if (sub) sub.textContent = 'No se han podido cargar los módulos de la calculadora avanzada. Comprueba la conexión y recarga la página.';
+    });
+  }
 }
 
 /** Pestaña indicada en la URL, si la hay. */

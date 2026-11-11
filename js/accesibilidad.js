@@ -43,7 +43,9 @@ function a11yEtiquetaVecina(el) {
 
 function a11yEtiquetar(root) {
   const base = root || document;
-  base.querySelectorAll('input:not([type=hidden]):not([type=file]), select, textarea').forEach(el => {
+  const campos = [...base.querySelectorAll('input:not([type=hidden]):not([type=file]), select, textarea')];
+  if (base !== document && base.matches?.('input, select, textarea')) campos.push(base);
+  campos.forEach(el => {
     if (a11yNombreDe(el)) return;
     const porMapa = A11Y_NOMBRES.find(([sel]) => el.matches(sel));
     if (porMapa) { el.setAttribute('aria-label', porMapa[1]); return; }
@@ -53,7 +55,9 @@ function a11yEtiquetar(root) {
     if (txt) el.setAttribute('aria-label', txt);
   });
   // Botones que sólo llevan un símbolo: su título es el nombre.
-  base.querySelectorAll('button:not([aria-label])').forEach(b => {
+  const botones = [...(base.querySelectorAll?.('button:not([aria-label])') || [])];
+  if (base.matches?.('button:not([aria-label])')) botones.push(base);
+  botones.forEach(b => {
     if (!b.textContent.trim().replace(/[✕→⠿▲▼🔒🔓+×]/g, '') && b.title) b.setAttribute('aria-label', b.title);
   });
 }
@@ -123,7 +127,7 @@ function temaSiguiente() {
 
 /* ── Arranque ─────────────────────────────────────────────────── */
 
-(function iniciarAccesibilidad() {
+function iniciarAccesibilidad() {
   // Pestañas: tras cada cambio de pestaña se actualizan roles y estado.
   if (typeof switchTab === 'function') {
     const original = switchTab;
@@ -138,13 +142,21 @@ function temaSiguiente() {
 
   // Campos: ahora y cada vez que se añadan filas o se pinten tablas.
   a11yEtiquetar();
-  let pendiente = false;
-  new MutationObserver(() => {
-    if (pendiente) return;
-    pendiente = true;
-    requestAnimationFrame(() => { pendiente = false; a11yEtiquetar(); });
+  // Sólo se revisan los nodos nuevos, agrupados en un fotograma.
+  let nuevos = [];
+  new MutationObserver(muts => {
+    muts.forEach(m => m.addedNodes.forEach(n => { if (n.nodeType === 1) nuevos.push(n); }));
+    if (!nuevos.length || nuevos.pending) return;
+    nuevos.pending = true;
+    requestAnimationFrame(() => {
+      const lote = nuevos; nuevos = [];
+      lote.forEach(n => { if (n.isConnected) a11yEtiquetar(n); });
+    });
   }).observe(document.querySelector('.main') || document.body, { childList: true, subtree: true });
 
   document.getElementById('theme-btn')?.addEventListener('click', temaSiguiente);
   temaAplicar(temaActual());
-})();
+}
+
+// Después de que tabs.js monte las pestañas (su listener se registró antes).
+document.addEventListener('DOMContentLoaded', iniciarAccesibilidad);
