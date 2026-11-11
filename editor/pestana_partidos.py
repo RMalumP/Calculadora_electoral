@@ -31,6 +31,7 @@ class PestanaPartidos(ttk.Frame):
         ttk.Button(barra, text='Colores a los que no tienen', command=self.colores_auto).pack(side='left', padx=2)
         ttk.Button(barra, text='Fusionar con…', command=self.fusionar).pack(side='left', padx=2)
         ttk.Button(barra, text='🔗 Enlazar con…', command=self.enlazar).pack(side='left', padx=2)
+        ttk.Button(barra, text='Sugerir enlaces…', command=self.sugerir).pack(side='left', padx=2)
         ttk.Button(barra, text='Borrar', command=self.borrar).pack(side='left', padx=2)
         ttk.Button(barra, text='Dónde aparece', command=self.usos).pack(side='left', padx=2)
         self.tabla = TablaEditable(self, al_editar=self._editar, con_imagen=True)
@@ -154,6 +155,14 @@ class PestanaPartidos(ttk.Frame):
         if iid:
             DialogoEnlace(self, self.app, iid)
 
+    def sugerir(self):
+        sugerencias = self.app.modelo.sugerir_enlaces()
+        if not sugerencias:
+            messagebox.showinfo('Sugerir enlaces', 'No hay enlaces que proponer: los partidos que se '
+                                'parecen ya están enlazados.', parent=self)
+            return
+        DialogoSugerencias(self, self.app, sugerencias)
+
     def borrar(self):
         iid, _ = self._actual()
         if not iid:
@@ -233,3 +242,68 @@ class DialogoEnlace(tk.Toplevel):
         fam = self.app.modelo.familia(self.siglas)
         self.app.estado(f'«{self.siglas}» sin enlace.' if quitar else
                         f'«{self.siglas}» enlazado. Familia: {fam}.')
+
+
+class DialogoSugerencias(tk.Toplevel):
+    """Lista de enlaces propuestos (historia del partido y coaliciones). Se aplican los marcados."""
+
+    def __init__(self, pestana, app, sugerencias):
+        super().__init__(pestana)
+        self.app, self.sug = app, sugerencias
+        self.title('Sugerir enlaces')
+        self.transient(pestana.winfo_toplevel())
+        self.geometry('900x520')
+        f = ttk.Frame(self, padding=12)
+        f.pack(fill='both', expand=True)
+        ttk.Label(f, text=f'{len(sugerencias)} enlaces propuestos. Clic en una fila para marcarla o '
+                          'desmarcarla; se aplican sólo las marcadas (☑). Cada partido conserva sus votos.',
+                  wraplength=860, justify='left').pack(fill='x', pady=(0, 8))
+        cols = ('marca', 'siglas', 'destino', 'tipo', 'motivo')
+        caja = ttk.Frame(f)
+        caja.pack(fill='both', expand=True)
+        self.tree = ttk.Treeview(caja, columns=cols, show='headings', selectmode='none')
+        for c, t, a in [('marca', '', 30), ('siglas', 'Partido', 180), ('destino', 'Enlazar con', 150),
+                        ('tipo', 'Tipo', 90), ('motivo', 'Por qué', 400)]:
+            self.tree.heading(c, text=t)
+            self.tree.column(c, width=a, stretch=(c == 'motivo'), anchor='center' if c == 'marca' else 'w')
+        sb = ttk.Scrollbar(caja, orient='vertical', command=self.tree.yview)
+        self.tree.configure(yscrollcommand=sb.set)
+        self.tree.pack(side='left', fill='both', expand=True)
+        sb.pack(side='right', fill='y')
+        self.marcados = set(range(len(sugerencias)))
+        for i, x in enumerate(sugerencias):
+            self.tree.insert('', 'end', iid=str(i),
+                             values=('☑', x['siglas'], x['destino'], x['tipo'], x['motivo']))
+        self.tree.bind('<Button-1>', self._clic)
+        b = ttk.Frame(f)
+        b.pack(fill='x', pady=(10, 0))
+        ttk.Button(b, text='Marcar todos', command=lambda: self._todos(True)).pack(side='left')
+        ttk.Button(b, text='Desmarcar todos', command=lambda: self._todos(False)).pack(side='left', padx=4)
+        ttk.Button(b, text='Cancelar', command=self.destroy).pack(side='right', padx=4)
+        ttk.Button(b, text='Enlazar los marcados', command=self._aplicar).pack(side='right')
+        self.bind('<Escape>', lambda e: self.destroy())
+        self.grab_set()
+
+    def _poner(self, i, si):
+        (self.marcados.add if si else self.marcados.discard)(i)
+        self.tree.set(str(i), 'marca', '☑' if si else '☐')
+
+    def _clic(self, ev):
+        fila = self.tree.identify_row(ev.y)
+        if fila:
+            i = int(fila)
+            self._poner(i, i not in self.marcados)
+        return 'break'
+
+    def _todos(self, si):
+        for i in range(len(self.sug)):
+            self._poner(i, si)
+
+    def _aplicar(self):
+        elegidos = [self.sug[i] for i in sorted(self.marcados)]
+        if not elegidos:
+            self.destroy()
+            return
+        n = self.app.modelo.aplicar_enlaces(elegidos)
+        self.destroy()
+        self.app.estado(f'{n} partido(s) enlazados. «Deshacer» los quita todos a la vez.')

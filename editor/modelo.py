@@ -65,6 +65,23 @@ PALETA = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e3
           '#7b4173', '#3182bd', '#e6550d', '#31a354', '#756bb1', '#636363']
 
 
+
+# Historia conocida (siglas, enlazado con, tipo). Sólo se proponen si los dos existen.
+HISTORIA_PARTIDOS = [
+    ('PP', 'AP', 'Viene de'), ('CD', 'AP', 'Coalición'), ('UPN-PP', 'PP', 'Coalición'),
+    ('CDS', 'UCD', 'Viene de'), ('IU', 'PCE', 'Viene de'),
+    ('IC', 'PSUC', 'Viene de'), ('IC-V', 'IC', 'Viene de'), ('ICV-EUiA', 'IC-V', 'Viene de'),
+    ('EH', 'HB', 'Viene de'), ('AMAIUR', 'EH', 'Viene de'), ('EH Bildu', 'AMAIUR', 'Viene de'),
+    ('CiU', 'CIU', 'Coalición'), ('JxCAT - JUNTS', 'CiU', 'Viene de'),
+    ('CCa', 'AIC', 'Viene de'), ('PNV', 'EAJ-PNV', 'Coalición'), ('UPD', 'UPyD', 'Coalición'),
+    ('PODEMOS-IU', 'PODEMOS', 'Viene de'), ('SUMAR', 'PODEMOS-IU', 'Viene de'),
+]
+PALABRAS_COMUNES = {'PARTIDO', 'PARTIT', 'PARTIDU', 'COALICION', 'COALICIÓN', 'COALICIO', 'ELECTORAL',
+                    'AGRUPACION', 'AGRUPACIÓN', 'ELECTORES', 'CANDIDATURA', 'FEDERACION', 'FEDERACIÓN',
+                    'UNIDA', 'UNIDAS', 'UNIDO', 'UNIDOS', 'UNION', 'UNIÓN', 'UNIO', 'UNIÓ',
+                    'DELS', 'PARA', 'POR', 'CON', 'LOS', 'LAS', 'DEL', 'ESPAÑA', 'ESPAÑOL', 'ESPAÑOLA'}
+
+
 class ErrorModelo(Exception):
     """Una operación que no se puede hacer, con un mensaje para enseñar tal cual."""
 
@@ -373,6 +390,63 @@ class Modelo:
         p['Enlazado con'] = destino or None
         p['Tipo de enlace'] = (tipo if destino else None)
         self._despues()
+
+    def sugerir_enlaces(self):
+        """Propone enlaces para los partidos que no tienen ninguno. Devuelve una lista de
+        {'siglas', 'destino', 'tipo', 'motivo'}; no cambia nada (eso lo hace aplicar_enlaces).
+
+          · Historia conocida de partidos españoles (PP viene de AP, CDS de UCD…).
+          · Coaliciones y marcas regionales: siglas que empiezan por las de otro partido
+            más usado y con alguna palabra del nombre en común (AP-PDP → AP, PSOE-A → PSOE).
+        """
+        usos = self.contar_usos()
+        por_siglas = {texto(p.get('Siglas')): p for p in self.partidos}
+        libres = {s for s, p in por_siglas.items() if not texto(p.get('Enlazado con'))}
+        out, vistos = [], set()
+
+        def proponer(s, d, tipo, motivo):
+            if s in vistos or s not in libres or d not in por_siglas or s == d or s in self.cadena(d):
+                return
+            vistos.add(s)
+            out.append({'siglas': s, 'destino': d, 'tipo': tipo, 'motivo': motivo})
+
+        for s, d, tipo in HISTORIA_PARTIDOS:
+            proponer(s, d, tipo, 'Historia del partido')
+
+        def palabras(t):
+            return {w for w in re.split(r'[^A-ZÑÁÉÍÓÚÜÇ]+', texto(t).upper())
+                    if len(w) >= 4 and w not in PALABRAS_COMUNES}
+
+        for s in sorted(libres, key=lambda x: (usos.get(x, 0), x)):
+            p = por_siglas[s]
+            trozos = [t for t in re.split(r'\s*[-/,:+]\s*|\s+', s) if t]
+            entre_parentesis = re.findall(r'\(([^)]+)\)', s)
+            for t in entre_parentesis + trozos[:1]:
+                t = t.strip()
+                d = por_siglas.get(t)
+                if (not d or t == s or usos.get(t, 0) <= usos.get(s, 0)
+                        or texto(d.get('País')) != texto(p.get('País'))):
+                    continue
+                comunes = palabras(p.get('Nombre')) & palabras(d.get('Nombre'))
+                if comunes:
+                    proponer(s, t, 'Coalición', f'Empieza por «{t}» y comparte «{sorted(comunes)[0].lower()}»')
+                    break
+        return out
+
+    def aplicar_enlaces(self, sugerencias):
+        """Aplica de una vez (un solo «Deshacer») los enlaces elegidos. Devuelve cuántos."""
+        self._antes()
+        n = 0
+        for x in sugerencias:
+            p = self.partido(x['siglas'])
+            if (not p or texto(p.get('Enlazado con')) or not self.partido(x['destino'])
+                    or x['siglas'] in self.cadena(x['destino'])):
+                continue
+            p['Enlazado con'] = x['destino']
+            p['Tipo de enlace'] = x['tipo']
+            n += 1
+        self._despues()
+        return n
 
     def editar_partido(self, siglas, campo, valor):
         p = self.partido(siglas)
