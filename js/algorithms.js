@@ -26,6 +26,7 @@ function allocateSeats(parties, totalSeats, formula) {
     case 'droop':
     case 'hb':              return largestRemainder(parties, totalSeats, v => v / (totalSeats + 1));
     case 'majority':        return majority(parties, totalSeats);
+    case 'limited_vote':    return limitedVote(parties, totalSeats);
     case 'majority_round2': return majorityRound2(totalSeats);
     default:                return highestAverage(parties, totalSeats, getDivFn('dhondt'));
   }
@@ -100,6 +101,35 @@ function majority(parties, totalSeats) {
   if (!parties.length) return [];
   const winner = parties.reduce((max, p) => p.votes > max.votes ? p : max);
   return parties.map(p => ({ ...p, seats: p === winner ? totalSeats : 0 }));
+}
+
+/**
+ * Votos que puede dar cada elector en el voto limitado (Senado, art. 166 LOREG):
+ * uno menos que los escaños cuando se eligen 3 o más (3 de 4, 2 de 3) y tantos
+ * como escaños cuando se eligen 1 o 2 (islas menores, Ceuta y Melilla).
+ */
+function limitedVoteMax(totalSeats) {
+  return totalSeats >= 3 ? totalSeats - 1 : totalSeats;
+}
+
+/**
+ * Mayoritario plurinominal parcial (voto limitado). Cada partido presenta como
+ * mucho tantos candidatos como votos tiene el elector y todos ellos reciben
+ * los votos del partido, así que los escaños van por orden de votos y ningún
+ * partido pasa del máximo: con 4 escaños, 3 al primero y 1 al segundo.
+ */
+function limitedVote(parties, totalSeats) {
+  const max = limitedVoteMax(totalSeats);
+  const order = parties.map((p, i) => i).sort((a, b) => parties[b].votes - parties[a].votes);
+  const seats = parties.map(() => 0);
+  let left = totalSeats;
+  for (const i of order) {
+    if (left <= 0) break;
+    if (!(parties[i].votes > 0)) continue;
+    seats[i] = Math.min(max, left);
+    left -= seats[i];
+  }
+  return parties.map((p, i) => ({ ...p, seats: seats[i] }));
 }
 
 /** Mayoritario de segunda vuelta (lee del DOM de segunda vuelta) */

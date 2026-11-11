@@ -230,7 +230,27 @@ _NUMS_CIRC = (('Población', 'poblacion'), ('Mesas', 'mesas'), ('Censo sin CERA'
 
 
 # Columnas añadidas después: si faltan, se crean al guardar.
-COLUMNAS_OPCIONALES = {'Enlazado con', 'Tipo de enlace'}
+COLUMNAS_OPCIONALES = {'Enlazado con', 'Tipo de enlace', 'Escaños totales', 'Escaños reales (total)'}
+
+
+def leer_reales(v):
+    """«PP: 22; PSOE: 20» → ({'PP': 22, 'PSOE': 20}, trozos que no se entienden)."""
+    reales, malos = {}, []
+    for trozo in texto(v).replace('\n', ';').split(';'):
+        trozo = trozo.strip()
+        if not trozo:
+            continue
+        siglas, _, n = trozo.rpartition(':')
+        n = entero(n.strip())
+        if not siglas.strip() or n is None or n < 0:
+            malos.append(trozo)
+            continue
+        reales[siglas.strip()] = reales.get(siglas.strip(), 0) + n
+    return reales, malos
+
+
+def escribir_reales(reales):
+    return '; '.join(f'{s}: {n}' for s, n in sorted(reales.items(), key=lambda x: (-x[1], x[0])) if n) or None
 
 
 def comprobar(t, inf=None):
@@ -291,6 +311,14 @@ def comprobar(t, inf=None):
             elif val:
                 inf.aviso(H, fila, f'barrera {k} con porcentaje pero sin ámbito: se ignora', eid)
         f2 = fecha(f.get('Fecha 2ª vuelta'))
+        total = entero(f.get('Escaños totales'))
+        if texto(f.get('Escaños totales')) and (total is None or total < 0):
+            inf.error(H, fila, '«Escaños totales» debe ser un número entero', eid)
+            total = None
+        reales, malos = leer_reales(f.get('Escaños reales (total)'))
+        if malos:
+            inf.error(H, fila, '«Escaños reales (total)» se escribe «SIGLAS: escaños; …» '
+                               f'(no entiendo «{malos[0]}»)', eid)
         elecciones[eid] = {
             'id': eid, 'archivo': archivo_de(eid), 'pestana': pestana, '_fila': fila,
             'pais': texto(f.get('País')), 'clase': texto(f.get('Clase')), 'tipo': texto(f.get('Tipo')),
@@ -301,6 +329,7 @@ def comprobar(t, inf=None):
             'minimo': entero(f.get('Mínimo por circunscripción')),
             'formaVoto': texto(f.get('Forma de voto')),
             'formula': fid, 'barreras': barreras,
+            'escanosTotales': total or None, 'escanosReales': reales or None,
             'fuente': texto(f.get('Fuente')), 'notas': texto(f.get('Notas')),
             'circunscripciones': [], 'resultados': [], '_codigos': {},
         }
@@ -395,6 +424,10 @@ def comprobar(t, inf=None):
     for p in partidos.values():
         del p['_fila']
 
+    for e in elecciones.values():
+        for sg in e.get('escanosReales') or {}:
+            if sg not in partidos:
+                inf.aviso(HOJA_ELECCIONES, e['_fila'], f'«Escaños reales (total)»: «{sg}» no está en Partidos', e['id'])
     usadas = {e['pestana'] for e in elecciones.values()}
     t['_respaldo'] = respaldo_de(t, inf)
     for h, filas in t.get('resultados', {}).items():

@@ -84,6 +84,13 @@
     España.Senado, Europa...). Sólo se borra si no tiene elecciones.
   · Una elección sin resultados da error: no se puede publicar hasta que
     tenga votos.
+  · Circunscripción única con datos por provincias (europeas): deja las
+    provincias con 0 escaños y rellena «Escaños totales» (61) y «Escaños
+    reales (total)» («PP: 22; PSOE: 20; …»). La app reparte los escaños al
+    nivel que se elija (estatal, comunidad o provincia) por población.
+  · Senado: fórmula «Mayoritario plurinominal parcial» (voto limitado: 3 de
+    4, 2 de 3). Al importar, los votos de cada partido son la media de sus
+    candidatos más votados (tantos como votos tiene el elector).
 
 
 ────────────────────────────────────────────────────────────────────────────────

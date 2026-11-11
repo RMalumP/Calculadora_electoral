@@ -138,7 +138,7 @@ function advPopupLastSeat(body) {
   const formulaName = FORMULAS.find(f => f.id === formula)?.name || formula || '—';
   const head = `<p class="adv-popup-note"><b>${advEscape(d.name)}</b> · ${advNum(d.analysis?.toAllocate || 0)} escaños repartidos · ${advEscape(formulaName)}</p>`;
 
-  if (!info || !info.loser || formula === 'majority' || formula === 'majority_round2') {
+  if (!info || !info.loser || formula === 'majority' || formula === 'majority_round2' || formula === 'limited_vote') {
     body.innerHTML = head + '<p class="adv-empty">Esta circunscripción no tiene un último escaño que analizar con esta fórmula.</p>';
     return;
   }

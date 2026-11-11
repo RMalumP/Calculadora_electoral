@@ -28,6 +28,7 @@ RAIZ = os.path.dirname(AQUI)
 sys.path.insert(0, os.path.join(RAIZ, 'scripts'))
 
 from base_datos import (  # noqa: E402
+    escribir_reales, leer_reales,
     Informe, comprobar, entero, es_color, escribir_libro, fecha, leer_libro, norm,
     tablas_vacias, texto,
 )
@@ -128,7 +129,7 @@ def valor_de_texto(columna, t):
 NUMERICAS = {'Escaños', 'Mínimo', 'Población', 'Mesas', 'Censo sin CERA', 'Censo CERA',
              'Censo total', 'Votantes CER', 'Votantes CERA', 'Votantes total', 'Votos válidos',
              'Votos a candidaturas', 'Votos en blanco', 'Votos nulos', 'Votos', 'Escaños reales',
-             'Vuelta', 'Mínimo por circunscripción'}
+             'Vuelta', 'Mínimo por circunscripción', 'Escaños totales'}
 
 
 def leer_enlace(t):
@@ -443,6 +444,11 @@ class Modelo:
         for p in self.partidos:
             if texto(p.get('Enlazado con')) == vieja:
                 p['Enlazado con'] = nueva
+        for e in self.elecciones:
+            reales, _malos = leer_reales(e.get('Escaños reales (total)'))
+            if vieja in reales:
+                reales[nueva] = reales.get(nueva, 0) + reales.pop(vieja)
+                e['Escaños reales (total)'] = escribir_reales(reales)
         if destino and texto(destino.get('Enlazado con')) == nueva:
             destino['Enlazado con'] = None       # se había enlazado con el que absorbe
             destino['Tipo de enlace'] = None

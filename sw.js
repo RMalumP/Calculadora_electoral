@@ -1,4 +1,4 @@
-const CACHE = 'calculadora-electoral-v4';
+const CACHE = 'calculadora-electoral-v5';
 const ASSETS = [
   './',
   './index.html',

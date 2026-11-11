@@ -346,7 +346,7 @@ function displayLastSeatInfo() {
   const container = document.getElementById('last-seat-container');
   const formula = document.getElementById('formula-select').value;
 
-  if (formula === 'majority' || formula === 'majority_round2' || !info || !info.loser) {
+  if (formula === 'majority' || formula === 'majority_round2' || formula === 'limited_vote' || !info || !info.loser) {
     container.style.display = 'none';
     return;
   }
