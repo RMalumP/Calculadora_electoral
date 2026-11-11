@@ -149,8 +149,9 @@ class TestModelo(BaseCopia):
         self.m.editar_eleccion(EID, 'Fórmula', 'Dhont')
         errs = self.m.comprobar().errores
         self.assertEqual(errs[0]['hoja'], 'Elecciones')
-        self.assertEqual(errs[0]['fila'], 2)
-        self.assertIs(self.m.fila_de('Elecciones', 2), self.m.eleccion(EID))
+        fila = self.m.t['elecciones'].index(self.m.eleccion(EID)) + 2
+        self.assertEqual(errs[0]['fila'], fila)
+        self.assertIs(self.m.fila_de('Elecciones', fila), self.m.eleccion(EID))
 
     def test_ambitos(self):
         self.m.nuevo_ambito('Francia.Presidenciales')
@@ -382,11 +383,11 @@ class TestEnlaces(BaseCopia):
     """Enlazar partidos: coaliciones con otro nombre y evolución."""
 
     def test_enlazar_familia_y_guardar(self):
-        self.m.nuevo_partido('ECP', 'En Comú Podem', 'España')
+        self.m.nuevo_partido('ECP-T', 'En Comú Podem', 'España')
         self.m.nuevo_partido('UP', 'Unidas Podemos', 'España')
-        self.m.enlazar('ECP', 'UP', 'Coalición')
+        self.m.enlazar('ECP-T', 'UP', 'Coalición')
         self.m.enlazar('SUMAR', 'UP', 'Viene de')
-        self.assertEqual(self.m.cadena('ECP'), ['ECP', 'UP'])
+        self.assertEqual(self.m.cadena('ECP-T'), ['ECP-T', 'UP'])
         self.assertEqual(self.m.familia('SUMAR'), 'UP')
         with self.assertRaises(ErrorModelo):
             self.m.enlazar('UP', 'SUMAR')            # círculo
@@ -395,7 +396,7 @@ class TestEnlaces(BaseCopia):
         with self.assertRaises(ErrorModelo):
             self.m.borrar_partido('UP')               # tiene enlazados
         self.m.renombrar_siglas('UP', 'UNIDAS PODEMOS')
-        self.assertEqual(self.m.partido('ECP')['Enlazado con'], 'UNIDAS PODEMOS')
+        self.assertEqual(self.m.partido('ECP-T')['Enlazado con'], 'UNIDAS PODEMOS')
         self.m.guardar()
         m2 = Modelo.abrir(self.ruta)
         self.assertEqual(m2.partido('SUMAR')['Tipo de enlace'], 'Viene de')
