@@ -430,7 +430,14 @@ def _analizar_ancha(cab, sub, datos, modelo, eid, pais, nombres=None):
             vistos[titulo] = _nuevo_partido(modelo, titulo, pais, nombres.get(titulo, ''))
             partidos.append(vistos[titulo])
 
+    # Subtítulos que sólo marcan columnas a ignorar (Senado de 1979): el resto va como si no hubiera.
+    ignorar = set()
+    if sub and not any(x and x != 'ignorar' for x in sub):
+        ignorar = {j for j, x in enumerate(sub) if x == 'ignorar'}
+        sub = None
     for j, titulo in enumerate(cab):
+        if j in ignorar:
+            continue
         tipo = _tipo_columna(titulo)
         s = sub[j] if sub else ''
         if s:
