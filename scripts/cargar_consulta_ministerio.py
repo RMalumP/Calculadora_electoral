@@ -55,6 +55,10 @@ def siglas_de(texto_fila, prefijo):
 
 
 def cargar(clase, ruta):
+    if clase == 'europeas':
+        # La consulta separa las marcas regionales de cada lista (PSC-PSOE, IU-CA…) y sin la lista
+        # nacional el D'Hondt no da los escaños reales. Mejor los zips PROV_07 del Ministerio.
+        raise SystemExit('Para las europeas usa los zips PROV_07 del Ministerio con el importador del editor.')
     cfg = TIPOS[clase]
     filas = list(openpyxl.load_workbook(ruta, read_only=True, data_only=True).worksheets[0].iter_rows(values_only=True))
     cab = filas[3]
