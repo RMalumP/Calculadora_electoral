@@ -2,8 +2,8 @@
 """
 IMPORTAR RESULTADOS  (sin ventana: se prueba sin tkinter)
 ═════════════════════════════════════════════════════════
-Lee una tabla de resultados (CSV, Excel o texto pegado desde una web o desde
-Excel) y la mete en la elección elegida. Admite dos formas de tabla:
+Lee una tabla de resultados (CSV, Excel, el .zip del Ministerio del Interior o
+texto pegado desde una web o desde Excel) y la mete en la elección elegida. Admite dos formas de tabla:
 
   · ANCHA: una fila por circunscripción y una columna por partido. Puede
     llevar también columnas de censo, votantes, blancos, nulos... Si la fila
@@ -68,8 +68,35 @@ def leer_texto(t):
     return [[c.strip() for c in f] for f in filas if any(c.strip() for c in f)]
 
 
+TABLAS = ('.xlsx', '.xlsm', '.csv', '.txt', '.tsv')
+
+
+def _con_zip(ruta, funcion, *args):
+    """Un .zip (como los del Ministerio) se abre por dentro: se usa la primera tabla que lleve."""
+    import shutil
+    import tempfile
+    import zipfile
+    with zipfile.ZipFile(ruta) as z:
+        dentro = [n for n in z.namelist() if n.lower().endswith(TABLAS) and not n.startswith('__MACOSX')
+                  and not os.path.basename(n).startswith(('~$', '.'))]
+        if not dentro:
+            raise ErrorModelo('El .zip no lleva ninguna tabla (.xlsx o .csv) que se pueda leer.')
+        carpeta = tempfile.mkdtemp(prefix='importar_')
+        try:
+            destino = os.path.join(carpeta, os.path.basename(dentro[0]))
+            with z.open(dentro[0]) as origen, open(destino, 'wb') as f:
+                shutil.copyfileobj(origen, f)
+            return funcion(destino, *args)
+        finally:
+            shutil.rmtree(carpeta, ignore_errors=True)
+
+
 def hojas_de(ruta):
     """Pestañas de un Excel (para elegir cuál importar)."""
+    if ruta.lower().endswith('.zip'):
+        return _con_zip(ruta, hojas_de)
+    if not ruta.lower().endswith(('.xlsx', '.xlsm')):
+        return []
     import openpyxl
     wb = openpyxl.load_workbook(ruta, read_only=True)
     try:
@@ -80,6 +107,8 @@ def hojas_de(ruta):
 
 def leer_archivo(ruta, hoja=None):
     ext = os.path.splitext(ruta)[1].lower()
+    if ext == '.zip':
+        return _con_zip(ruta, leer_archivo, hoja)
     if ext in ('.xlsx', '.xlsm'):
         import openpyxl
         wb = openpyxl.load_workbook(ruta, read_only=True, data_only=True)
@@ -108,12 +137,12 @@ CAMPOS_CIRC = {
     'Mínimo': ['minimo', 'minimo por circunscripcion'],
     'Población': ['poblacion', 'population'],
     'Mesas': ['mesas', 'numero de mesas', 'n mesas', 'total mesas'],
-    'Censo sin CERA': ['censo sin cera', 'censo cer', 'censo ine', 'censo residentes'],
+    'Censo sin CERA': ['censo sin cera', 'censo electoral sin cera', 'censo cer', 'censo ine', 'censo residentes'],
     'Censo CERA': ['censo cera'],
     'Censo total': ['censo', 'censo total', 'total censo', 'total censo electoral', 'censo electoral', 'electores',
                     'inscritos', 'inscrits', 'electorate'],
-    'Votantes CER': ['votantes cer', 'votantes sin cera'],
-    'Votantes CERA': ['votantes cera'],
+    'Votantes CER': ['votantes cer', 'total votantes cer', 'votantes sin cera'],
+    'Votantes CERA': ['votantes cera', 'total votantes cera'],
     'Votantes total': ['votantes', 'total votantes', 'votantes total', 'votos emitidos', 'votants', 'turnout'],
     'Votos válidos': ['votos validos', 'validos', 'exprimes', 'suffrages exprimes', 'valid votes'],
     'Votos a candidaturas': ['votos a candidaturas', 'a candidaturas', 'votos candidaturas', 'candidaturas'],
@@ -138,7 +167,7 @@ VOTOS = ['votos', 'voix', 'votes', 'votos obtenidos', 'n votos']
 ESCANOS = ['escanos', 'escanos reales', 'electos', 'diputados', 'senadores', 'concejales', 'seats', 'sieges',
            'elus', 'escanos obtenidos']
 VUELTA = ['vuelta', 'tour', 'round']
-IGNORAR = ['total', 'totales', 'suma', 'participacion', 'abstencion', 'abstenciones', 'abstention', 'comunidad',
+IGNORAR = ['solicitudes voto cera aceptadas', 'solicitudes cera', 'total', 'totales', 'suma', 'participacion', 'abstencion', 'abstenciones', 'abstention', 'comunidad',
            'elecciones', 'eleccion', 'fecha', 'tipo', 'ano', 'mes', 'pais']
 FILAS_TOTAL = {'total', 'totales', 'total nacional', 'total general', 'suma', 'total espana', 'resultados totales'}
 
@@ -191,22 +220,54 @@ def _es_numero(v):
     return _numero(v) is not None
 
 
-def _buscar_cabecera(filas):
-    """Índice de la fila de cabecera: la primera con varios textos seguida de filas con números."""
-    for i, f in enumerate(filas[:40]):
-        textos = [c for c in f if texto(c).strip() and not _es_numero(c)]
-        if len(textos) < 2:
-            continue
-        for g in filas[i + 1:i + 4]:
-            if sum(1 for c in g if _es_numero(c)) >= 1 and sum(1 for c in g if texto(c).strip()) >= 2:
-                return i
-    raise ErrorModelo('No encuentro la fila de títulos de la tabla (una fila con los nombres de las columnas '
-                      'seguida de filas con números).')
-
-
 SUBCABECERAS = {'votos': 'votos', 'voix': 'votos', 'votes': 'votos', 'diputados': 'escanos', 'escanos': 'escanos',
                 'electos': 'escanos', 'senadores': 'escanos', 'concejales': 'escanos', 'sieges': 'escanos',
                 'seats': 'escanos', 'elus': 'escanos', '%': 'ignorar', 'porcentaje': 'ignorar', 'pct': 'ignorar'}
+
+
+def _leer_cabecera(filas):
+    """Separa los títulos de los datos. Devuelve (titulos, sub, nombres, datos):
+      titulos  título de cada columna (para las de partido, sus siglas);
+      sub      None, o para cada columna 'votos'/'escanos'/'ignorar' si está bajo un partido, o '';
+      nombres  {siglas: nombre completo} cuando la tabla trae las dos cosas.
+    Admite títulos en hasta tres filas, como los Excel del Ministerio del Interior:
+    nombre del partido / siglas / «Votos | Diputados»."""
+    def n_textos(f):
+        return sum(1 for c in f if texto(c).strip() and not _es_numero(c))
+
+    def es_dato(f):
+        return sum(1 for c in f if _es_numero(c)) >= 1 and sum(1 for c in f if texto(c).strip()) >= 2
+
+    d = next((k for k in range(1, min(len(filas), 60)) if es_dato(filas[k]) and n_textos(filas[k - 1]) >= 2), None)
+    if d is None:
+        raise ErrorModelo('No encuentro la fila de títulos de la tabla (una fila con los nombres de las columnas '
+                          'seguida de filas con números).')
+    arriba = d - 1
+    while arriba > 0 and d - arriba < 3 and n_textos(filas[arriba - 1]) >= 2 and not es_dato(filas[arriba - 1]):
+        arriba -= 1
+    ancho = max(len(f) for f in filas[arriba:])
+    bloque = [[texto(c).strip() for c in f] + [''] * (ancho - len(f)) for f in filas[arriba:d]]
+    ultima, encima = bloque[-1], bloque[:-1]
+    sub = [SUBCABECERAS.get(_cab(c), '') for c in ultima] if encima else None
+    # Sólo hay subcabecera si encima de alguna «Votos» hay un partido.
+    if sub and not any(sub[j] and any(f[j] for f in encima) for j in range(ancho)):
+        sub = None
+    titulos, nombres = [], {}
+    for j in range(ancho):
+        if sub and sub[j]:
+            vals = [f[j] for f in encima if f[j]]
+            if not vals and j > 0 and sub[j - 1]:
+                titulos.append(titulos[j - 1])      # celda combinada: el partido de la columna anterior
+                continue
+            et = vals[-1] if vals else ''
+            if len(vals) >= 2:
+                nombres[et] = vals[-2]
+            titulos.append(et)
+        else:
+            vals = [f[j] for f in bloque if f[j]]
+            titulos.append(ultima[j] or (vals[-1] if vals else ''))
+    datos = [list(f) + [''] * (ancho - len(f)) for f in filas[d:]]
+    return titulos, sub, nombres, datos
 
 
 # ── Emparejar circunscripciones y partidos ───────────────────────────
@@ -291,25 +352,7 @@ def analizar(filas, modelo, eid):
     filas = [list(f) for f in filas if any(texto(c).strip() for c in f)]
     if not filas:
         raise ErrorModelo('No hay nada que importar.')
-    i = _buscar_cabecera(filas)
-    cab = [texto(c).strip() for c in filas[i]]
-    sub = None
-    if i + 1 < len(filas):
-        s = [_cab(c) for c in filas[i + 1]]
-        reconocidas = [x for x in s if x in SUBCABECERAS]
-        if (len(reconocidas) >= 2 and len(reconocidas) * 2 >= len([x for x in s if x])
-                and not any(_es_numero(c) for c in filas[i + 1])):
-            sub = s
-    datos = filas[i + 2:] if sub else filas[i + 1:]
-    ancho = max(len(f) for f in [cab] + datos)
-    cab += [''] * (ancho - len(cab))
-    if sub:
-        sub += [''] * (ancho - len(sub))
-        # Cabeceras combinadas: «PSOE» ocupa dos columnas (Votos | Diputados).
-        for j in range(1, ancho):
-            if not cab[j] and sub[j] in SUBCABECERAS and cab[j - 1]:
-                cab[j] = cab[j - 1]
-    datos = [list(f) + [''] * (ancho - len(f)) for f in datos]
+    cab, sub, nombres, datos = _leer_cabecera(filas)
     pais = texto(modelo.eleccion(eid).get('País'))
     tipos = [_cab(c) for c in cab]
     col_partido = next((j for j, t in enumerate(tipos) if t in PARTIDO), None)
@@ -317,7 +360,7 @@ def analizar(filas, modelo, eid):
     if col_partido is not None and col_votos is not None and not sub:
         plan = _analizar_larga(cab, tipos, datos, modelo, eid, pais)
     else:
-        plan = _analizar_ancha(cab, sub, datos, modelo, eid, pais)
+        plan = _analizar_ancha(cab, sub, datos, modelo, eid, pais, nombres)
     for p in plan['partidos']:
         p['votos'] = sum(f['votos'].get(p['etiqueta'], 0) for f in plan['filas'])
         p['escanos'] = sum(f['escanos'].get(p['etiqueta'], 0) for f in plan['filas'])
@@ -338,19 +381,27 @@ def avisos(plan):
         out.append(f'{len(nuevos)} partido(s) nuevo(s) se darán de alta en Partidos: '
                    + ', '.join(nuevos[:10]) + ('…' if len(nuevos) > 10 else '')
                    + '. Si alguno ya existe con otras siglas, cámbialo en la lista (doble clic).')
+    parecidos = [f'{p["etiqueta"]} → {p["siglas"]}' for p in plan['partidos'] if p.get('parecido')]
+    if parecidos:
+        out.append(f'{len(parecidos)} partido(s) se juntan con uno que se escribe casi igual (en azul, «¿mismo?»): '
+                   + ', '.join(parecidos[:8]) + ('…' if len(parecidos) > 8 else '')
+                   + '. Compruébalos; si no es el mismo, doble clic y escribe sus siglas.')
     return out
 
 
 def _nuevo_partido(modelo, etiqueta, pais, nombre=''):
-    s = buscar_partido(modelo, etiqueta, pais)
-    return {'etiqueta': etiqueta, 'siglas': s or etiqueta, 'nombre': nombre or etiqueta, 'existe': bool(s)}
+    s = buscar_partido(modelo, etiqueta, pais) or buscar_partido(modelo, nombre, pais)
+    # «parecido»: no son las mismas siglas, sino unas que se escriben casi igual (B.N.G. / BNG) o el
+    # mismo nombre. La vista previa lo marca para que se compruebe.
+    return {'etiqueta': etiqueta, 'siglas': s or etiqueta, 'nombre': nombre or etiqueta, 'existe': bool(s),
+            'parecido': bool(s) and s != etiqueta}
 
 
 def _es_fila_total(codigo, nombre):
     return not texto(codigo).strip() and norm(nombre) in FILAS_TOTAL
 
 
-def _analizar_ancha(cab, sub, datos, modelo, eid, pais):
+def _analizar_ancha(cab, sub, datos, modelo, eid, pais, nombres=None):
     avisos = []
     cols = {'codigo': None, 'nombre': None, 'region': None, 'codigo_region': None, 'vuelta': None}
     circ_cols, partidos, cols_partido = {}, [], []   # cols_partido: (j, etiqueta, 'votos'|'escanos')
@@ -358,18 +409,24 @@ def _analizar_ancha(cab, sub, datos, modelo, eid, pais):
     for j, titulo in enumerate(cab):
         tipo = _tipo_columna(titulo)
         s = sub[j] if sub else ''
-        if tipo in cols and cols[tipo] is None and not (sub and SUBCABECERAS.get(s) == 'escanos'):
-            cols[tipo] = j
-        elif tipo.startswith('circ:') and not s:
-            circ_cols.setdefault(tipo[5:], j)
-        elif tipo == 'partido' or (sub and SUBCABECERAS.get(s) in ('votos', 'escanos') and tipo != 'vacia'):
-            que = SUBCABECERAS.get(s, 'votos') if sub else 'votos'
-            if que == 'ignorar':
+        if s:
+            if s == 'ignorar' or not titulo:
                 continue
+            if titulo not in vistos:
+                vistos[titulo] = _nuevo_partido(modelo, titulo, pais, (nombres or {}).get(titulo, ''))
+                partidos.append(vistos[titulo])
+            cols_partido.append((j, titulo, s))
+        elif tipo in cols and cols[tipo] is None:
+            cols[tipo] = j
+        elif tipo.startswith('circ:'):
+            circ_cols.setdefault(tipo[5:], j)
+        elif tipo == 'partido' and not sub:
             if titulo not in vistos:
                 vistos[titulo] = _nuevo_partido(modelo, titulo, pais)
                 partidos.append(vistos[titulo])
-            cols_partido.append((j, titulo, que))
+            cols_partido.append((j, titulo, 'votos'))
+        elif tipo == 'partido':
+            avisos.append(f'Se ignora la columna «{titulo}» (no sé qué es).')
     # Sin columna de nombre: la primera columna de texto que no sea de partido.
     if cols['nombre'] is None and cols['codigo'] is None:
         cols['nombre'] = 0
@@ -473,6 +530,7 @@ def cambiar_siglas(plan, modelo, etiqueta, siglas):
         if p['etiqueta'] == etiqueta:
             p['siglas'] = siglas.strip() or etiqueta
             p['existe'] = bool(modelo.partido(p['siglas']))
+            p['parecido'] = False
 
 
 # ── Aplicar ──────────────────────────────────────────────────────────

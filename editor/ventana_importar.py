@@ -48,7 +48,7 @@ class VentanaImportar(tk.Toplevel):
 
         origen = ttk.Frame(f)
         origen.pack(fill='x', pady=(10, 4))
-        ttk.Button(origen, text='📂 Abrir archivo (CSV o Excel)…', command=self.abrir).pack(side='left')
+        ttk.Button(origen, text='📂 Abrir archivo (CSV, Excel o zip)…', command=self.abrir).pack(side='left')
         ttk.Button(origen, text='📋 Pegar tabla copiada', command=self.pegar).pack(side='left', padx=6)
         ttk.Label(origen, text='Pestaña:').pack(side='left', padx=(14, 2))
         self.hoja = tk.StringVar()
@@ -88,13 +88,14 @@ class VentanaImportar(tk.Toplevel):
         self.t_partidos = self._arbol(izq, [('etiqueta', 'En el archivo', 170), ('siglas', 'Siglas', 130),
                                              ('estado', '', 70), ('votos', 'Votos', 90), ('escanos', 'Escaños', 60)])
         self.t_partidos.tag_configure('nuevo', foreground='#b25d00')
+        self.t_partidos.tag_configure('parecido', foreground='#1f5fa8')
         self.t_partidos.bind('<Double-1>', self._cambiar_siglas)
         self.t_circs = self._arbol(der, [('fila', 'En el archivo', 190), ('destino', 'Va a', 170),
                                          ('votos', 'Votos', 90)])
         self.t_circs.tag_configure('falta', foreground='#a12020')
         self.t_circs.tag_configure('nueva', foreground='#b25d00')
 
-        self.avisos = tk.Text(f, height=4, wrap='word', relief='flat', background=self.cget('background'),
+        self.avisos = tk.Text(f, height=6, wrap='word', relief='flat', background=self.cget('background'),
                               foreground='#8a5a00', font=('TkDefaultFont', 9))
         self.avisos.pack(fill='x', pady=(8, 0))
         self.avisos.insert('1.0', 'Abre un archivo o pega una tabla. Sirven tablas con una fila por circunscripción '
@@ -126,13 +127,13 @@ class VentanaImportar(tk.Toplevel):
 
     def abrir(self):
         ruta = filedialog.askopenfilename(parent=self, title='Archivo de resultados',
-                                          filetypes=[('Tablas', '*.csv *.txt *.tsv *.xlsx *.xlsm'),
+                                          filetypes=[('Tablas', '*.csv *.txt *.tsv *.xlsx *.xlsm *.zip'),
                                                      ('Todos', '*.*')])
         if not ruta:
             return
         self.ruta = ruta
         hojas = []
-        if ruta.lower().endswith(('.xlsx', '.xlsm')):
+        if ruta.lower().endswith(('.xlsx', '.xlsm', '.zip')):
             try:
                 hojas = importar.hojas_de(ruta)
             except Exception as ex:
@@ -196,8 +197,10 @@ class VentanaImportar(tk.Toplevel):
             self.btn.state(['disabled'])
             return
         for i, x in enumerate(p['partidos']):
-            self.t_partidos.insert('', 'end', iid=str(i), tags=() if x['existe'] else ('nuevo',),
-                                   values=(x['etiqueta'], x['siglas'], 'ya existe' if x['existe'] else 'NUEVO',
+            estado, tag = ('NUEVO', 'nuevo') if not x['existe'] else (
+                ('¿mismo?', 'parecido') if x.get('parecido') else ('ya existe', ''))
+            self.t_partidos.insert('', 'end', iid=str(i), tags=(tag,) if tag else (),
+                                   values=(x['etiqueta'], x['siglas'], estado,
                                            mostrar(x['votos']), x['escanos'] or ''))
         m = self.app.modelo
         crear = self.crear.get()

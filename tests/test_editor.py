@@ -317,3 +317,21 @@ class TestImportar(BaseCopia):
     def test_tabla_sin_partidos_da_error(self):
         with self.assertRaises(ErrorModelo):
             self.imp.analizar(self.imp.leer_texto('hola\nadiós'), self.m, EID)
+
+    def test_zip_del_ministerio(self):
+        """Archivo real del Ministerio del Interior (Congreso, noviembre de 2019): tres filas de títulos."""
+        eid = self.m.nueva_eleccion('España.Congreso', {'Fecha': '10/11/2019'}, copiar_de=EID)
+        ruta = os.path.join(RAIZ, 'tests', 'datos', 'PROV_02_201911_1.zip')
+        self.assertEqual(self.imp.hojas_de(ruta), ['Circunscripciones'])
+        plan = self.imp.analizar(self.imp.leer_archivo(ruta), self.m, eid)
+        self.assertEqual(len(plan['filas']), 52)
+        self.assertFalse([f for f in plan['filas'] if not f['destino']])
+        p = {x['etiqueta']: x for x in plan['partidos']}
+        self.assertEqual(p['PSOE']['nombre'], 'PARTIDO SOCIALISTA OBRERO ESPAÑOL')
+        self.assertEqual((p['PSOE']['votos'], p['PSOE']['escanos']), (6792199, 120))
+        self.assertTrue(p['BNG']['parecido'])          # se junta con «B.N.G.»
+        self.imp.aplicar(plan, self.m, eid)
+        self.assertEqual(sum(x['votos'] for x in plan['partidos']), 24041001)
+        self.assertEqual(self.m.circunscripcion(eid, '4')['Censo CERA'], 41988)
+        self.assertEqual(self.m.partido('PODEMOS-IU')['Nombre'], 'UNIDAS PODEMOS')
+        self.assertFalse(self.m.comprobar().errores)

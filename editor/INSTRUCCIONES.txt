@@ -123,14 +123,17 @@
   Para meter una elección entera de golpe en la elección elegida arriba.
 
   1. Pestaña Resultados → «⇩ Importar / pegar tabla…».
-  2. «Abrir archivo» (CSV o Excel .xlsx; si tiene varias pestañas, elige
-     cuál) o «Pegar tabla copiada» (seleccionas la tabla en una web o en
+  2. «Abrir archivo» (CSV, Excel .xlsx o el .zip tal cual lo descarga el
+     Ministerio del Interior; si tiene varias pestañas, elige cuál) o «Pegar tabla copiada» (seleccionas la tabla en una web o en
      Excel, Ctrl+C, y pulsas el botón).
   3. Revisa la vista previa:
        Partidos ........... cada partido del archivo y a qué siglas va. En
                             naranja, los NUEVOS (se darán de alta). Doble
                             clic para mandarlo a otras siglas: así se juntan
-                            «PSOE» y «P.S.O.E.», por ejemplo.
+                            «PSOE» y «P.S.O.E.», por ejemplo. En azul
+                            («¿mismo?»), los que se juntan con uno que se
+                            escribe casi igual o con el mismo nombre
+                            (BNG → B.N.G.): compruébalos.
        Circunscripciones .. cada fila y a cuál va. En rojo, las que no
                             encuentra: corrige el nombre en el archivo o
                             marca «Crear las circunscripciones que falten».
