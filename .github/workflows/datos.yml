@@ -10,11 +10,13 @@ on:
       - 'datos/Datos_electorales.xlsx'
       - 'scripts/convertir_datos.py'
       - 'scripts/esquema_datos.py'
+      - 'scripts/base_datos.py'
   pull_request:
     paths:
       - 'datos/Datos_electorales.xlsx'
       - 'scripts/convertir_datos.py'
       - 'scripts/esquema_datos.py'
+      - 'scripts/base_datos.py'
   workflow_dispatch:
 
 permissions:

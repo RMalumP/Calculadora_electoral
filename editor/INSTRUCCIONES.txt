@@ -1,0 +1,154 @@
+════════════════════════════════════════════════════════════════════════════════
+ EDITOR ELECTORAL  ·  INSTRUCCIONES
+ Programa en Python (Thonny) para editar la base de datos de la Calculadora
+ electoral sin abrir Excel, comprobarla y publicarla en GitHub con un botón.
+════════════════════════════════════════════════════════════════════════════════
+
+────────────────────────────────────────────────────────────────────────────────
+ 1. ARRANCAR
+────────────────────────────────────────────────────────────────────────────────
+
+  1. Abre Thonny.
+  2. Archivo → Abrir…  →  editor/editor_electoral.py  (dentro de la carpeta del
+     repositorio que tienes clonado con GitHub Desktop).
+  3. Pulsa F5 (o el botón verde ▶ Ejecutar).
+
+  La primera vez hace falta la librería openpyxl (lee y escribe el Excel):
+     Thonny → Herramientas → Gestionar paquetes… → escribe «openpyxl» →
+     Buscar → Instalar.  Si falta, el editor lo dice al arrancar.
+
+  El editor abre solo datos/Datos_electorales.xlsx y recuerda la última
+  elección que tenías elegida.
+
+  No abras el mismo Excel con Excel mientras usas el editor: en Windows queda
+  bloqueado y no se podría guardar (el editor te avisa).
+
+
+────────────────────────────────────────────────────────────────────────────────
+ 2. LA VENTANA
+────────────────────────────────────────────────────────────────────────────────
+
+  Arriba: los botones (Abrir, Guardar, Deshacer, Rehacer, Comprobar, Ver en la
+  app, Traer lo último, Ayuda y ☁ Publicar).
+
+  Debajo: «Ámbito» y «Elección». El ámbito es una pestaña de resultados del
+  Excel (España.Congreso, Francia.Presidenciales, Europa…). La elección elegida
+  es la que se ve en las pestañas Circunscripciones y Resultados.
+
+  En medio, las pestañas:
+
+    Elecciones          Las elecciones de cada ámbito y sus reglas.
+    Circunscripciones   Escaños, censo, votantes, blancos y nulos de la elección.
+    Resultados          Los votos: una fila por circunscripción y una columna
+                        por partido.
+    Partidos            Siglas, nombre, color y país de cada partido.
+
+  Abajo: la comprobación. Se actualiza sola al cambiar algo. Los ERRORES impiden
+  publicar; los AVISOS no. Doble clic en uno te lleva a la celda.
+
+
+────────────────────────────────────────────────────────────────────────────────
+ 3. EDITAR CELDAS (todas las tablas funcionan igual)
+────────────────────────────────────────────────────────────────────────────────
+
+  Clic en una celda ........ la selecciona (recuadro rojo).
+  Flechas .................. moverse.  Tab / Mayús+Tab: derecha / izquierda.
+  Escribir ................. empieza a editar (sustituye lo que había).
+  Doble clic, Intro o F2 ... edita lo que hay.
+  Intro .................... guarda y baja.   Esc: cancela.
+  Supr ..................... vacía la celda.
+  Ctrl+C / Ctrl+V .......... copiar / pegar. Se puede pegar un bloque copiado de
+                             Excel o de una web: se reparte desde la celda
+                             activa hacia la derecha y hacia abajo.
+  Ctrl+Z / Ctrl+Y .......... deshacer / rehacer (hasta 30 pasos).
+  Ctrl+S ................... guardar.     F5: comprobar.
+
+  Los números se pueden escribir con o sin puntos de miles (1.234.567).
+  Las fechas, como dd/mm/aaaa. Las barreras, en porcentaje: 3 = 3 %.
+
+
+────────────────────────────────────────────────────────────────────────────────
+ 4. RESULTADOS
+────────────────────────────────────────────────────────────────────────────────
+
+  · Vuelta 1ª / 2ª: para elecciones a doble vuelta.
+  · Editar «Votos» o «Escaños reales» (los reales son opcionales: la app los
+    compara con los que calcula).
+  · ＋ Añadir partido…: elige uno de la lista o escribe unas siglas nuevas. Si
+    es nuevo, se añade solo a la pestaña Partidos (con un color libre).
+  · − Quitar partido: quita de esta elección el partido de la celda activa.
+  · Un 0 o una celda vacía no se guardan (no hace falta escribir los partidos
+    que no se presentaron en una circunscripción).
+  · En rojo: circunscripciones donde la suma de los partidos no coincide con
+    «Votos a candidaturas» de la pestaña Circunscripciones.
+  · Fila TOTAL arriba: suma de toda la elección.
+
+
+────────────────────────────────────────────────────────────────────────────────
+ 5. PARTIDOS
+────────────────────────────────────────────────────────────────────────────────
+
+  · Cambiar unas SIGLAS las cambia en todas las elecciones.
+  · Si escribes unas siglas que ya existen, el editor pregunta si FUSIONAR los
+    dos partidos: los votos del primero pasan al segundo (se suman donde estén
+    los dos) y el primero desaparece de la lista. Útil para duplicados.
+  · Cambiar el NOMBRE lo cambia también en los resultados.
+  · Color: doble clic en la celda de color o botón «🎨 Color…».
+    «Colores a los que no tienen» reparte colores a los que están en blanco.
+  · Sólo se puede borrar un partido que no está en ninguna elección.
+    «Dónde aparece» lista sus elecciones.
+
+
+────────────────────────────────────────────────────────────────────────────────
+ 6. GUARDAR, VER Y PUBLICAR
+────────────────────────────────────────────────────────────────────────────────
+
+  💾 Guardar
+     Guarda el Excel. Antes deja una copia del anterior en datos/.historial/
+     (las 10 últimas). Mientras hay cambios sin guardar, cada 3 minutos se
+     guarda una copia de recuperación; si el editor se cierra sin guardar, al
+     volver a abrirlo te ofrece recuperarla.
+
+  👁 Ver en la app
+     Genera los datos de la app (datos/generado) y abre la calculadora en el
+     navegador, para ver el cambio antes de publicarlo (pestaña «Calculadora
+     avanzada»; si no se ve, recarga con Ctrl+F5).
+
+  ☁ Publicar…
+     1. Guarda y comprueba. Con errores no publica (los tienes abajo).
+     2. Genera los datos de la app.
+     3. Enseña los archivos de datos/ que han cambiado y pide un mensaje.
+     4. Los sube a GitHub: a la rama principal (se publica ya) o a una rama
+        del día (para revisarlo antes en GitHub).
+     Sólo sube la carpeta datos/; el resto de tus archivos no se toca. No te
+     cambia de rama. Si alguien cambió los mismos archivos en GitHub, se para
+     y te pide «Traer lo último»: nunca pisa cambios ajenos.
+
+     Requisitos (una vez):
+       · El repositorio clonado con GitHub Desktop (File → Clone repository).
+       · git: vale el que trae GitHub Desktop, el editor lo encuentra solo.
+       · La primera vez que subes, puede abrirse una ventana de GitHub para
+         iniciar sesión. Si falla, haz un «Push» desde GitHub Desktop una vez.
+     El editor nunca ve tu contraseña ni tu token: los gestiona git.
+
+  ⟳ Traer lo último
+     Baja de GitHub los cambios que no tienes (por ejemplo, los que hiciste
+     desde otro ordenador) y vuelve a cargar el Excel si ha cambiado. Al
+     arrancar, la barra de abajo avisa si GitHub tiene cambios nuevos.
+
+
+────────────────────────────────────────────────────────────────────────────────
+ 7. ARCHIVOS DEL EDITOR (carpeta editor/)
+────────────────────────────────────────────────────────────────────────────────
+
+  editor_electoral.py      El programa: se abre con Thonny.
+  modelo.py                Las operaciones sobre los datos (sin ventana).
+  tabla.py                 La tabla editable que usan todas las pestañas.
+  pestana_*.py             Una pestaña cada uno.
+  ventana_publicar.py      Publicar y traer lo último.
+  git_sync.py              Habla con git (adaptado del editor de SupuestosC1).
+  archivos.py              Guardado seguro, copias y recuperación.
+  INSTRUCCIONES.txt        Este archivo.
+
+  Las comprobaciones están en scripts/base_datos.py y son las mismas que usa
+  GitHub al recibir el Excel. Las pruebas automáticas están en tests/.

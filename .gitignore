@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+datos/.historial/
+datos/.recuperacion_*
+datos/.guardando_*
+datos/~$*
+datos/generado.tmp/
+editor/.editor_prefs.json
+.DS_Store
+Thumbs.db
