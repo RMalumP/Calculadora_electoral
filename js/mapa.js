@@ -233,7 +233,8 @@ const MAPA = (() => {
     });
 
     svg.addEventListener('click', e => {
-      const el = e.target.closest('.mapa-pieza');
+      // Las burbujas del cartograma valen como la pieza que representan.
+      const el = e.target.closest('.mapa-pieza, .mapa-burbuja');
       seleccionar(el ? el.dataset.codigo : null);
     });
 

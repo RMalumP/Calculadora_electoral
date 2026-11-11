@@ -61,7 +61,10 @@ const MAPA_PUNTOS = (() => {
       const total = lista.reduce((n, p) => n + p.escanos, 0);
       if (!total) return;
 
-      const { puntos, radio } = rejilla(total, pieza.centro, pieza.area);
+      // Con el cartograma encendido, los puntos van dentro de la burbuja.
+      const sitio = mapaPuntoDe(pieza, porPieza, nivel);
+      if (!sitio) return;
+      const { puntos, radio } = rejilla(total, sitio.centro, sitio.area);
       let i = 0;
       lista.forEach(partido => {
         for (let k = 0; k < partido.escanos; k++, i++) {

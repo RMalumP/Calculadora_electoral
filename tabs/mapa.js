@@ -53,6 +53,9 @@ registerTab('map', 'tab-content', String.raw`
         <label class="mapa-opcion">
           <input type="checkbox" id="mapa-puntos"> Puntos de escaños
         </label>
+        <label class="mapa-opcion" title="Cada circunscripción, un círculo del tamaño de lo que reparte">
+          <input type="checkbox" id="mapa-cartograma"> Cartograma
+        </label>
         <span class="mapa-estado" id="mapa-estado" role="status"></span>
       </div>
 

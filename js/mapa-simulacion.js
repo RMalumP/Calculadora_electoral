@@ -370,8 +370,10 @@ MAPA_ADORNOS.push((porPieza, nivel) => {
     if (!agregado || agregado.repetido) return;
     const d = (agregado.escanos[partido.siglas] || 0) - (agregado.reales[partido.siglas] || 0);
     if (!d) return;
-    const tamano = Math.max(7, Math.min(14, Math.sqrt(pieza.area) * 0.22));
-    html += '<text class="mapa-cifra" x="' + pieza.centro[0] + '" y="' + pieza.centro[1] +
+    const sitio = mapaPuntoDe(pieza, porPieza, nivel);
+    if (!sitio) return;
+    const tamano = Math.max(7, Math.min(14, Math.sqrt(sitio.area) * 0.22));
+    html += '<text class="mapa-cifra" x="' + sitio.centro[0] + '" y="' + sitio.centro[1] +
             '" font-size="' + tamano.toFixed(1) + '">' +
             (d > 0 ? '+' : '−') + Math.abs(d) + '</text>';
   });

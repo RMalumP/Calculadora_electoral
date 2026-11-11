@@ -71,6 +71,10 @@ const MAPA_UI = {
   ambito: null,
   eleccion: null,
   cargando: false,
+  // Colores del último pintado, por si otro dibujo los necesita.
+  colores: {},
+  // El cartograma lo enciende: el color va en las burbujas, no en el mapa.
+  sinRelleno: false,
 };
 
 function mapaEstado(texto, error) {
@@ -157,7 +161,10 @@ function mapaRefrescar() {
   // de la avanzada, por ejemplo); si no, los de la elección cargada.
   const propios = modo.datos ? modo.datos(nivel) : null;
   const porPieza = propios || MAPA_DATOS.porNivel(nivel);
-  MAPA.pintar(modo.colores(porPieza, nivel));
+  // Los colores quedan a mano: el cartograma los reutiliza para sus burbujas
+  // en vez de volver a calcularlos.
+  MAPA_UI.colores = modo.colores(porPieza, nivel);
+  MAPA.pintar(MAPA_UI.sinRelleno ? null : MAPA_UI.colores);
   mapaLeyenda(modo.leyenda ? modo.leyenda(porPieza, nivel) : []);
   MAPA.limpiarAdornos();
   MAPA_ADORNOS.forEach(fn => fn(porPieza, nivel));
@@ -227,7 +234,7 @@ function mapaGlobo() {
   let dentro = null;
 
   svg.addEventListener('mousemove', e => {
-    const el = e.target.closest ? e.target.closest('.mapa-pieza') : null;
+    const el = e.target.closest ? e.target.closest('.mapa-pieza, .mapa-burbuja') : null;
     if (!el) { globo.hidden = true; dentro = null; return; }
     const pieza = MAPA.pieza(el.dataset.codigo);
     if (!pieza) return;
@@ -529,6 +536,9 @@ function mapaUIInit() {
 
   const puntos = document.getElementById('mapa-puntos');
   if (puntos) puntos.addEventListener('change', () => MAPA_PUNTOS.encender(puntos.checked));
+
+  const cartograma = document.getElementById('mapa-cartograma');
+  if (cartograma) cartograma.addEventListener('change', () => MAPA_CARTOGRAMA.encender(cartograma.checked));
 
   mapaEstado('Cargando el índice de elecciones…');
   MAPA_DATOS.cargarIndice()

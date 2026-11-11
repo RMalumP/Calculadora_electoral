@@ -467,3 +467,24 @@
   0%, 40% { box-shadow: 0 0 0 3px var(--accent); }
   100%    { box-shadow: 0 0 0 3px transparent; }
 }
+
+/* ── Cartograma ─────────────────────────────────────────────────── */
+
+/* Con el cartograma encendido el mapa de verdad se queda debajo, apagado:
+   sirve para situarse, pero lo que se lee son las burbujas. */
+.mapa-capa.apagada .mapa-pieza {
+  fill: none;
+  stroke: var(--mapa-linea);
+  opacity: .55;
+}
+
+.mapa-burbuja {
+  stroke: rgba(255, 255, 255, .7);
+  stroke-width: 0.9;
+  vector-effect: non-scaling-stroke;
+  pointer-events: all;
+  cursor: pointer;
+  transition: fill var(--transition);
+}
+
+.mapa-burbuja:hover { stroke: var(--text); stroke-width: 1.6; }
