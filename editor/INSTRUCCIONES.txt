@@ -115,6 +115,39 @@
   · En rojo: circunscripciones donde la suma de los partidos no coincide con
     «Votos a candidaturas» de la pestaña Circunscripciones.
   · Fila TOTAL arriba: suma de toda la elección.
+  · ⇩ Importar / pegar tabla…: ver el apartado siguiente.
+
+
+  IMPORTAR UNA TABLA DE RESULTADOS
+  ────────────────────────────────
+  Para meter una elección entera de golpe en la elección elegida arriba.
+
+  1. Pestaña Resultados → «⇩ Importar / pegar tabla…».
+  2. «Abrir archivo» (CSV o Excel .xlsx; si tiene varias pestañas, elige
+     cuál) o «Pegar tabla copiada» (seleccionas la tabla en una web o en
+     Excel, Ctrl+C, y pulsas el botón).
+  3. Revisa la vista previa:
+       Partidos ........... cada partido del archivo y a qué siglas va. En
+                            naranja, los NUEVOS (se darán de alta). Doble
+                            clic para mandarlo a otras siglas: así se juntan
+                            «PSOE» y «P.S.O.E.», por ejemplo.
+       Circunscripciones .. cada fila y a cuál va. En rojo, las que no
+                            encuentra: corrige el nombre en el archivo o
+                            marca «Crear las circunscripciones que falten».
+  4. Elige la vuelta y las opciones, y pulsa «⇩ Importar». Ctrl+Z lo deshace.
+
+  Tablas que entiende:
+    · Una fila por circunscripción y una columna por partido. Puede traer
+      también Escaños, Censo, Votantes, Válidos, Blancos, Nulos... (se
+      copian a la pestaña Circunscripciones). Si debajo de cada partido hay
+      «Votos» y «Diputados», como en los Excel del Ministerio del Interior,
+      lee también los escaños.
+    · Una fila por circunscripción y partido: columnas Provincia (o
+      Circunscripción, Código...), Siglas (o Partido), Votos y, si quieres,
+      Escaños y Vuelta.
+  Las circunscripciones se buscan por código o por nombre (da igual «Alicante/
+  Alacant» o «Balears (Illes)»). Las filas de TOTAL se saltan solas.
+  Los .xls antiguos hay que guardarlos antes como .xlsx desde Excel.
 
 
 ────────────────────────────────────────────────────────────────────────────────
@@ -179,6 +212,8 @@
   tabla.py                 La tabla editable que usan todas las pestañas.
   pestana_*.py             Una pestaña cada uno.
   ventana_publicar.py      Publicar y traer lo último.
+  importar.py              Leer y emparejar tablas para importarlas.
+  ventana_importar.py      La ventana de importar con la vista previa.
   git_sync.py              Habla con git (adaptado del editor de SupuestosC1).
   archivos.py              Guardado seguro, copias y recuperación.
   INSTRUCCIONES.txt        Este archivo.

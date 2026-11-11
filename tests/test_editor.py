@@ -226,3 +226,94 @@ class TestGitSync(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class TestImportar(BaseCopia):
+    """Importar tablas de resultados (editor/importar.py)."""
+
+    def setUp(self):
+        super().setUp()
+        import importar
+        self.imp = importar
+
+    def _xlsx_ministerio(self):
+        import openpyxl
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.append(['Elecciones Generales 2023'])
+        ws.append(['Resultados por provincia'])
+        ws.append([])
+        ws.append(['Nombre de Comunidad', 'Código de Provincia', 'Nombre de Provincia', 'Población',
+                   'Número de mesas', 'Total censo electoral', 'Total votantes', 'Votos válidos',
+                   'Votos a candidaturas', 'Votos en blanco', 'Votos nulos', 'PP', None, 'PSOE', None,
+                   'PARTIDO NUEVO', None])
+        ws.append([None] * 11 + ['Votos', 'Diputados'] * 3)
+        ws.append(['Andalucía', '04', 'Almería', 700000, 900, 500000, 330000, 320000, 318000, 2000, 10000,
+                   150000, 4, 100000, 2, 68000, 0])
+        ws.append(['Comunitat Valenciana', '03', 'Alicante/Alacant', 1900000, 2000, 1300000, 900000, 890000,
+                   880000, 10000, 10000, 400000, 6, 300000, 5, 180000, 1])
+        ws.append(['Illes Balears', '07', 'Balears (Illes)', 1100000, 800, 800000, 500000, 495000, 490000,
+                   5000, 5000, 200000, 4, 190000, 3, 100000, 1])
+        ws.append(['Total', None, None, 1, 1, 1, 1, 1, 1, 1, 1, 750000, 14, 590000, 10, 348000, 2])
+        ruta = os.path.join(self.dir, 'ministerio.xlsx')
+        wb.save(ruta)
+        return ruta
+
+    def test_excel_ministerio_cabecera_doble(self):
+        filas = self.imp.leer_archivo(self._xlsx_ministerio())
+        plan = self.imp.analizar(filas, self.m, EID)
+        self.assertEqual(plan['formato'], 'ancha')
+        self.assertEqual([f['destino'] for f in plan['filas']], ['4', '3', '7'])
+        et = {p['etiqueta']: p for p in plan['partidos']}
+        self.assertEqual(set(et), {'PP', 'PSOE', 'PARTIDO NUEVO'})
+        self.assertTrue(et['PP']['existe'])
+        self.assertFalse(et['PARTIDO NUEVO']['existe'])
+        self.assertEqual(plan['filas'][0]['escanos'], {'PP': 4, 'PSOE': 2})
+        self.assertEqual(plan['filas'][1]['circ']['Censo total'], 1300000)
+        self.imp.cambiar_siglas(plan, self.m, 'PARTIDO NUEVO', 'VOX')
+        msg = self.imp.aplicar(plan, self.m, EID, vuelta=1, sustituir=True)
+        self.assertIn('3 circunscripciones', msg)
+        self.assertEqual(self.votos(EID, '4', 'PP'), 150000)
+        self.assertEqual(self.votos(EID, '4', 'VOX'), 68000)
+        self.assertEqual(self.votos(EID, '28', 'PP'), 0)   # sustituir: lo que no venía se quita
+        self.assertEqual(self.m.circunscripcion(EID, '3')['Votos nulos'], 10000)
+        self.assertIsNone(self.m.partido('PARTIDO NUEVO'))
+        _s, filas = self.m.tabla_ancha(EID)
+        self.assertEqual(next(f for f in filas if f['codigo'] == '3')['reales'].get('PSOE'), 5)
+        self.m.deshacer()
+        self.assertGreater(self.votos(EID, '28', 'PP'), 0)
+
+    def test_pegado_largo_sin_sustituir_y_partido_nuevo(self):
+        t = ('Provincia\tSiglas\tVotos\tEscaños\n'
+             'Madrid\tPP\t1.500.000\t16\n'
+             'Madrid\tNUEVA\t12.345\t0\n'
+             'Coruña (A)\tPSOE\t200.000\t3\n')
+        plan = self.imp.analizar(self.imp.leer_texto(t), self.m, EID)
+        self.assertEqual(plan['formato'], 'larga')
+        self.assertEqual([f['destino'] for f in plan['filas']], ['28', '15'])
+        antes_vox = self.votos(EID, '28', 'VOX')
+        self.imp.aplicar(plan, self.m, EID, sustituir=False)
+        self.assertEqual(self.votos(EID, '28', 'PP'), 1500000)
+        self.assertEqual(self.votos(EID, '28', 'NUEVA'), 12345)
+        self.assertEqual(self.votos(EID, '28', 'VOX'), antes_vox)
+        self.assertTrue(self.m.partido('NUEVA'))
+        self.assertEqual(self.m.partido('NUEVA')['País'], 'España')
+
+    def test_csv_con_punto_y_coma_y_crear_circunscripciones(self):
+        eid = self.m.nueva_eleccion('España.Congreso', {'Fecha': '01/01/2030'})
+        ruta = os.path.join(self.dir, 'r.csv')
+        with open(ruta, 'w', encoding='cp1252') as f:
+            f.write('Código;Circunscripción;Escaños;Censo;PP;PSOE\n1;Álava;4;250000;30000;40000\n'
+                    '2;Albacete;4;300000;80000;70000\n')
+        plan = self.imp.analizar(self.imp.leer_archivo(ruta), self.m, eid)
+        self.assertEqual([f['destino'] for f in plan['filas']], [None, None])
+        self.assertTrue(any('no coinciden' in a for a in plan['avisos']))
+        self.imp.aplicar(plan, self.m, eid, crear_circ=True)
+        self.assertEqual([self.m.codigo_circ(c) for c in self.m.circunscripciones(eid)], ['1', '2'])
+        self.assertEqual(self.m.circunscripcion(eid, '1')['Circunscripción'], 'Álava')
+        self.assertEqual(self.m.circunscripcion(eid, '2')['Escaños'], 4)
+        self.assertEqual(self.votos(eid, '2', 'PSOE'), 70000)
+
+    def test_tabla_sin_partidos_da_error(self):
+        with self.assertRaises(ErrorModelo):
+            self.imp.analizar(self.imp.leer_texto('hola\nadiós'), self.m, EID)
