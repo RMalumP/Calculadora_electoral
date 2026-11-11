@@ -1,8 +1,9 @@
-const CACHE = 'calculadora-electoral-v2';
+const CACHE = 'calculadora-electoral-v3';
 const ASSETS = [
   './',
   './index.html',
   './manifest.webmanifest',
+  './datos/generado/indice.js',
   './css/advanced.css',
   './css/components.css',
   './css/header-tabs.css',

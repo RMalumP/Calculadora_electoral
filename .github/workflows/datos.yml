@@ -1,0 +1,54 @@
+name: Datos electorales
+
+# Comprueba el Excel de datos y regenera los archivos que usa la app.
+# - En una PR: sólo comprueba (falla si el Excel tiene errores).
+# - Al subir a main: comprueba, regenera datos/generado y lo sube en un commit.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'datos/Datos_electorales.xlsx'
+      - 'scripts/convertir_datos.py'
+      - 'scripts/esquema_datos.py'
+  pull_request:
+    paths:
+      - 'datos/Datos_electorales.xlsx'
+      - 'scripts/convertir_datos.py'
+      - 'scripts/esquema_datos.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: datos-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  convertir:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Instalar openpyxl
+        run: pip install openpyxl==3.1.5
+
+      - name: Comprobar el Excel y generar los datos
+        run: python3 scripts/convertir_datos.py
+
+      - name: Subir los datos generados
+        if: github.event_name != 'pull_request'
+        run: |
+          git add datos/generado
+          if git diff --cached --quiet; then
+            echo "Los datos generados no han cambiado."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898341+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Datos: regenerados desde Datos_electorales.xlsx"
+          git push

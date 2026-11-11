@@ -54,6 +54,156 @@ const ADV_ELECTIONS = [
   }
 ];
 
+/* ── Base de datos local (datos/generado, desde el Excel) ───── */
+
+/**
+ * Si existe datos/generado/indice.js (lo genera scripts/convertir_datos.py a
+ * partir de datos/Datos_electorales.xlsx), cada pestaña de resultados del
+ * Excel es un ámbito y va primero. Google Sheets queda al final como
+ * respaldo. Sin índice local todo funciona como antes, sólo con Google.
+ */
+const ADV_DATOS_DIR = 'datos/generado/';
+
+(function advRegistrarAmbitosLocales() {
+  const indice = typeof window !== 'undefined' ? window.CE_DATOS_INDICE : null;
+  if (!indice?.ambitos?.length) return;
+  const locales = indice.ambitos.map(a => ({
+    key: `local:${a.key}`, label: a.label, local: true, ambito: a.key, elecciones: a.elecciones || []
+  }));
+  ADV_ELECTIONS.forEach(e => { if (!e.local) e.label = `${e.label} (Google Sheets, respaldo)`; });
+  ADV_ELECTIONS.unshift(...locales);
+})();
+
+/** Colores de partido que trae la pestaña Partidos del Excel (siglas en mayúsculas). */
+const ADV_DATA_COLORS = (() => {
+  const out = {};
+  const c = typeof window !== 'undefined' ? window.CE_DATOS_INDICE?.colores : null;
+  Object.entries(c || {}).forEach(([s, col]) => { out[String(s).toUpperCase()] = col; });
+  return out;
+})();
+
+/** Descarga (con una etiqueta <script>, válida también desde el disco) el archivo de una elección. */
+function _advCargarEleccionLocal(e) {
+  const ya = window.CE_DATOS_ELECCIONES?.[e.id];
+  if (ya) return Promise.resolve(ya);
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = `${ADV_DATOS_DIR}elecciones/${encodeURIComponent(e.archivo)}.js`;
+    script.onload = () => {
+      script.remove();
+      const datos = window.CE_DATOS_ELECCIONES?.[e.id];
+      datos ? resolve(datos) : reject(new Error(`El archivo de datos de ${e.id} no contiene esa elección.`));
+    };
+    script.onerror = () => {
+      script.remove();
+      reject(new Error(`No se ha encontrado el archivo de datos de ${e.id}. ` +
+        'Puede que los datos se estén regenerando: prueba en un minuto o elige el ámbito de Google Sheets.'));
+    };
+    document.head.appendChild(script);
+  });
+}
+
+/** Entrada del desplegable de convocatorias para una elección local. */
+function _advEntradaLocal(e) {
+  const [anio, mes, dia] = String(e.fecha || '').split('-');
+  return {
+    key: e.id, eid: e.id,
+    anio: anio || '', mes: mes ? String(parseInt(mes, 10)) : '', dia: dia ? String(parseInt(dia, 10)) : '',
+    pais: e.pais || '', familia: e.clase || '', tipoEleccion: e.tipo || ''
+  };
+}
+
+/**
+ * Pasa los datos de una elección local al modelo que usa la calculadora, el
+ * mismo que sale de advParseTable con la hoja de Google.
+ */
+function advModeloLocal(datos) {
+  const fechaDe = iso => {
+    const [anio, mes, dia] = String(iso || '').split('-');
+    return { anio: anio || '', mes: mes ? String(parseInt(mes, 10)) : '', dia: dia ? String(parseInt(dia, 10)) : '' };
+  };
+  const fecha = fechaDe(datos.fecha);
+  const level = _advDetectLevel(datos.circBase) || 'provincia';
+  const asBarrierLevel = l => (!l || l === level) ? 'circunscripcion' : l;
+  const infoPartidos = datos.partidos || {};
+
+  // Candidaturas ordenadas por votos totales (primera vuelta) y, aparte, las de la segunda.
+  const totales = new Map(), totales2 = new Map(), nombres = new Map();
+  (datos.resultados || []).forEach(([, vuelta, siglas, nombre, votos]) => {
+    const m = vuelta === 2 ? totales2 : totales;
+    m.set(siglas, (m.get(siglas) || 0) + votos);
+    if (!nombres.has(siglas)) nombres.set(siglas, nombre || infoPartidos[siglas]?.nombre || siglas);
+  });
+  const ordenar = m => [...m.entries()].sort((a, b) => b[1] - a[1])
+    .map(([siglas]) => ({ key: siglas, name: nombres.get(siglas), siglas }));
+  const parties = ordenar(totales);
+  const parties2 = ordenar(totales2);
+
+  const porCirc = new Map();
+  (datos.resultados || []).forEach(([cod, vuelta, siglas, , votos, reales]) => {
+    if (!porCirc.has(cod)) porCirc.set(cod, { 1: new Map(), 2: new Map() });
+    porCirc.get(cod)[vuelta === 2 ? 2 : 1].set(siglas, { votos, reales });
+  });
+
+  const rows = (datos.circunscripciones || []).map(c => {
+    const r = porCirc.get(c.codigo) || { 1: new Map(), 2: new Map() };
+    return {
+      ...fecha, eid: datos.id,
+      ccaaCode: c.codigoRegion || '', ccaaName: c.region || c.nombre,
+      provCode: c.codigo, provName: c.nombre,
+      seatsBase: c.escanos || 0,
+      poblacion: c.poblacion || 0, censoTotal: c.censoTotal || 0,
+      votantesTotal: c.votantesTotal || 0,
+      votosValidos: c.votosValidos || ((c.votosCandidaturas || 0) + (c.votosBlanco || 0)),
+      votosBlanco: c.votosBlanco || 0, votosNulos: c.votosNulos || 0,
+      minimo: c.minimo ?? null,
+      formulaPropia: c.formula || null,
+      barreraPropia: c.barrera ?? null,
+      parties: parties.map(p => ({
+        ...p, votes: r[1].get(p.key)?.votos || 0, realSeats: r[1].get(p.key)?.reales || 0
+      })),
+      round2: parties2.map(p => ({ ...p, votes: r[2].get(p.key)?.votos || 0 }))
+    };
+  });
+
+  const magnitud = ADV_MAGNITUD_INDEX(datos.magnitud);
+  const prorrateo = ADV_PRORRATEO_INDEX(datos.prorrateo);
+  const b = datos.barreras || [];
+  const barrera = x => x ? { nivel: asBarrierLevel(_advDetectLevel(x.ambito)), valor: x.porcentaje || 0 } : null;
+  const minimos = rows.map(r => r.minimo).filter(n => n != null);
+
+  const meta = {
+    tipo: datos.clase || 'Generales',
+    subtipo: datos.tipo || '',
+    pais: datos.pais || '',
+    idEleccion: datos.id,
+    circunscripcionDefault: level,
+    magnitud, magnitudLabel: ADV_MAGNITUD_LABEL[magnitud] || datos.magnitud || '',
+    prorrateo, prorrateoLabel: ADV_PRORRATEO_LABEL[prorrateo] || datos.prorrateo || '',
+    formaVoto: datos.formaVoto || '',
+    formulaCode: Object.keys(ADV_FORMULA_CODES).map(Number).find(k => ADV_FORMULA_CODES[k] === datos.formula) ?? null,
+    formulaDefault: datos.formula || null,
+    minimoDefault: datos.minimo ?? _advModa(minimos),
+    barrera1: barrera(b[0]) || { nivel: 'circunscripcion', valor: 0 },
+    barrera2: barrera(b[1]),
+    segundaVuelta: datos.fecha2
+      ? { ...fechaDe(datos.fecha2), candidaturas: parties2 }
+      : null,
+    fuente: datos.fuente || '',
+    notas: datos.notas || ''
+  };
+
+  return {
+    meta, parties, rows,
+    debug: {
+      parserVersion: ADV_PARSER_VERSION, origen: 'local',
+      hojaUsada: `Excel · pestaña «${datos.pestana}»`,
+      numParties: parties.length, numRound2Parties: parties2.length,
+      metaCols: { anio: 0, provName: 0, ccaaName: 0, seatsBase: 0 }
+    }
+  };
+}
+
 /**
  * ¿La pestaña leída sirve como elección? El libro de códigos y cualquier otra
  * auxiliar se leen sin dar error, así que la comprobación es que haya salido
@@ -120,6 +270,20 @@ const ADV_MAGNITUD_LABEL = { 1: 'Uninominal', 2: 'Plurinominal', 3: 'Única' };
 
 /** 2. Prorrateo: cómo se reparten los escaños entre circunscripciones. */
 const ADV_PRORRATEO_LABEL = { 1: 'Demográfico', 2: 'Territorial', 3: 'Combinado' };
+
+/** Código a partir del texto (Excel nuevo) o del número (CodeBook antiguo). */
+function _advIndiceDeEtiqueta(etiquetas) {
+  return v => {
+    if (v == null || v === '') return null;
+    const n = parseInt(v, 10);
+    if (!isNaN(n) && etiquetas[n]) return n;
+    const t = _advNormalize(v);
+    const k = Object.keys(etiquetas).find(k => _advNormalize(etiquetas[k]) === t);
+    return k ? Number(k) : null;
+  };
+}
+const ADV_MAGNITUD_INDEX  = _advIndiceDeEtiqueta(ADV_MAGNITUD_LABEL);
+const ADV_PRORRATEO_INDEX = _advIndiceDeEtiqueta(ADV_PRORRATEO_LABEL);
 
 /**
  * 4. Fórmula electoral → identificador de la fórmula en la calculadora.
@@ -633,6 +797,9 @@ function _advGuardarLayout(key, layout) {
 
 /** Clave con que se identifica una elección dentro de su ámbito. */
 function advElectionKey(e) {
+  // Las elecciones del Excel se identifican por su ID: en una misma pestaña
+  // (Europa) puede haber varias el mismo día, una por país.
+  if (e.eid) return e.eid;
   return [e.anio, e.mes, e.dia].join('|');
 }
 
@@ -645,6 +812,13 @@ function advElectionKey(e) {
 async function advGetElectionIndex(electionKey) {
   const cfg = ADV_ELECTIONS.find(e => e.key === electionKey) || ADV_ELECTIONS[0];
   if (_advCache[cfg.key]?.index) return _advCache[cfg.key].index;
+
+  if (cfg.local) {
+    const elecciones = cfg.elecciones.map(_advEntradaLocal);
+    const index = { elecciones, layout: { util: true, local: true, label: cfg.label } };
+    _advCache[cfg.key] = { ..._advCache[cfg.key], index };
+    return index;
+  }
 
   const layout = await advGetLayout(cfg.key);
   if (!layout.util) return { elecciones: [], layout };
@@ -699,6 +873,20 @@ async function advGetElectionData(electionKey, eleccionKey) {
   const cfg = ADV_ELECTIONS.find(e => e.key === electionKey) || ADV_ELECTIONS[0];
   const { elecciones, layout } = await advGetElectionIndex(cfg.key);
 
+  if (cfg.local) {
+    const elegida = elecciones.find(e => e.key === eleccionKey) || elecciones[elecciones.length - 1];
+    if (!elegida) throw new Error('Esta pestaña del Excel no tiene ninguna elección.');
+    const cacheKey = `${cfg.key}::${elegida.key}`;
+    if (_advCache[cacheKey]) return _advCache[cacheKey];
+    const registro = cfg.elecciones.find(e => e.id === elegida.key);
+    const data = advModeloLocal(await _advCargarEleccionLocal(registro));
+    data.eleccion = elegida;
+    data.elecciones = elecciones;
+    data.debug.eleccionesEnPestana = elecciones.length;
+    _advCache[cacheKey] = data;
+    return data;
+  }
+
   if (!layout.util) {
     // No se ha encontrado una pestaña con elecciones: se devuelve lo leído
     // para que el diagnóstico pueda explicar qué ha pasado.
@@ -740,6 +928,6 @@ function advClearCache() {
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     advParseTable, advFetchTable, advGetElectionData, advGetElectionIndex,
-    advGetLayout, advElectionKey, advClearCache, ADV_ELECTIONS
+    advGetLayout, advElectionKey, advClearCache, ADV_ELECTIONS, advModeloLocal
   };
 }
