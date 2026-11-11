@@ -16,7 +16,8 @@ const ADV_MODULOS = [
   'js/advanced-calc.js',
   'js/advanced-ui.js',
   'js/advanced-popups.js',
-  'js/advanced-territorial.js'
+  'js/advanced-territorial.js',
+  'js/advanced-compare.js'
 ];
 
 let _advModulosPromesa = null;

@@ -16,9 +16,13 @@ registerTab('advanced', 'tab-content', String.raw`
           <h2 class="adv-title">Calculadora Avanzada</h2>
           <div class="adv-subtitle" id="adv-subtitle">Cargando datos electorales…</div>
         </div>
-        <div class="adv-mode" role="group" aria-label="Modo de la calculadora">
-          <button type="button" class="adv-mode-btn" data-mode="simple">Sencillo</button>
-          <button type="button" class="adv-mode-btn" data-mode="advanced">Avanzado</button>
+        <div class="adv-head-tools">
+          <button type="button" class="adv-compare-btn" id="adv-compare-btn"
+                  title="Comparar dos configuraciones independientes, lado a lado">⚖ Comparar</button>
+          <div class="adv-mode" role="group" aria-label="Modo de la calculadora">
+            <button type="button" class="adv-mode-btn" data-mode="simple">Sencillo</button>
+            <button type="button" class="adv-mode-btn" data-mode="advanced">Avanzado</button>
+          </div>
         </div>
       </div>
 

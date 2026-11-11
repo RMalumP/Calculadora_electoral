@@ -29,10 +29,11 @@ function advTerritorialOptions() {
 }
 
 /** Votos por territorio y partido (con los votos de origen). */
-function advTerritorialData(by) {
-  const config = _advConfig;
+function advTerritorialData(by, rows, config) {
+  rows = rows || _advParties.rows || [];
+  config = config || _advConfig;
   const territorios = new Map();
-  (_advParties.rows || []).forEach(r => {
+  rows.forEach(r => {
     const key = by === 'ccaa' ? r.ccaaName : `${r.ccaaName}|${r.provName}`;
     let t = territorios.get(key);
     if (!t) {
