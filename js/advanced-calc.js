@@ -92,6 +92,9 @@ function advBuildDistricts(data, config) {
     numRows: 0, minAjuste: 0,
     partyVotes: new Map(), realSeats: new Map(),
     members: [],
+    // Códigos de circunscripción de la base de datos que caen aquí. El mapa
+    // los usa para casar cada circunscripción con su pieza.
+    codigos: [],
     // Reglas propias que trae la base de datos para esta circunscripción
     // («Fórmula (excepción)», «Barrera % (excepción)»). Sólo valen si todas
     // las de origen agrupadas en ella coinciden.
@@ -112,6 +115,7 @@ function advBuildDistricts(data, config) {
     d.numRows       += 1;
     if (minimoBase != null && row.minimo != null) d.minAjuste += row.minimo - minimoBase;
     d.members.push(row.provName);
+    if (row.provCode) d.codigos.push(row.provCode);
     d.formulaPropia = propia(d.formulaPropia, row.formulaPropia);
     d.barreraPropia = propia(d.barreraPropia, row.barreraPropia);
     row.parties.forEach(p => {

@@ -432,3 +432,33 @@
 
 .mapa-tabla td.sube { color: #2b7a9e; font-weight: 600; }
 .mapa-tabla td.baja { color: #c9702f; font-weight: 600; }
+
+/* ── Enlace con la calculadora avanzada ─────────────────────────── */
+
+.mapa-boton {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 7px 10px;
+  font: inherit;
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--accent);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  cursor: pointer;
+}
+
+.mapa-boton:hover { background: var(--bg-soft, rgba(127, 127, 127, .08)); }
+
+/* La circunscripción a la que lleva el botón, un momento resaltada para
+   encontrarla entre las cincuenta y tantas de la lista. */
+.adv-resaltada {
+  animation: adv-resaltar 2.4s ease-out;
+}
+
+@keyframes adv-resaltar {
+  0%, 40% { box-shadow: 0 0 0 3px var(--accent); }
+  100%    { box-shadow: 0 0 0 3px transparent; }
+}

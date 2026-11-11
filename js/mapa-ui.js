@@ -152,8 +152,11 @@ function mapaRefrescar() {
     return;
   }
   const nivel = MAPA.nivelActual();
-  const porPieza = MAPA_DATOS.porNivel(nivel);
   const modo = mapaModo(mapaModoActual);
+  // Un modo puede pintar otra cosa que los resultados reales (la simulación
+  // de la avanzada, por ejemplo); si no, los de la elección cargada.
+  const propios = modo.datos ? modo.datos(nivel) : null;
+  const porPieza = propios || MAPA_DATOS.porNivel(nivel);
   MAPA.pintar(modo.colores(porPieza, nivel));
   mapaLeyenda(modo.leyenda ? modo.leyenda(porPieza, nivel) : []);
   MAPA.limpiarAdornos();
@@ -194,9 +197,11 @@ function mapaLeyenda(filas) {
 const MAPA_GLOBO_EXTRAS = [];
 
 MAPA_GLOBO_EXTRAS.push(pieza => {
-  const agregado = MAPA_DATOS.porNivel(MAPA.nivelActual()).get(pieza.codigo);
-  if (!agregado) return '';
+  const nivel = MAPA.nivelActual();
   const modo = mapaModo(mapaModoActual);
+  const propios = modo.datos ? modo.datos(nivel) : null;
+  const agregado = (propios || MAPA_DATOS.porNivel(nivel)).get(pieza.codigo);
+  if (!agregado) return '';
   const resumen = modo.resumen ? modo.resumen(agregado, pieza) : '';
   return resumen ? '<span class="mapa-globo-linea">' + resumen + '</span>' : '';
 });

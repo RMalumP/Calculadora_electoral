@@ -54,6 +54,9 @@ const MAPA_PUNTOS = (() => {
     piezas.forEach(pieza => {
       const agregado = porPieza.get(pieza.codigo);
       if (!agregado) return;
+      // Un agregado que se repite en varias piezas (una circunscripción
+      // agrupada enseñada por provincias) pondría sus escaños en cada una.
+      if (agregado.repetido) return;
       const lista = MAPA_DATOS.ordenadas(agregado).filter(p => p.escanos > 0);
       const total = lista.reduce((n, p) => n + p.escanos, 0);
       if (!total) return;
