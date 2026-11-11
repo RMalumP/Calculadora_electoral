@@ -8,6 +8,12 @@ on:
       - 'editor/**'
       - 'scripts/**'
       - 'tests/**'
+      - 'js/**'
+      - 'tabs/**'
+      - 'css/**'
+      - 'index.html'
+      - 'sw.js'
+      - 'datos/generado/**'
 
 jobs:
   pruebas:
@@ -21,3 +27,8 @@ jobs:
         run: pip install openpyxl==3.1.5
       - name: Pruebas del editor y del conversor
         run: python3 -m unittest discover -s tests -v
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Pruebas del cálculo (Node)
+        run: node --test tests/*.test.js

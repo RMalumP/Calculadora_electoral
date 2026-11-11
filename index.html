@@ -6,18 +6,24 @@
   <title>Calculadora Electoral</title>
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#211c18">
+  <meta name="color-scheme" content="light dark">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Electoral">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <link rel="icon" type="image/png" href="icons/icon-192.png">
-  <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Source+Sans+3:wght@300;400;600&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Source+Sans+3:wght@300;400;600&display=swap"></noscript>
   <link rel="stylesheet" href="css/variables.css">
   <link rel="stylesheet" href="css/header-tabs.css">
   <link rel="stylesheet" href="css/layout.css">
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/otros-drag-responsive.css">
   <link rel="stylesheet" href="css/advanced.css">
+  <link rel="stylesheet" href="css/tema-oscuro.css">
+  <script>try{var t=localStorage.getItem('ce-tema');if(t=='dark'||t=='light')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
 </head>
 <body>
 
@@ -33,6 +39,10 @@
       <option value="concejales">Concejales</option>
       <option value="congresistas">Congresistas</option>
     </select>
+
+    <!-- Tema: automático (el del sistema), claro u oscuro. -->
+    <button class="save-icon-btn" id="theme-btn" type="button"
+            title="Cambiar el tema (automático, claro u oscuro)" aria-label="Cambiar el tema">🌓</button>
 
     <!-- Sesión guardada automáticamente en este navegador. -->
     <button class="save-icon-btn" id="auto-clear-btn"
@@ -66,32 +76,29 @@
 </div><!-- /main -->
 
 <!-- ══ PESTAÑAS: registro (js/tabs.js) y marcado de cada sección ══ -->
-<script src="js/tabs.js"></script>
-<script src="tabs/calculadora.js"></script>
-<script src="tabs/pactometro.js"></script>
-<script src="tabs/avanzada.js"></script>
-<script src="tabs/teoria.js"></script>
+<script src="js/tabs.js" defer></script>
+<script src="tabs/calculadora.js" defer></script>
+<script src="tabs/pactometro.js" defer></script>
+<script src="tabs/avanzada.js" defer></script>
+<script src="tabs/teoria.js" defer></script>
 
 <!-- ══ SCRIPTS (orden de dependencias) ══ -->
-<script src="js/helpers.js"></script>
-<script src="js/constants.js"></script>
-<script src="js/algorithms.js"></script>
-<script src="js/groupings.js"></script>
-<script src="js/rows.js"></script>
-<script src="js/totals.js"></script>
-<script src="js/calculator.js"></script>
-<script src="js/hemicycle.js"></script>
-<script src="js/pactometer.js"></script>
-<!-- Base de datos local generada desde datos/Datos_electorales.xlsx (si falta, se usa Google Sheets) -->
-<script src="datos/generado/indice.js"></script>
-<script src="js/advanced-data.js?v=12"></script>
-<script src="js/advanced-compensation.js?v=12"></script>
-<script src="js/advanced-calc.js?v=12"></script>
-<script src="js/advanced-ui.js?v=12"></script>
-<script src="js/advanced-popups.js?v=12"></script>
-<script src="js/session.js"></script>
-<script src="js/autosave.js"></script>
-<script src="js/ui.js"></script>
+<script src="js/helpers.js" defer></script>
+<script src="js/constants.js" defer></script>
+<script src="js/algorithms.js" defer></script>
+<script src="js/groupings.js" defer></script>
+<script src="js/rows.js" defer></script>
+<script src="js/totals.js" defer></script>
+<script src="js/calculator.js" defer></script>
+<script src="js/hemicycle.js" defer></script>
+<script src="js/pactometer.js" defer></script>
+<!-- La calculadora avanzada (y la base de datos local de datos/generado/) se descarga al abrir su pestaña: js/carga-avanzada.js -->
+<script src="js/carga-avanzada.js" defer></script>
+<script src="js/advanced-compensation.js" defer></script>
+<script src="js/session.js" defer></script>
+<script src="js/autosave.js" defer></script>
+<script src="js/ui.js" defer></script>
+<script src="js/accesibilidad.js" defer></script>
 <script>
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));

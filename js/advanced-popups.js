@@ -209,8 +209,7 @@ function advPopupCoefficients(body) {
 
   // Fórmulas de cuota: se muestra la cuota, los escaños directos y los restos.
   const total = sorted.reduce((s, p) => s + p.votes, 0);
-  const divisor = { hare: toAllocate, imperiali: toAllocate + 2, droop: toAllocate + 1, hb: toAllocate + 1 }[formula] || toAllocate;
-  const quota = total / divisor;
+  const quota = d.analysis?.quota ?? (getQuotaFn(formula, toAllocate) || (v => v / toAllocate))(total);
   body.innerHTML = head + `<p class="adv-popup-note">Cuota: <b>${quota.toLocaleString('es-ES', { maximumFractionDigits: 2 })}</b> votos por escaño.</p>
     <div class="adv-popup-scroll"><table class="adv-popup-table">
       <thead><tr><th>Candidatura</th><th class="adv-num">Votos</th><th class="adv-num">Votos ÷ cuota</th><th class="adv-num">Directos</th><th class="adv-num">Resto</th><th class="adv-num">Escaños</th></tr></thead>

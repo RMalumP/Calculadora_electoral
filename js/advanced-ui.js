@@ -89,10 +89,7 @@ function advPartyColor(p) {
 const advNum = n => formatVotes(n || 0);
 const advPct = n => (n || 0).toFixed(2) + '%';
 
-function advEscape(s) {
-  return String(s ?? '').replace(/[&<>"']/g, c =>
-    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-}
+function advEscape(s) { return escapeHtml(s); }
 
 /* ── Carga de datos ────────────────────────────────────────── */
 
@@ -641,9 +638,18 @@ function advReadCompForm() {
   };
 }
 
+let _advRunPendiente = false;
+
+/** Recalcula en el siguiente fotograma: varios cambios seguidos (cargar una sesión, cambiar de ámbito) dan un solo cálculo. */
+function advRunSoon() {
+  if (_advRunPendiente) return;
+  _advRunPendiente = true;
+  requestAnimationFrame(() => { _advRunPendiente = false; if (_advLoaded) advRun(); });
+}
+
 function advOnConfigChange() {
   advRefreshFormState();
-  if (_advLoaded) advRun();
+  if (_advLoaded) advRunSoon();
 }
 
 /* ── Cálculo y render ──────────────────────────────────────── */
@@ -699,8 +705,10 @@ function advRenderSummary() {
 }
 
 function advRenderResults() {
-  select('#adv-results').innerHTML = advNationalCard() + advExtrasCard() + advDistrictsCard();
+  const terr = typeof advTerritorialCard === 'function' ? advTerritorialCard() : '';
+  select('#adv-results').innerHTML = advNationalCard() + terr + advExtrasCard() + advDistrictsCard();
   advAttachResultHandlers();
+  if (terr) advTerritorialAttach();
 }
 
 /**
@@ -780,6 +788,8 @@ function advNationalCard() {
         <button type="button" class="adv-tool-btn" data-adv-popup="hemi">Representación visual</button>
         <button type="button" class="adv-tool-btn" data-adv-popup="last">Último escaño</button>
         <button type="button" class="adv-tool-btn" data-adv-popup="coef">Coeficientes</button>
+        <button type="button" class="adv-tool-btn" data-adv-export="csv" title="Descargar el recuento en CSV (Excel)">CSV</button>
+        <button type="button" class="adv-tool-btn" data-adv-export="png" title="Descargar el recuento como imagen">Imagen</button>
       </span>
       <span class="formula-tag">${advEscape(FORMULAS.find(f => f.id === _advConfig.formula)?.name || _advConfig.formula)}</span>
     </div>
@@ -2010,7 +2020,9 @@ function advEnsureLoaded() {
   if (!_advLoaded && !_advLoading) {
     // Si el navegador guardaba una sesión de esta pestaña, se repone en cuanto
     // llegan los datos (autosave.js).
-    advLoadElection(false).then(() => {
+    advLoadElection(false).then(async () => {
+      // Un enlace con escenario manda sobre la sesión guardada en el navegador.
+      if (typeof advAplicarEscenarioDeUrl === 'function' && await advAplicarEscenarioDeUrl()) return;
       if (typeof autoRestoreAdvanced === 'function') autoRestoreAdvanced();
     });
   }

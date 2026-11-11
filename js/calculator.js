@@ -35,9 +35,12 @@ function _assignPartyNames(rows) {
 
 /* ── CÁLCULO PRINCIPAL ─────────────────────────────────────── */
 
+/** Análisis del último escaño del último cálculo (lo rellena allocateSeats). */
+let _calcSeatOut = {};
+
 function calculate() {
   const formula = document.getElementById('formula-select').value;
-  window.lastSeatInfo = null;
+  _calcSeatOut = {};
 
   // Segunda vuelta: flujo simplificado sin lógica de absorción
   if (formula === 'majority_round2') {
@@ -117,7 +120,7 @@ function calculate() {
   let allocated = allocateSeats(
     eligible.map(p => ({ name: p.name, siglas: p.siglas, votes: p.votes, color: p.color })),
     seatsToAllocate, formula
-  );
+  );  // esta primera asignación sólo sirve para decidir qué partidos se absorben
   applyBonus(allocated, bonus);
 
   // ── PASO 4: Identificar partidos minoritarios a absorber ──
@@ -174,7 +177,7 @@ function calculate() {
 
   allocated = allocateSeats(
     eligible2.map(p => ({ name: p.name, siglas: p.siglas, votes: p.votes, color: p.color })),
-    seatsToAllocate, formula
+    seatsToAllocate, formula, _calcSeatOut
   );
   applyBonus(allocated, bonus);
 
@@ -247,24 +250,24 @@ function displayResults(allocated, totalValid, totalSeats, formula, excludedBarr
     const _siglasVis = typeof siglasVisible !== 'undefined' && siglasVisible;
     const _namesHid  = typeof namesHidden  !== 'undefined' && namesHidden;
     const siglasPrefixHtml = p.siglas
-      ? `<span class="result-siglas-prefix" data-siglas="${p.siglas}" style="${_siglasVis ? '' : 'display:none'}">${p.siglas}${_siglasVis && !_namesHid ? '-' : ''}</span>`
+      ? `<span class="result-siglas-prefix" data-siglas="${escapeHtml(p.siglas)}" style="${_siglasVis ? '' : 'display:none'}">${escapeHtml(p.siglas)}${_siglasVis && !_namesHid ? '-' : ''}</span>`
       : '';
-    const partyNameHtml = `<span class="result-party-name" style="${_namesHid ? 'display:none' : ''}">${p.name}</span>`;
+    const partyNameHtml = `<span class="result-party-name" style="${_namesHid ? 'display:none' : ''}">${escapeHtml(p.name)}</span>`;
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td style="font-size:0.88rem">
         <div style="display:flex;align-items:center;gap:6px">
-          <span class="color-swatch" style="background:${color}"></span><span>${siglasPrefixHtml}${partyNameHtml}</span>
+          <span class="color-swatch" style="background:${escapeHtml(color)}"></span><span>${siglasPrefixHtml}${partyNameHtml}</span>
         </div>
       </td>
       <td style="text-align:right;font-variant-numeric:tabular-nums;font-size:0.82rem">${p.votes.toLocaleString('es-ES')}</td>
       <td class="pct-cell" style="font-size:0.82rem">${votePct}%</td>
       <td>
         <div class="seats-bar-wrap">
-          <span class="result-badge" style="background:${color}">${p.seats}</span>
+          <span class="result-badge" style="background:${escapeHtml(color)}">${p.seats}</span>
           ${p.compSeats > 0 ? `<span class="comp-note" title="Escaños directos + compensatorios">${p.directSeats}+${p.compSeats}</span>` : ''}
           <div class="seats-bar-outer">
-            <div class="seats-bar" style="width:${barPct}%;background:${color};opacity:0.6"></div>
+            <div class="seats-bar" style="width:${barPct}%;background:${escapeHtml(color)};opacity:0.6"></div>
           </div>
         </div>
       </td>
@@ -310,7 +313,7 @@ function _showCompensationNote() {
   const word = typeof currentSeatName === 'string' ? currentSeatName : 'escaños';
   note.innerHTML = `Compensación (${comp.modo === 'bolsa' ? 'bolsa fija' : 'ampliación'}): ` +
     `<strong>+${comp.added}</strong> ${word} · total <strong>${comp.size}</strong>` +
-    (comp.warnings.length ? `<br><em>${comp.warnings.join(' ')}</em>` : '');
+    (comp.warnings.length ? `<br><em>${escapeHtml(comp.warnings.join(' '))}</em>` : '');
 }
 
 function highlightInputTable(allocated, formula) {
@@ -342,7 +345,7 @@ function highlightInputTable(allocated, formula) {
 }
 
 function displayLastSeatInfo() {
-  const info = window.lastSeatInfo;
+  const info = _calcSeatOut.lastSeat;
   const container = document.getElementById('last-seat-container');
   const formula = document.getElementById('formula-select').value;
 
@@ -374,8 +377,12 @@ function displayLastSeatInfo() {
   }
 
   document.getElementById('last-seat-info').innerHTML =
-    `<strong>Último ${seatWord}:</strong> ${info.winner} (cociente&nbsp;${info.winnerQuotient.toFixed(4)}) &nbsp;·&nbsp; ` +
-    `<strong>Aspirante:</strong> ${info.loser.name} (cociente&nbsp;${info.loser.quotient.toFixed(4)}) &nbsp;·&nbsp; ${diffText}`;
+    `<strong>Último ${seatWord}:</strong> ${escapeHtml(info.winner)} (cociente&nbsp;${info.winnerQuotient.toFixed(4)}) &nbsp;·&nbsp; ` +
+    `<strong>Aspirante:</strong> ${escapeHtml(info.loser.name)} (cociente&nbsp;${info.loser.quotient.toFixed(4)}) &nbsp;·&nbsp; ${diffText}` +
+    (_calcSeatOut.sorteo
+      ? `<br><strong>Empate exacto:</strong> ${escapeHtml(_calcSeatOut.sorteo.join(' y '))} tienen el mismo cociente y los mismos votos; ` +
+        `el último ${seatWord} se decidiría por sorteo (aquí se asigna al primero de la lista).`
+      : '');
   container.style.display = 'block';
 }
 
@@ -461,12 +468,12 @@ function prepareSecondRound() {
     if (row) {
       row.dataset.siglas = p.siglas || '';
       const siglasPrefixHtml = p.siglas
-        ? `<span class="sr-siglas-prefix" data-siglas="${p.siglas}" style="${_siglasVis ? '' : 'display:none'}">${p.siglas}${_siglasVis && !_namesHid ? '-' : ''}</span>`
+        ? `<span class="sr-siglas-prefix" data-siglas="${escapeHtml(p.siglas)}" style="${_siglasVis ? '' : 'display:none'}">${escapeHtml(p.siglas)}${_siglasVis && !_namesHid ? '-' : ''}</span>`
         : `<span class="sr-siglas-prefix" data-siglas="" style="display:none"></span>`;
       row.innerHTML = `
-        <td style="text-align:center;padding:4px 6px"><input type="color" value="${p.color}" onchange="updateSecondRoundPercentages()"></td>
-        <td><div style="display:flex;align-items:center;gap:4px">${siglasPrefixHtml}<input type="text" class="sr-name-input" placeholder="Candidato ${i + 1}" value="${p.name}" oninput="updateSecondRoundPercentages()" style="${_namesHid ? 'display:none' : ''}"></div></td>
-        <td><input type="number" min="0" placeholder="0" value="${p.votes}" oninput="updateSecondRoundPercentages()"></td>
+        <td style="text-align:center;padding:4px 6px"><input type="color" value="${escapeHtml(p.color)}" onchange="updateSecondRoundPercentages()"></td>
+        <td><div style="display:flex;align-items:center;gap:4px">${siglasPrefixHtml}<input type="text" class="sr-name-input" placeholder="Candidato ${i + 1}" value="${escapeHtml(p.name)}" oninput="updateSecondRoundPercentages()" style="${_namesHid ? 'display:none' : ''}"></div></td>
+        <td><input type="number" min="0" placeholder="0" value="${escapeHtml(p.votes)}" oninput="updateSecondRoundPercentages()"></td>
         <td class="pct-cell">${pct === '—' ? '—' : pct + '%'}</td>`;
     }
   }

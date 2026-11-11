@@ -506,16 +506,17 @@ function advAllocateDistrict(d, { config, edits, locks, partyMeta, eligibility, 
   const aRepartir = bonoExtra ? d.seats : Math.max(0, d.seats - bono);
 
   // El último escaño y los cocientes se guardan en la circunscripción para las
-  // ventanas de análisis: allocateSeats los deja en una variable global que la
-  // siguiente circunscripción pisaría.
-  window.lastSeatInfo = null;
+  // ventanas de análisis.
+  const seatOut = {};
   const allocated = aRepartir > 0 && contenders.length
-    ? allocateSeats(contenders, aRepartir, formula)
+    ? allocateSeats(contenders, aRepartir, formula, seatOut)
     : contenders.map(p => ({ ...p, seats: 0 }));
-  d.lastSeat = aRepartir > 0 && window.lastSeatInfo ? { ...window.lastSeatInfo } : null;
+  d.lastSeat = aRepartir > 0 && seatOut.lastSeat ? { ...seatOut.lastSeat } : null;
+  d.sorteo = aRepartir > 0 ? seatOut.sorteo : null;
   d.analysis = {
     formula,
     toAllocate: aRepartir,
+    quota: seatOut.quota ?? null,
     parties: contenders.map(c => ({
       key: c.key, name: c.name, siglas: c.siglas, votes: c.votes,
       seats: allocated.find(a => a.key === c.key)?.seats || 0
@@ -663,6 +664,15 @@ function advCalculate(data, config, edits, locks) {
         `Revisa: ${bad.join('; ')}.`
       );
     }
+  }
+  // Empates exactos en el último escaño: la norma pide sorteo y la calculadora no sortea.
+  const empates = districts.filter(d => d.sorteo && d.sorteo.length)
+    .map(d => `${d.name || d.id} (${d.sorteo.join(' y ')})`);
+  if (empates.length) {
+    warnings.push(
+      'Empate exacto (mismo cociente y mismos votos) en el último escaño de: ' + empates.join('; ') +
+      '. Se asigna al primero de la lista; en la realidad se decidiría por sorteo.'
+    );
   }
   const gallagherBefore = advGallagherIndex(national);
   let compensation = null;

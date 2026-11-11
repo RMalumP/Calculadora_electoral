@@ -7,6 +7,7 @@
 
 .workspace {
   display: flex;
+  flex-wrap: wrap;       /* si no caben las dos columnas, la de resultados baja */
   gap: 20px;
   align-items: start;
 }
@@ -39,7 +40,7 @@
 /* min-width = ancho por defecto de results-card (560 px)     */
 /* param-area = max 1/4 de ese ancho (140 px)                 */
 .main-right {
-  flex: 1;
+  flex: 1 1 560px;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -121,7 +122,7 @@ tbody tr:hover { background: var(--accent-bg); }
 /* Alternating rows only in results table */
 #results-body tr:nth-child(even) { background: var(--row-alt); }
 
-tbody tr.special-row { background: #f3f0eb; border-top: 2px solid var(--border); }
+tbody tr.special-row { background: var(--special-row); border-top: 2px solid var(--border); }
 tbody tr.special-row:hover { background: var(--accent-bg); }
 tbody tr.special-row td:first-child {
   font-style: italic;

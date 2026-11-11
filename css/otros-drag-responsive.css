@@ -91,7 +91,7 @@ tr[data-is-otros="true"] td input[type=color] {
 .otros-dropdown-item .otros-siglas-input:focus {
   outline: none;
   border-color: var(--accent);
-  background: #fffef9;
+  background: var(--surface);
 }
 .otros-dropdown-item .otros-siglas-input::placeholder {
   color: var(--text-muted);
@@ -120,10 +120,10 @@ tr[data-is-otros="true"] td input[type=color] {
 .otros-dropdown-item .otros-item-name-input:focus {
   outline: none;
   border-color: var(--accent);
-  background: #fffef9;
+  background: var(--surface);
 }
 .otros-dropdown-item .otros-item-name-input:read-only {
-  background: #f5f5f5;
+  background: var(--row-alt);
   cursor: not-allowed;
   color: var(--text-muted);
 }
@@ -153,7 +153,7 @@ tr[data-is-otros="true"] td input[type=color] {
 .otros-dropdown-item .otros-item-votes-input:focus {
   outline: none;
   border-color: var(--accent);
-  background: #fffef9;
+  background: var(--surface);
 }
 .otros-dropdown-item .otros-item-pct {
   font-size: 0.75rem;
@@ -248,7 +248,7 @@ tr.drag-over-below       { border-bottom: 2px solid var(--accent) !important; }
   top: 140px;
   right: 40px;
   width: 420px;
-  background: white;
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: 0 8px 28px rgba(0,0,0,.14);
@@ -333,7 +333,7 @@ tr.drag-over-below       { border-bottom: 2px solid var(--accent) !important; }
 }
 
 /* ── MOBILE (≤ 700 px) ──────────────────────────────────────── */
-@media (max-width: 700px) {
+@media (max-width: 760px) {
   header {
     padding: 12px 14px;
     flex-direction: column;
@@ -346,14 +346,14 @@ tr.drag-over-below       { border-bottom: 2px solid var(--accent) !important; }
 
   .main { padding: 10px 8px 40px; }
 
-  /* workspace: mantiene fila — main-left izquierda, main-right derecha */
-  .workspace { gap: 10px; }
+  /* workspace: una sola columna (votos, parámetros y resultados apilados) */
+  .workspace { flex-direction: column; align-items: stretch; gap: 10px; }
 
   /* Columna izquierda: votos + desglose */
   .left-column {
-    flex: 1 1 45%;
+    flex: none;
+    width: 100%;
     min-width: 0;
-    overflow-x: hidden;
   }
   .main-left { gap: 10px; }
   .votes-table-scroll { overflow-x: auto; }
@@ -361,7 +361,8 @@ tr.drag-over-below       { border-bottom: 2px solid var(--accent) !important; }
 
   /* Columna derecha: params arriba, resultados abajo */
   .main-right {
-    flex: 1 1 55%;
+    flex: none;
+    width: 100%;
     min-width: 0;
     gap: 10px;
   }
@@ -381,7 +382,7 @@ tr.drag-over-below       { border-bottom: 2px solid var(--accent) !important; }
   /* results-area: ancho completo, tabla con scroll si es necesario */
   .results-area { width: 100%; }
   #results-card { overflow-x: auto; }
-  #results-table { min-width: 380px; }
+  #results-table { min-width: 0; }
 
   /* Celdas más compactas */
   td, th { padding: 4px 6px; font-size: 0.8rem; }
@@ -402,4 +403,38 @@ tr.drag-over-below       { border-bottom: 2px solid var(--accent) !important; }
     right: 16px;
     left: 16px;
   }
+}
+
+
+/* ── PACTÓMETRO ─────────────────────────────────────────────── */
+.pacto-wrap { padding: 40px; max-width: 900px; margin: 0 auto; }
+.pacto-head { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
+.pacto-title { font-family: 'Libre Baskerville', serif; color: var(--text); font-size: 1.8rem; margin: 0; }
+.pacto-head-tools { display: flex; align-items: center; gap: 8px; margin-left: auto; flex-wrap: wrap; }
+.pacto-card-actions { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+.pacto-total-bar {
+  padding: 10px 14px; border-top: 1px solid var(--border); background: var(--accent-bg);
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.pacto-free-seats {
+  display: flex; align-items: center; gap: 6px; margin-left: 20px; padding: 6px 10px;
+  background: var(--accent-bg); border: 1px solid var(--border); border-radius: var(--radius);
+}
+.pacto-hemi-wrap { display: flex; flex-direction: column; gap: 0; }
+.pacto-hemi-body { padding: 30px; display: flex; flex-direction: column; align-items: center; gap: 20px; }
+
+@media (max-width: 760px) {
+  .pacto-wrap { padding: 14px 8px 40px; }
+  .pacto-title { font-size: 1.4rem; }
+  .pacto-head-tools { margin-left: 0; width: 100%; }
+  .pacto-card-actions { margin-left: 0; width: 100%; }
+  .pacto-free-seats { margin-left: 0; }
+  .pacto-hemi-body { padding: 14px 10px; width: 100%; }
+  .pacto-hemi-wrap { width: 100%; }
+  /* El hemiciclo tenía 700 px fijos en el propio marcado. */
+  #voting-panel-toggle, #voting-panel-wrapper, #combined-settings,
+  #hemicycle-legend, #hemicycle-container { width: 100% !important; max-width: 700px; box-sizing: border-box; }
+  #pactometer-table { min-width: 0; }
+  #pactometer-table th, #pactometer-table td { padding: 6px 4px; }
+  #pact-seats-header, #pactometer-table th:nth-child(4) { width: auto !important; }
 }

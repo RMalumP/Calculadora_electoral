@@ -100,7 +100,7 @@ function switchTab(tabName, updateHash = true) {
 
   if (updateHash) {
     const slug = TAB_SLUGS[tabName];
-    if (location.hash.slice(1) !== slug) {
+    if (hashSlug() !== slug) {
       // replaceState evita llenar el historial con cada cambio de pestaña;
       // si no está disponible (file:// en algunos navegadores) se recurre al
       // fragmento directamente.
@@ -109,12 +109,22 @@ function switchTab(tabName, updateHash = true) {
     }
   }
 
-  if (tabName === 'advanced' && typeof advEnsureLoaded === 'function') advEnsureLoaded();
+  if (tabName === 'advanced') {
+    advCargarModulos().then(() => advEnsureLoaded()).catch(() => {
+      const sub = select('#adv-subtitle');
+      if (sub) sub.textContent = 'No se han podido cargar los módulos de la calculadora avanzada. Comprueba la conexión y recarga la página.';
+    });
+  }
 }
 
 /** Pestaña indicada en la URL, si la hay. */
+function hashSlug() {
+  // «#avanzada&s=…»: lo que sigue al primer & son parámetros (escenario compartido).
+  return decodeURIComponent(location.hash.replace(/^#/, '').split('&')[0]);
+}
+
 function tabFromHash() {
-  return SLUG_TO_TAB[decodeURIComponent(location.hash.replace(/^#/, ''))] || null;
+  return SLUG_TO_TAB[hashSlug()] || null;
 }
 
 /** Abre la pestaña de la URL al cargar y al navegar atrás o adelante. */
@@ -338,9 +348,6 @@ function showTheorySystem(systemId) {
   });
   selectAll('.theory-system-btn').forEach(b => {
     toggleClass(b, 'active', false);
-    b.style.background = 'white';
-    b.style.color = 'var(--text)';
-    b.style.border = '1px solid var(--border)';
   });
 
   const contentEl = select(`#theory-${systemId}`);
@@ -352,9 +359,6 @@ function showTheorySystem(systemId) {
   selectAll('.theory-system-btn').forEach(b => {
     if (b.dataset.system === systemId) {
       toggleClass(b, 'active', true);
-      b.style.background = 'var(--accent)';
-      b.style.color = 'white';
-      b.style.border = 'none';
     }
   });
 }

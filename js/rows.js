@@ -89,7 +89,7 @@ function _buildRow(name, votes, color, isOtros) {
        </div>`
     : `<div class="name-wrapper">
         <input type="text" class="siglas-input" placeholder="Sig." maxlength="6" oninput="this.value=this.value.toUpperCase()">
-        <input type="text" class="name-input" placeholder="Nombre del partido" value="${name}">
+        <input type="text" class="name-input" placeholder="Nombre del partido" value="${escapeHtml(name)}">
        </div>`;
 
   const actionsCell = isOtros ? '' :
@@ -115,7 +115,7 @@ function _buildRow(name, votes, color, isOtros) {
   tr.innerHTML = `
     <td style="white-space:nowrap;padding:2px 2px 2px 4px">${dragHandle}${deleteButton}</td>
     <td style="text-align:center;padding:1px 2px">${actionsCell}</td>
-    <td style="text-align:center;padding:4px 6px"><input type="color" value="${colorVal}" title="Color del partido" ${isOtros ? 'disabled style="cursor:not-allowed"' : ''}></td>
+    <td style="text-align:center;padding:4px 6px"><input type="color" value="${escapeHtml(colorVal)}" title="Color del partido" ${isOtros ? 'disabled style="cursor:not-allowed"' : ''}></td>
     ${groupCell}
     <td>${nameCell}</td>
     <td style="padding:2px 4px"><input type="text" class="votes-input" placeholder="0" value="${votesFmt}" min="0" max="9000000000" ${isOtros ? 'data-otros-main="true"' : ''} oninput="formatVoteInput(this);updateTotals();updateSecondRoundIfActive();" onfocus="onVoteFocus(this)" onblur="onVoteBlur(this)"></td>

@@ -31,12 +31,7 @@ function advCompActive(comp) {
 function _advCompAllocate(votes, total, formula) {
   const f = ADV_COMP_FORMULAS.includes(formula) ? formula : 'dhondt';
   const parties = votes.map((v, i) => ({ idx: i, votes: v }));
-  // allocateSeats deja el análisis del último escaño en una variable global: la
-  // compensación no debe pisar el del reparto principal.
-  const saved = typeof window !== 'undefined' ? window.lastSeatInfo : undefined;
-  const seats = allocateSeats(parties, total, f).map(p => p.seats);
-  if (typeof window !== 'undefined') window.lastSeatInfo = saved;
-  return seats;
+  return allocateSeats(parties, total, f).map(p => p.seats);
 }
 
 /** Fórmula de compensación que corresponde a una de reparto (la que se hereda). */

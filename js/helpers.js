@@ -29,6 +29,12 @@ function updateHTML(el, html) {
   if (el) el.innerHTML = html;
 }
 
+/** Escapa texto de usuario antes de meterlo en un innerHTML o en un atributo. */
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
 /* ── Parse & Format ── */
 
 function parseVoteValue(val) {

@@ -1,19 +1,28 @@
-const CACHE = 'calculadora-electoral-v5';
+// Versión de la caché: súbela cuando cambie algo que deba reemplazarse sí o sí.
+// No hace falta tocar los ?v= de los scripts: el servidor de red va primero y la
+// caché se busca sin parámetros, así que una URL con o sin ?v= es el mismo archivo.
+const CACHE = 'calculadora-electoral-v6';
 const ASSETS = [
   './',
   './index.html',
   './manifest.webmanifest',
   './datos/generado/indice.js',
   './css/advanced.css',
+  './css/tema-oscuro.css',
   './css/components.css',
   './css/header-tabs.css',
   './css/layout.css',
   './css/otros-drag-responsive.css',
   './css/variables.css',
+  './js/accesibilidad.js',
   './js/advanced-calc.js',
+  './js/advanced-compare.js',
+  './js/advanced-exportar.js',
+  './js/carga-avanzada.js',
   './js/advanced-compensation.js',
   './js/advanced-data.js',
   './js/advanced-popups.js',
+  './js/advanced-territorial.js',
   './js/advanced-ui.js',
   './js/algorithms.js',
   './js/autosave.js',
@@ -38,8 +47,27 @@ const ASSETS = [
   './icons/icon-maskable-512.png'
 ];
 
+// El índice de datos se lee aquí para precachear la elección más reciente de
+// cada ámbito: así la avanzada funciona sin red desde el primer arranque.
+// importScripts también hace que, al cambiar el índice, el navegador renueve este SW.
+let DATOS_RECIENTES = [];
+try {
+  self.window = self;
+  importScripts('./datos/generado/indice.js');
+  DATOS_RECIENTES = (self.CE_DATOS_INDICE?.ambitos || [])
+    .map(a => [...(a.elecciones || [])].sort((x, y) => String(y.fecha).localeCompare(String(x.fecha)))[0])
+    .filter(Boolean)
+    .map(e => `./datos/generado/elecciones/${encodeURIComponent(e.archivo)}.js`);
+} catch (err) { /* sin índice: sólo se precachean los archivos de la aplicación */ }
+
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
+  e.waitUntil(
+    caches.open(CACHE).then(async c => {
+      await c.addAll(ASSETS);
+      // Los datos son opcionales: si alguno falla, la instalación sigue adelante.
+      await Promise.allSettled(DATOS_RECIENTES.map(u => c.add(u)));
+    }).then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener('activate', e => {
@@ -62,6 +90,6 @@ self.addEventListener('fetch', e => {
         }
         return res;
       })
-      .catch(() => caches.match(e.request).then(r => r || caches.match('./index.html')))
+      .catch(() => caches.match(e.request, { ignoreSearch: true }).then(r => r || caches.match('./index.html')))
   );
 });

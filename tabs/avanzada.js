@@ -16,9 +16,15 @@ registerTab('advanced', 'tab-content', String.raw`
           <h2 class="adv-title">Calculadora Avanzada</h2>
           <div class="adv-subtitle" id="adv-subtitle">Cargando datos electorales…</div>
         </div>
-        <div class="adv-mode" role="group" aria-label="Modo de la calculadora">
-          <button type="button" class="adv-mode-btn" data-mode="simple">Sencillo</button>
-          <button type="button" class="adv-mode-btn" data-mode="advanced">Avanzado</button>
+        <div class="adv-head-tools">
+          <button type="button" class="adv-compare-btn" id="adv-share-btn"
+                  title="Copiar un enlace que abre esta misma configuración">🔗 Compartir</button>
+          <button type="button" class="adv-compare-btn" id="adv-compare-btn"
+                  title="Comparar dos configuraciones independientes, lado a lado">⚖ Comparar</button>
+          <div class="adv-mode" role="group" aria-label="Modo de la calculadora">
+            <button type="button" class="adv-mode-btn" data-mode="simple">Sencillo</button>
+            <button type="button" class="adv-mode-btn" data-mode="advanced">Avanzado</button>
+          </div>
         </div>
       </div>
 
@@ -110,13 +116,13 @@ registerTab('advanced', 'tab-content', String.raw`
                   <label class="adv-check"><input type="checkbox" id="adv-b1-on"> Barrera electoral</label>
                   <div class="adv-row">
                     <div class="adv-select-wrap">
-                      <select id="adv-b1-level">
+                      <select id="adv-b1-level" aria-label="Ámbito de la barrera">
                         <option value="circunscripcion">Circunscripción</option>
                         <option value="ccaa">Comunidad</option>
                         <option value="nacional">Nacional</option>
                       </select>
                     </div>
-                    <input type="number" id="adv-b1-val" min="0" max="100" step="0.1" value="3">
+                    <input type="number" id="adv-b1-val" aria-label="Valor de la barrera (%)" min="0" max="100" step="0.1" value="3">
                   </div>
                   <small id="adv-b1-hint" style="display:none"></small>
                 </div>

@@ -1,0 +1,85 @@
+/* ── TEMA OSCURO ───────────────────────────────────────────────
+   Se activa solo si el sistema lo pide (prefers-color-scheme) o a mano con el
+   botón de la cabecera (data-theme="dark" / "light" en <html>). */
+:root { color-scheme: light; }
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #16130f;
+  --surface: #221d19;
+  --border: #3c342d;
+  --border-light: #2c2621;
+  --text: #ece6df;
+  --text-muted: #a89f95;
+  --accent: #d4554f;
+  --accent-light: #e0706a;
+  --accent-pale: #3b2321;
+  --accent-bg: #2c1e1c;
+  --header-bg: #0f0c0a;
+  --header-text: #ede7e0;
+  --row-alt: #1d1915;
+  --shadow: 0 1px 3px rgba(0,0,0,0.4);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.45);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.5);
+  --danger-bg: #3a1f1d;
+  --danger-bg-strong: #4a2522;
+  --danger-bg-hover: #56302c;
+  --danger-border: #6e3a35;
+  --danger-text: #f0b4ae;
+  --tint: #2a2019;
+  --tint-hover: #35281f;
+  --special-row: #1d1915;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #16130f;
+    --surface: #221d19;
+    --border: #3c342d;
+    --border-light: #2c2621;
+    --text: #ece6df;
+    --text-muted: #a89f95;
+    --accent: #d4554f;
+    --accent-light: #e0706a;
+    --accent-pale: #3b2321;
+    --accent-bg: #2c1e1c;
+    --header-bg: #0f0c0a;
+    --header-text: #ede7e0;
+    --row-alt: #1d1915;
+    --shadow: 0 1px 3px rgba(0,0,0,0.4);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.45);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.5);
+    --danger-bg: #3a1f1d;
+    --danger-bg-strong: #4a2522;
+    --danger-bg-hover: #56302c;
+    --danger-border: #6e3a35;
+    --danger-text: #f0b4ae;
+    --tint: #2a2019;
+    --tint-hover: #35281f;
+    --special-row: #1d1915;
+  }
+}
+
+/* Los colores que no salen de las variables. */
+:root[data-theme="dark"] body { background-image: none; }
+:root[data-theme="dark"] input,
+:root[data-theme="dark"] select,
+:root[data-theme="dark"] textarea { color: var(--text); }
+:root[data-theme="dark"] select,
+:root[data-theme="dark"] input[type="text"],
+:root[data-theme="dark"] input[type="number"] { background-color: transparent; }
+:root[data-theme="dark"] select option { background: var(--surface); color: var(--text); }
+:root[data-theme="dark"] tbody tr.special-row,
+:root[data-theme="dark"] tr.special-row { background: var(--row-alt); }
+:root[data-theme="dark"] .adv-notice.warn { background: #3a3016; border-color: #6b5a22; color: #e8d9a8; }
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) body { background-image: none; }
+  :root:not([data-theme="light"]) input,
+  :root:not([data-theme="light"]) select,
+  :root:not([data-theme="light"]) textarea { color: var(--text); }
+  :root:not([data-theme="light"]) select option { background: var(--surface); color: var(--text); }
+  :root:not([data-theme="light"]) tr.special-row { background: var(--row-alt); }
+  :root:not([data-theme="light"]) .adv-notice.warn { background: #3a3016; border-color: #6b5a22; color: #e8d9a8; }
+}
