@@ -19,9 +19,6 @@ from collections import Counter, OrderedDict
 from datetime import date
 
 import openpyxl
-from openpyxl.styles import Alignment, Font, PatternFill
-from openpyxl.utils import get_column_letter
-from openpyxl.worksheet.datavalidation import DataValidation
 
 sys.path.insert(0, __import__('os').path.dirname(__file__))
 from esquema_datos import *  # noqa: E402,F401,F403
@@ -202,126 +199,15 @@ def migrar(origen, destino):
 
 # ── Escritura del libro nuevo ─────────────────────────────────────────
 
-CAB_FILL = PatternFill('solid', fgColor='211C18')
-CAB_FONT = Font(bold=True, color='FFFFFF')
-FMT_MILES = '#,##0'
-
-
-def hoja_tabla(wb, titulo, columnas, filas, anchos=None, fmt=None):
-    ws = wb.create_sheet(titulo)
-    ws.append(columnas)
-    for c in ws[1]:
-        c.fill, c.font = CAB_FILL, CAB_FONT
-        c.alignment = Alignment(vertical='center', wrap_text=True)
-    for f in filas:
-        ws.append([f.get(c) for c in columnas])
-    ws.freeze_panes = 'A2'
-    ws.auto_filter.ref = f'A1:{get_column_letter(len(columnas))}{max(ws.max_row, 2)}'
-    for i, c in enumerate(columnas, 1):
-        ws.column_dimensions[get_column_letter(i)].width = (anchos or {}).get(c, max(12, len(c) + 3))
-        f = (fmt or {}).get(c)
-        if f:
-            for (cell,) in ws.iter_rows(min_row=2, min_col=i, max_col=i):
-                cell.number_format = f
-    return ws
-
-
-def lista_desplegable(ws, columna, rango, filas=5000):
-    letra = get_column_letter(columna)
-    dv = DataValidation(type='list', formula1=rango, allow_blank=True)
-    dv.error = 'Elige un valor de la lista (pestaña Listas).'
-    dv.errorTitle = 'Valor no válido'
-    ws.add_data_validation(dv)
-    dv.add(f'{letra}2:{letra}{filas}')
-
-
-LEEME = [
-    'Base de datos de la Calculadora electoral',
-    '',
-    'Cómo está organizado',
-    '• Elecciones: una fila por elección, con sus reglas (fórmula, barreras, prorrateo…). '
-    'Cada elección puede tener reglas distintas.',
-    '• Circunscripciones: una fila por elección y circunscripción (escaños, censo, votantes, blancos, nulos). '
-    'Las columnas «Fórmula (excepción)» y «Barrera % (excepción)» sólo se rellenan si esa circunscripción '
-    'no sigue la regla general de la elección.',
-    '• Partidos: siglas, nombre y color de cada candidatura (se usa para colorear gráficos).',
-    '• Pestañas de resultados (por ejemplo «España.Congreso»): una fila por elección, circunscripción y '
-    'candidatura. El nombre de la pestaña debe coincidir con la columna «Pestaña» de Elecciones.',
-    '',
-    'Reglas',
-    '• El ID de la elección (columna A de Elecciones) enlaza las tres tablas: escríbelo igual en todas.',
-    '• Votos y escaños: números sin texto. Las barreras en porcentaje: 3 = 3 %.',
-    '• Los partidos con 0 votos en una circunscripción no hace falta escribirlos.',
-    '• Para elecciones a doble vuelta: «Vuelta» = 2 en las filas de la segunda vuelta.',
-    '• Las celdas con desplegable sólo admiten los valores de la pestaña Listas. '
-    'Para añadir una opción, escríbela al final de su columna en Listas.',
-    '',
-    'Publicar cambios',
-    '• Guarda el archivo en datos/Datos_electorales.xlsx del repositorio y súbelo con GitHub Desktop '
-    '(Commit + Push). GitHub comprueba el archivo y actualiza los datos de la app. Si hay errores, '
-    'la comprobación falla, te llega un aviso y la app sigue con los datos anteriores.',
-]
-
 
 def escribir(destino, elecciones, circs, partidos, resultados):
-    wb = openpyxl.Workbook()
-    ws = wb.active
-    ws.title = HOJA_LEEME
-    for linea in LEEME:
-        ws.append([linea])
-    ws['A1'].font = Font(bold=True, size=14)
-    for r in (3, 10, 17):
-        ws.cell(r, 1).font = Font(bold=True)
-    ws.column_dimensions['A'].width = 140
-    for row in ws.iter_rows():
-        row[0].alignment = Alignment(wrap_text=True, vertical='top')
-
-    listas = wb.create_sheet(HOJA_LISTAS)
-    columnas_listas = [
-        ('Fórmula', [n for n, _ in FORMULAS]), ('Magnitud', MAGNITUDES),
-        ('Prorrateo', PRORRATEOS), ('Forma de voto', FORMAS_VOTO),
-        ('Ámbito de barrera', AMBITOS_BARRERA), ('Clase', CLASES), ('Vuelta', VUELTAS),
-    ]
-    rangos = {}
-    for j, (titulo, valores) in enumerate(columnas_listas, 1):
-        letra = get_column_letter(j)
-        listas.cell(1, j, titulo).font = CAB_FONT
-        listas.cell(1, j).fill = CAB_FILL
-        listas.column_dimensions[letra].width = 28
-        for i, v in enumerate(valores, 2):
-            listas.cell(i, j, v)
-        rangos[titulo] = f'{HOJA_LISTAS}!${letra}$2:${letra}$40'
-
-    el = hoja_tabla(wb, HOJA_ELECCIONES, COLS_ELECCIONES, elecciones,
-                    anchos={'ID': 26, 'Pestaña': 20, 'Fórmula': 24, 'Notas': 50, 'Fuente': 30},
-                    fmt={'Fecha': 'dd/mm/yyyy', 'Fecha 2ª vuelta': 'dd/mm/yyyy'})
-    for nombre, lista in (('Clase', 'Clase'), ('Magnitud', 'Magnitud'), ('Prorrateo', 'Prorrateo'),
-                          ('Forma de voto', 'Forma de voto'), ('Fórmula', 'Fórmula'),
-                          ('Barrera 1 ámbito', 'Ámbito de barrera'), ('Barrera 2 ámbito', 'Ámbito de barrera')):
-        lista_desplegable(el, COLS_ELECCIONES.index(nombre) + 1, rangos[lista], 1000)
-
-    numericas = [c for c in COLS_CIRCUNSCRIPCIONES if c not in
-                 ('Elección', 'Código', 'Circunscripción', 'Código región', 'Región',
-                  'Fórmula (excepción)', 'Barrera % (excepción)', 'Escaños', 'Mínimo')]
-    ci = hoja_tabla(wb, HOJA_CIRCUNSCRIPCIONES, COLS_CIRCUNSCRIPCIONES, circs,
-                    anchos={'Elección': 26, 'Circunscripción': 24, 'Región': 24, 'Fórmula (excepción)': 22},
-                    fmt={c: FMT_MILES for c in numericas})
-    lista_desplegable(ci, COLS_CIRCUNSCRIPCIONES.index('Fórmula (excepción)') + 1, rangos['Fórmula'], 20000)
-
-    hoja_tabla(wb, HOJA_PARTIDOS, COLS_PARTIDOS, partidos,
-               anchos={'Siglas': 22, 'Nombre': 55, 'Color': 12, 'País': 14})
-    pa = wb[HOJA_PARTIDOS]
-    for (s, n, c, p) in pa.iter_rows(min_row=2):
-        if c.value:
-            c.fill = PatternFill('solid', fgColor=c.value.lstrip('#'))
-
-    for pestana, filas in resultados.items():
-        rs = hoja_tabla(wb, pestana, COLS_RESULTADOS, filas,
-                        anchos={'Elección': 26, 'Circunscripción': 24, 'Siglas': 20, 'Partido': 50},
-                        fmt={'Votos': FMT_MILES})
-        lista_desplegable(rs, COLS_RESULTADOS.index('Vuelta') + 1, rangos['Vuelta'], 200000)
-
-    wb.save(destino)
+    from base_datos import escribir_libro, tablas_vacias
+    t = tablas_vacias()
+    t['elecciones'] = list(elecciones)
+    t['circunscripciones'] = list(circs)
+    t['partidos'] = list(partidos)
+    t['resultados'] = {h: list(f) for h, f in resultados.items()}
+    escribir_libro(destino, t)
 
 
 if __name__ == '__main__':

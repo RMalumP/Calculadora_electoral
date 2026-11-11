@@ -17,7 +17,11 @@ HOJA_LISTAS = 'Listas'
 HOJA_ELECCIONES = 'Elecciones'
 HOJA_CIRCUNSCRIPCIONES = 'Circunscripciones'
 HOJA_PARTIDOS = 'Partidos'
-HOJAS_FIJAS = {HOJA_LEEME, HOJA_LISTAS, HOJA_ELECCIONES, HOJA_CIRCUNSCRIPCIONES, HOJA_PARTIDOS}
+# Respaldo en Google Sheets: qué pestaña de la hoja de Google corresponde a cada pestaña de
+# resultados. La app sólo la usa si no puede cargar los datos de la base interna.
+HOJA_RESPALDO = 'Respaldo Google'
+COLS_RESPALDO = ['Pestaña', 'ID de la hoja de Google', 'gid']
+HOJAS_FIJAS = {HOJA_LEEME, HOJA_LISTAS, HOJA_ELECCIONES, HOJA_CIRCUNSCRIPCIONES, HOJA_PARTIDOS, HOJA_RESPALDO}
 
 COLS_ELECCIONES = [
     'ID', 'Pestaña', 'País', 'Clase', 'Tipo', 'Fecha', 'Fecha 2ª vuelta',
@@ -35,7 +39,11 @@ COLS_CIRCUNSCRIPCIONES = [
     'Fórmula (excepción)', 'Barrera % (excepción)',
 ]
 
-COLS_PARTIDOS = ['Siglas', 'Nombre', 'Color', 'País']
+COLS_PARTIDOS = ['Siglas', 'Nombre', 'Color', 'País', 'Enlazado con', 'Tipo de enlace']
+# «Enlazado con»: las siglas del partido con el que se enlaza. «Coalición»: es la marca de una
+# coalición mayor con otro nombre (En Comú Podem → Unidas Podemos). «Viene de»: es la
+# continuación de un partido o coalición anterior (Sumar → Unidas Podemos).
+TIPOS_ENLACE = ['Coalición', 'Viene de']
 
 COLS_RESULTADOS = [
     'Elección', 'Código circunscripción', 'Circunscripción', 'Vuelta',
