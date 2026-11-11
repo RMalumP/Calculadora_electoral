@@ -511,3 +511,40 @@
 }
 
 .mapa-herramientas button:hover { background: rgba(255, 255, 255, .24); }
+
+/* ── Zoom y tabla equivalente ───────────────────────────────────── */
+
+.mapa-lienzo svg { touch-action: none; }
+
+/* Acercado, el cursor dice que el mapa se puede arrastrar. */
+.mapa-lienzo svg.acercado { cursor: grab; }
+.mapa-lienzo svg.acercado:active { cursor: grabbing; }
+
+.mapa-herramientas button[disabled] { opacity: .4; cursor: default; }
+
+.mapa-equivalente {
+  border-top: 1px solid var(--border-light, var(--border));
+  padding: 8px 12px 12px;
+}
+
+.mapa-equivalente summary {
+  cursor: pointer;
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  padding: 4px 0;
+}
+
+.mapa-equivalente summary:hover { color: var(--text); }
+
+.mapa-equivalente .mapa-tabla { margin-top: 8px; }
+
+/* En pantallas pequeñas el mapa se queda alto de más: se limita por altura
+   y la tabla pasa a ser la forma cómoda de leerlo. */
+@media (max-width: 760px) {
+  .mapa-lienzo svg { max-height: 62vh; }
+  /* Los seis botones no caben en una línea junto al título: se van debajo. */
+  .mapa-card .card-header { flex-wrap: wrap; row-gap: 8px; }
+  .mapa-herramientas { gap: 4px; flex-wrap: wrap; }
+  .mapa-herramientas button { padding: 4px 9px; }
+}

@@ -43,6 +43,7 @@ const ASSETS = [
   './js/mapa-senado.js',
   './js/mapa-simulacion.js',
   './js/mapa-ui.js',
+  './js/mapa-zoom.js',
   './js/pactometer.js',
   './js/rows.js',
   './js/session.js',

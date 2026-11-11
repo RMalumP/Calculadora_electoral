@@ -169,6 +169,7 @@ function mapaRefrescar() {
   MAPA.limpiarAdornos();
   MAPA_ADORNOS.forEach(fn => fn(porPieza, nivel));
   mapaPintarPanel();
+  MAPA_TRAS_PINTAR.forEach(fn => fn(porPieza, nivel));
 }
 
 /** Dibujos que van encima del relleno (puntos de escaños, etiquetas). */
@@ -176,6 +177,9 @@ const MAPA_ADORNOS = [];
 
 /** Lo que haya que ajustar al cambiar de elección (el nivel de partida). */
 const MAPA_TRAS_CARGA = [];
+
+/** Lo que va fuera del dibujo y también cambia con él (la tabla equivalente). */
+const MAPA_TRAS_PINTAR = [];
 
 function mapaLeyenda(filas) {
   const el = document.getElementById('mapa-leyenda');
@@ -541,6 +545,7 @@ function mapaUIInit() {
   if (cartograma) cartograma.addEventListener('change', () => MAPA_CARTOGRAMA.encender(cartograma.checked));
 
   if (typeof mapaExportarInit === 'function') mapaExportarInit();
+  if (typeof MAPA_ZOOM !== 'undefined') MAPA_ZOOM.init();
 
   mapaEstado('Cargando el índice de elecciones…');
   MAPA_DATOS.cargarIndice()

@@ -67,6 +67,9 @@ registerTab('map', 'tab-content', String.raw`
               <button type="button" id="mapa-png" title="Descargar el mapa como imagen PNG">PNG</button>
               <button type="button" id="mapa-svg" title="Descargar el mapa como SVG, que no pierde calidad">SVG</button>
               <button type="button" id="mapa-enlace" title="Copiar un enlace que abre el mapa tal y como está">Enlace</button>
+              <button type="button" id="mapa-zoom-menos" title="Alejar" aria-label="Alejar">−</button>
+              <button type="button" id="mapa-zoom-mas" title="Acercar" aria-label="Acercar">+</button>
+              <button type="button" id="mapa-zoom-reset" title="Volver a ver el mapa entero" disabled>⤢</button>
             </span>
           </div>
           <div class="mapa-lienzo" id="mapa-lienzo">
@@ -74,6 +77,7 @@ registerTab('map', 'tab-content', String.raw`
           </div>
           <div class="mapa-globo" id="mapa-globo" hidden></div>
           <div class="mapa-leyenda" id="mapa-leyenda"></div>
+          <div id="mapa-equivalente" hidden></div>
         </div>
 
         <aside class="card mapa-panel">
