@@ -201,14 +201,23 @@ const MAPA = (() => {
     });
   }
 
-  /** Vacía y devuelve la capa de adornos (puntos de escaños, etiquetas). */
+  /** La capa de adornos (puntos de escaños, etiquetas), por encima del relleno. */
   function adornos() {
-    const g = svg && svg.querySelector('.mapa-adornos');
+    return svg && svg.querySelector('.mapa-adornos');
+  }
+
+  /** La vacía antes de que cada adorno vuelva a dibujar lo suyo. */
+  function limpiarAdornos() {
+    const g = adornos();
     if (g) g.innerHTML = '';
-    return g;
   }
 
   function lienzo() { return svg; }
+
+  /** La capa del nivel que se está viendo. */
+  function capa(cual = nivel) {
+    return svg && svg.querySelector('.mapa-capa[data-nivel="' + cual + '"]');
+  }
 
   /* ── Arranque ──────────────────────────────────────────────────── */
 
@@ -235,7 +244,7 @@ const MAPA = (() => {
     NIVELES, TITULOS,
     dibujar, verNivel, nivelActual, permitirNiveles,
     piezas, pieza, seleccionar, seleccionActual,
-    pintar, despintar, adornos, lienzo, al, escapar,
+    pintar, despintar, adornos, limpiarAdornos, lienzo, capa, al, escapar,
   };
 
 })();

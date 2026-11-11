@@ -377,3 +377,19 @@
   font-style: italic;
   margin-top: 2px;
 }
+
+/* ── Puntos de escaños ──────────────────────────────────────── */
+
+.mapa-adornos { pointer-events: none; }
+
+.mapa-punto {
+  stroke: rgba(255, 255, 255, 0.85);
+  stroke-width: 0.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.mapa-opcion.apagada { color: var(--text-muted); opacity: 0.6; cursor: not-allowed; }
+
+/* Con los puntos encima el relleno se aclara, para que se cuenten bien. */
+.mapa-capa.con-puntos .mapa-pieza { fill-opacity: 0.32; }
+.mapa-capa.con-puntos .mapa-pieza.sel { fill-opacity: 0.45; }

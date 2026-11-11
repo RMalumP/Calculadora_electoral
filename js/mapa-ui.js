@@ -156,6 +156,7 @@ function mapaRefrescar() {
   const modo = mapaModo(mapaModoActual);
   MAPA.pintar(modo.colores(porPieza, nivel));
   mapaLeyenda(modo.leyenda ? modo.leyenda(porPieza, nivel) : []);
+  MAPA.limpiarAdornos();
   MAPA_ADORNOS.forEach(fn => fn(porPieza, nivel));
   mapaPintarPanel();
 }
@@ -348,6 +349,25 @@ function mapaPintarPanel() {
   cuerpo.innerHTML = html;
 }
 
+/** Opciones que sólo valen para algunas elecciones (los escaños, por ahora). */
+function mapaOpcionesSegunEleccion() {
+  const modelo = MAPA_DATOS.eleccionActual();
+  const caja = document.getElementById('mapa-puntos');
+  if (!caja) return;
+  const hay = !!(modelo && modelo.hayEscanos);
+  caja.disabled = !hay;
+  const etiqueta = caja.closest('.mapa-opcion');
+  if (etiqueta) {
+    etiqueta.classList.toggle('apagada', !hay);
+    etiqueta.title = hay ? '' : 'Esta elección no reparte escaños por circunscripción';
+  }
+  if (!hay && caja.checked) {
+    caja.checked = false;
+    MAPA_PUNTOS.encender(false);
+  }
+}
+
+
 /* ── Carga de la elección elegida ───────────────────────────────── */
 
 function mapaCargarEleccion() {
@@ -364,6 +384,7 @@ function mapaCargarEleccion() {
       mapaEstado('');
       MAPA.permitirNiveles(MAPA_DATOS.nivelesDisponibles());
       mapaLlenarModos();
+      mapaOpcionesSegunEleccion();
       mapaRefrescar();
     })
     .catch(err => {
@@ -396,6 +417,9 @@ function mapaUIInit() {
     mapaModoActual = modo.value;
     mapaRefrescar();
   });
+
+  const puntos = document.getElementById('mapa-puntos');
+  if (puntos) puntos.addEventListener('change', () => MAPA_PUNTOS.encender(puntos.checked));
 
   mapaEstado('Cargando el índice de elecciones…');
   MAPA_DATOS.cargarIndice()
