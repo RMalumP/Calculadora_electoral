@@ -152,7 +152,11 @@ class Editor:
             self.pestanas[clave] = p
 
     def clases_pestanas(self):
-        return [('resultados', '  Resultados  ', PestanaResultados),
+        from pestana_circunscripciones import PestanaCircunscripciones
+        from pestana_elecciones import PestanaElecciones
+        return [('elecciones', '  Elecciones  ', PestanaElecciones),
+                ('circunscripciones', '  Circunscripciones  ', PestanaCircunscripciones),
+                ('resultados', '  Resultados  ', PestanaResultados),
                 ('partidos', '  Partidos  ', PestanaPartidos)]
 
     def _panel_errores(self, padre):
@@ -414,7 +418,11 @@ class Editor:
         if hoja == HOJA_ELECCIONES and 'elecciones' in self.pestanas:
             self.pestana('elecciones')
         elif hoja == HOJA_CIRCUNSCRIPCIONES and 'circunscripciones' in self.pestanas and obj:
-            self.pestana('circunscripciones').ir_a(m.codigo_circ(obj))
+            msg = e['msg'].lower()
+            col = next((c for c in ('Escaños', 'Mínimo', 'Votos a candidaturas', 'Votos válidos', 'Votos en blanco',
+                                    'Votos nulos', 'Censo', 'Votantes', 'Fórmula', 'Barrera', 'Circunscripción')
+                        if c.lower() in msg), None)
+            self.pestana('circunscripciones').ir_a(m.codigo_circ(obj), col)
         elif obj and 'resultados' in self.pestanas and hoja in m.t['resultados']:
             p = self.pestana('resultados')
             p.refrescar()

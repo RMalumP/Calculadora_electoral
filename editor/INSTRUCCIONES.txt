@@ -68,7 +68,40 @@
 
 
 ────────────────────────────────────────────────────────────────────────────────
- 4. RESULTADOS
+ 4. ELECCIONES
+────────────────────────────────────────────────────────────────────────────────
+
+  · A la izquierda, los ámbitos con sus elecciones. Clic en una para elegirla.
+  · A la derecha, su ficha: fecha, fórmula, barreras, prorrateo... Al cambiar
+    algo se activa «✔ Aplicar cambios», que lo guarda todo de una vez.
+  · ＋ Nueva elección…: escribe la fecha y, si marcas «A partir de», copia las
+    reglas y las circunscripciones (escaños, nombres, regiones; no los votos)
+    de otra elección del mismo ámbito. Lo normal: a partir de la anterior.
+  · El ID (país-tipo-fecha, p. ej. ES-Congreso-2027-04-28) se pone solo.
+    «Generar ID» lo rehace con la fecha de la ficha. Cambiarlo lo cambia
+    también en circunscripciones y resultados.
+  · ＋ Ámbito…: una pestaña de resultados nueva (Francia.Presidenciales,
+    España.Senado, Europa...). Sólo se borra si no tiene elecciones.
+  · Una elección sin resultados da error: no se puede publicar hasta que
+    tenga votos.
+
+
+────────────────────────────────────────────────────────────────────────────────
+ 5. CIRCUNSCRIPCIONES
+────────────────────────────────────────────────────────────────────────────────
+
+  · Una fila por circunscripción de la elección elegida: escaños, mínimo,
+    población, censo, votantes, válidos, a candidaturas, blancos y nulos.
+  · «Fórmula (excepción)» y «Barrera % (excepción)»: sólo si esa
+    circunscripción no sigue la regla general de la elección.
+  · Cambiar el código o el nombre los cambia también en los resultados.
+  · ＋ Circunscripción…: pide nombre y código (sugiere el siguiente libre).
+  · Borrar: quita la circunscripción y sus resultados (Ctrl+Z lo deshace).
+  · Fila TOTAL arriba.
+
+
+────────────────────────────────────────────────────────────────────────────────
+ 6. RESULTADOS
 ────────────────────────────────────────────────────────────────────────────────
 
   · Vuelta 1ª / 2ª: para elecciones a doble vuelta.
@@ -85,7 +118,7 @@
 
 
 ────────────────────────────────────────────────────────────────────────────────
- 5. PARTIDOS
+ 7. PARTIDOS
 ────────────────────────────────────────────────────────────────────────────────
 
   · Cambiar unas SIGLAS las cambia en todas las elecciones.
@@ -100,7 +133,7 @@
 
 
 ────────────────────────────────────────────────────────────────────────────────
- 6. GUARDAR, VER Y PUBLICAR
+ 8. GUARDAR, VER Y PUBLICAR
 ────────────────────────────────────────────────────────────────────────────────
 
   💾 Guardar
@@ -138,7 +171,7 @@
 
 
 ────────────────────────────────────────────────────────────────────────────────
- 7. ARCHIVOS DEL EDITOR (carpeta editor/)
+ 9. ARCHIVOS DEL EDITOR (carpeta editor/)
 ────────────────────────────────────────────────────────────────────────────────
 
   editor_electoral.py      El programa: se abre con Thonny.
