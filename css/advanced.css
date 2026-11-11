@@ -13,7 +13,7 @@
 
 /* ── Cabecera ───────────────────────────────────────────────── */
 .adv-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
-.adv-mode { display: inline-flex; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: #fff; }
+.adv-mode { display: inline-flex; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--surface); }
 .adv-mode-btn {
   border: none; background: none; cursor: pointer;
   padding: 7px 16px;
@@ -50,7 +50,7 @@
   color: var(--text-muted);
 }
 .adv-notice.warn   { background: #fdf6e3; border-color: #e8d9a8; border-left: 3px solid #c99a2e; color: #6b5518; }
-.adv-notice.error  { background: #fdeaea; border-color: #e8bcbc; border-left: 3px solid var(--accent); color: #7a2020; }
+.adv-notice.error  { background: var(--danger-bg); border-color: var(--danger-border); border-left: 3px solid var(--accent); color: var(--danger-text); }
 .adv-notice.info   { border-left: 3px solid var(--accent); }
 .adv-notice strong { color: inherit; font-weight: 700; }
 .adv-notice + .adv-notice { margin-top: -6px; }
@@ -241,7 +241,7 @@
   gap: 9px;
   min-width: 0;
   padding: 8px 12px;
-  background: #f5ede8;
+  background: var(--tint);
   border: none;
   border-left: 3px solid transparent;
   cursor: pointer;
@@ -249,7 +249,7 @@
   font-family: 'Source Sans 3', sans-serif;
   transition: background var(--transition), border-color var(--transition);
 }
-.adv-ccaa-header:hover { background: #edddd6; border-left-color: var(--accent); }
+.adv-ccaa-header:hover { background: var(--tint-hover); border-left-color: var(--accent); }
 .adv-ccaa-arrow { color: var(--accent); font-size: 0.72rem; width: 10px; flex-shrink: 0; }
 /* Con una fuente más ancha que la de reserva, el nombre y la etiqueta de la
    comunidad no deben poder empujar la fila entera a una segunda línea: se
@@ -351,7 +351,7 @@
   border-bottom: 1px solid var(--border-light);
 }
 .adv-district tr:last-child td { border-bottom: none; }
-.adv-district tr.adv-blocked td { background: #fdeaea; }
+.adv-district tr.adv-blocked td { background: var(--danger-bg); }
 .adv-district tr.adv-noseat td { color: var(--text-muted); }
 
 .adv-blocked-tag {
@@ -1302,7 +1302,7 @@ tr.drag-over-below td { box-shadow: inset 0 -2px 0 var(--accent); }
     padding: 8px 6px;
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    background: #fff;
+    background: var(--surface);
     font-size: 0.66rem;
     white-space: normal;
     line-height: 1.2;

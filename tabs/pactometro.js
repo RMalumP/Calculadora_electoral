@@ -14,8 +14,8 @@ registerTab('pactometer', 'tab-content', String.raw`
       <div class="pacto-head">
         <h2 class="pacto-title">Pactómetro</h2>
         <div class="pacto-head-tools">
-          <label style="font-size:0.85rem;color:var(--text-muted);font-weight:600">Etiquetas bloques:</label>
-          <select id="block-labels" onchange="updateBlockLabels()" style="padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:0.85rem;font-family:'Source Sans 3',sans-serif;background:white;cursor:pointer">
+          <label for="block-labels" style="font-size:0.85rem;color:var(--text-muted);font-weight:600">Etiquetas bloques:</label>
+          <select id="block-labels" onchange="updateBlockLabels()" style="padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:0.85rem;font-family:'Source Sans 3',sans-serif;background:var(--surface);cursor:pointer">
             <option value="izq-der">IZQ / DER</option>
             <option value="no-si">NO / SÍ</option>
             <option value="custom">Personalizado...</option>
@@ -78,7 +78,7 @@ registerTab('pactometer', 'tab-content', String.raw`
             <div id="combined-settings" style="display:none;width:700px;padding:4px 20px;background:var(--accent-bg);border:1px solid var(--border);border-radius:var(--radius)">
               <div style="display:flex;align-items:center;gap:15px">
                 <span id="settings-label" style="font-size:0.85rem;font-weight:600;color:var(--text-muted)">Mayoría requerida:</span>
-                <select id="settings-select" onchange="updateHemicycle()" style="padding:6px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:0.85rem;background:white;font-family:'Source Sans 3',sans-serif">
+                <select id="settings-select" aria-labelledby="settings-label" onchange="updateHemicycle()" style="padding:6px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:0.85rem;background:var(--surface);font-family:'Source Sans 3',sans-serif">
                   <option value="simple">Mayoría simple (&gt; 50%)</option>
                   <option value="absolute">Mayoría absoluta (≥ mitad + 1)</option>
                   <option value="3/5">Mayoría cualificada 3/5 (≥ 60%)</option>
@@ -110,8 +110,8 @@ registerTab('pactometer', 'tab-content', String.raw`
               <div id="majority-label" style="position:absolute;top:50%;left:50%;background:var(--accent);color:white;padding:4px 8px;border-radius:3px;font-size:0.75rem;font-weight:700;z-index:20;white-space:nowrap;transform:translate(-50%,-50%)"></div>
               <div id="majority-status" style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);color:white;padding:6px 12px;border-radius:4px;font-size:0.8rem;font-weight:700;z-index:20;white-space:nowrap;display:none"></div>
               <div id="block-separator" style="display:none;position:absolute;top:0;bottom:0;z-index:15;pointer-events:none">
-                <div style="position:absolute;top:0;bottom:0;left:0;width:2px;background:white;opacity:0.9"></div>
-                <div style="position:absolute;top:0;bottom:0;left:4px;width:2px;background:white;opacity:0.9"></div>
+                <div style="position:absolute;top:0;bottom:0;left:0;width:2px;background:var(--surface);opacity:0.9"></div>
+                <div style="position:absolute;top:0;bottom:0;left:4px;width:2px;background:var(--surface);opacity:0.9"></div>
               </div>
               <div id="hemicycle-segments" style="position:absolute;top:0;left:0;right:0;bottom:0;z-index:5"></div>
             </div>

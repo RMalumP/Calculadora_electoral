@@ -91,7 +91,7 @@ tr[data-is-otros="true"] td input[type=color] {
 .otros-dropdown-item .otros-siglas-input:focus {
   outline: none;
   border-color: var(--accent);
-  background: #fffef9;
+  background: var(--surface);
 }
 .otros-dropdown-item .otros-siglas-input::placeholder {
   color: var(--text-muted);
@@ -120,10 +120,10 @@ tr[data-is-otros="true"] td input[type=color] {
 .otros-dropdown-item .otros-item-name-input:focus {
   outline: none;
   border-color: var(--accent);
-  background: #fffef9;
+  background: var(--surface);
 }
 .otros-dropdown-item .otros-item-name-input:read-only {
-  background: #f5f5f5;
+  background: var(--row-alt);
   cursor: not-allowed;
   color: var(--text-muted);
 }
@@ -153,7 +153,7 @@ tr[data-is-otros="true"] td input[type=color] {
 .otros-dropdown-item .otros-item-votes-input:focus {
   outline: none;
   border-color: var(--accent);
-  background: #fffef9;
+  background: var(--surface);
 }
 .otros-dropdown-item .otros-item-pct {
   font-size: 0.75rem;
@@ -248,7 +248,7 @@ tr.drag-over-below       { border-bottom: 2px solid var(--accent) !important; }
   top: 140px;
   right: 40px;
   width: 420px;
-  background: white;
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: 0 8px 28px rgba(0,0,0,.14);

@@ -338,9 +338,6 @@ function showTheorySystem(systemId) {
   });
   selectAll('.theory-system-btn').forEach(b => {
     toggleClass(b, 'active', false);
-    b.style.background = 'white';
-    b.style.color = 'var(--text)';
-    b.style.border = '1px solid var(--border)';
   });
 
   const contentEl = select(`#theory-${systemId}`);
@@ -352,9 +349,6 @@ function showTheorySystem(systemId) {
   selectAll('.theory-system-btn').forEach(b => {
     if (b.dataset.system === systemId) {
       toggleClass(b, 'active', true);
-      b.style.background = 'var(--accent)';
-      b.style.color = 'white';
-      b.style.border = 'none';
     }
   });
 }

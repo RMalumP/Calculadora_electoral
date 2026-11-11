@@ -122,7 +122,7 @@ tbody tr:hover { background: var(--accent-bg); }
 /* Alternating rows only in results table */
 #results-body tr:nth-child(even) { background: var(--row-alt); }
 
-tbody tr.special-row { background: #f3f0eb; border-top: 2px solid var(--border); }
+tbody tr.special-row { background: var(--special-row); border-top: 2px solid var(--border); }
 tbody tr.special-row:hover { background: var(--accent-bg); }
 tbody tr.special-row td:first-child {
   font-style: italic;

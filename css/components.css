@@ -249,16 +249,16 @@
   white-space: nowrap;
 }
 #breakdown-table td.seat-won {
-  background: #fad0d0;
+  background: var(--danger-bg-strong);
   font-weight: 700;
   color: var(--accent);
 }
 
 /* ── ROW HIGHLIGHT STATES ───────────────────────────────────── */
-tbody tr.no-seats       { background: #fdeaea !important; }
-tbody tr.barrier-blocked { background: #fdd8d8 !important; }
-tbody tr.no-seats:hover       { background: #fad8d8 !important; }
-tbody tr.barrier-blocked:hover { background: #f8c8c8 !important; }
+tbody tr.no-seats       { background: var(--danger-bg) !important; }
+tbody tr.barrier-blocked { background: var(--danger-bg-strong) !important; }
+tbody tr.no-seats:hover       { background: var(--danger-bg-strong) !important; }
+tbody tr.barrier-blocked:hover { background: var(--danger-bg-hover) !important; }
 
 /* ── GROUPING COLUMN ─────────────────────────────────────────── */
 #votes-table .group-col { display: none; }
@@ -288,8 +288,8 @@ tbody tr.barrier-blocked:hover { background: #f8c8c8 !important; }
 }
 
 /* ── GROUP HEADER ROW ────────────────────────────────────────── */
-.group-header-row { background: #f5ede8 !important; }
-.group-header-row:hover { background: #edddd6 !important; }
+.group-header-row { background: var(--tint) !important; }
+.group-header-row:hover { background: var(--tint-hover) !important; }
 .group-header-cell { padding: 4px 8px !important; }
 .group-header-content {
   display: flex;
@@ -323,7 +323,7 @@ tbody tr.barrier-blocked:hover { background: #f8c8c8 !important; }
 
 /* ── GROUPED PARTY ROWS ──────────────────────────────────────── */
 tr.in-group > td:first-child { border-left: 3px solid rgba(139,49,49,0.25); }
-tr.in-group { background: #fdf8f6; }
+tr.in-group { background: var(--accent-bg); }
 
 /* ── GROUP ANIMATION ─────────────────────────────────────────── */
 @keyframes groupSlideIn {
@@ -363,4 +363,47 @@ tr.in-group { background: #fdf8f6; }
   font-family: 'Source Sans 3', sans-serif;
   font-size: 0.85rem;
   color: var(--text);
+}
+
+
+/* ── TEORÍA (antes estilos en línea) ─────────────────────────── */
+.theory-system-btn {
+  width: 100%; text-align: left; padding: 7px 8px; margin-bottom: 2px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text);
+  border-radius: var(--radius); cursor: pointer;
+  font-family: 'Source Sans 3', sans-serif; font-size: 0.82rem; font-weight: 600;
+  transition: all 0.15s;
+}
+.theory-system-btn:hover { color: var(--accent); }
+.theory-system-btn.theory-btn-gap { margin-bottom: 6px; }
+.theory-system-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.theory-h4 { color: var(--text); margin-top: 25px; margin-bottom: 10px; font-size: 1.1rem; font-weight: 600; }
+.theory-p { line-height: 1.6; color: var(--text); margin-bottom: 15px; }
+.theory-p-last { line-height: 1.6; color: var(--text); }
+.theory-title { font-family: 'Libre Baskerville', serif; color: var(--accent); margin-bottom: 15px; font-size: 1.5rem; }
+.theory-formula { background: var(--accent-bg); padding: 15px; border-radius: var(--radius); margin-bottom: 15px; font-family: monospace; overflow-x: auto; }
+.theory-td { padding: 8px 10px; vertical-align: top; border-bottom: 1px solid var(--border-light); line-height: 1.5; }
+.theory-th { padding: 8px 10px; text-align: left; border-bottom: 2px solid var(--border); background: var(--accent-bg); color: var(--text); }
+.theory-group {
+  padding: 5px 8px 3px; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--text-muted); border-bottom: 1px solid var(--border-light); margin-bottom: 4px;
+}
+
+/* ── ACCESIBILIDAD: foco visible y objetivos táctiles ────────── */
+button:focus-visible, select:focus-visible, summary:focus-visible, a:focus-visible,
+.tab:focus-visible, [role="tab"]:focus-visible, input[type="color"]:focus-visible {
+  outline: 2px solid var(--accent-light);
+  outline-offset: 2px;
+}
+
+/* En pantallas táctiles, 44 px para lo que se pulsa a menudo; 32 px mínimo en las tablas. */
+@media (pointer: coarse), (max-width: 760px) {
+  .tab, .calc-btn, .ghost-btn, .save-icon-btn, .add-row-btn, select, .adv-mode-btn {
+    min-height: 44px;
+  }
+  .del-btn, .row-btn, .group-num-btn, .block-btn-left, .block-btn-right,
+  .otros-eject-btn, input[type="color"] {
+    min-width: 32px;
+    min-height: 32px;
+  }
 }

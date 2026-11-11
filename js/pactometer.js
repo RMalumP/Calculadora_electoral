@@ -30,8 +30,8 @@ function addPactometerRow(name = '', seats = '', color = '', block = '', siglas 
     <td style="text-align:center"><input type="number" min="0" placeholder="0" value="${escapeHtml(seats)}" style="text-align:center;font-size:1.1rem;font-weight:600" oninput="updateHemicycle()"></td>
     <td style="text-align:center">
       <div style="display:flex;gap:4px;justify-content:center">
-        <button onclick="setBlock(this,'left')"  style="padding:4px 8px;border:1px solid var(--border);background:${block==='left'?'var(--accent)':'white'};color:${block==='left'?'white':'var(--text-muted)'};border-radius:3px;cursor:pointer;font-size:0.7rem;font-weight:600;font-family:'Source Sans 3',sans-serif;min-width:40px" class="block-btn-left">${escapeHtml(currentLeftLabel)}</button>
-        <button onclick="setBlock(this,'right')" style="padding:4px 8px;border:1px solid var(--border);background:${block==='right'?'var(--accent)':'white'};color:${block==='right'?'white':'var(--text-muted)'};border-radius:3px;cursor:pointer;font-size:0.7rem;font-weight:600;font-family:'Source Sans 3',sans-serif;min-width:40px" class="block-btn-right">${escapeHtml(currentRightLabel)}</button>
+        <button onclick="setBlock(this,'left')"  style="padding:4px 8px;border:1px solid var(--border);background:${block==='left'?'var(--accent)':'var(--surface)'};color:${block==='left'?'white':'var(--text-muted)'};border-radius:3px;cursor:pointer;font-size:0.7rem;font-weight:600;font-family:'Source Sans 3',sans-serif;min-width:40px" class="block-btn-left">${escapeHtml(currentLeftLabel)}</button>
+        <button onclick="setBlock(this,'right')" style="padding:4px 8px;border:1px solid var(--border);background:${block==='right'?'var(--accent)':'var(--surface)'};color:${block==='right'?'white':'var(--text-muted)'};border-radius:3px;cursor:pointer;font-size:0.7rem;font-weight:600;font-family:'Source Sans 3',sans-serif;min-width:40px" class="block-btn-right">${escapeHtml(currentRightLabel)}</button>
       </div>
     </td>`;
   tbody.appendChild(tr);
@@ -80,7 +80,7 @@ function setBlock(btn, side) {
   if (tr.dataset.block === side) {
     tr.dataset.block = '';
     tr.querySelectorAll('td:last-child button').forEach(b => {
-      b.style.background = 'white';
+      b.style.background = 'var(--surface)';
       b.style.color = 'var(--text-muted)';
     });
   } else {
@@ -88,7 +88,7 @@ function setBlock(btn, side) {
     tr.querySelectorAll('td:last-child button').forEach(b => {
       const isSelected = (b.classList.contains('block-btn-left') && side === 'left') ||
                          (b.classList.contains('block-btn-right') && side === 'right');
-      b.style.background = isSelected ? 'var(--accent)' : 'white';
+      b.style.background = isSelected ? 'var(--accent)' : 'var(--surface)';
       b.style.color      = isSelected ? 'white' : 'var(--text-muted)';
     });
   }

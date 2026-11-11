@@ -6,6 +6,7 @@
   <title>Calculadora Electoral</title>
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#211c18">
+  <meta name="color-scheme" content="light dark">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Electoral">
@@ -18,6 +19,8 @@
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/otros-drag-responsive.css">
   <link rel="stylesheet" href="css/advanced.css">
+  <link rel="stylesheet" href="css/tema-oscuro.css">
+  <script>try{var t=localStorage.getItem('ce-tema');if(t=='dark'||t=='light')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
 </head>
 <body>
 
@@ -33,6 +36,10 @@
       <option value="concejales">Concejales</option>
       <option value="congresistas">Congresistas</option>
     </select>
+
+    <!-- Tema: automático (el del sistema), claro u oscuro. -->
+    <button class="save-icon-btn" id="theme-btn" type="button"
+            title="Cambiar el tema (automático, claro u oscuro)" aria-label="Cambiar el tema">🌓</button>
 
     <!-- Sesión guardada automáticamente en este navegador. -->
     <button class="save-icon-btn" id="auto-clear-btn"
@@ -92,6 +99,7 @@
 <script src="js/session.js"></script>
 <script src="js/autosave.js"></script>
 <script src="js/ui.js"></script>
+<script src="js/accesibilidad.js"></script>
 <script>
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
