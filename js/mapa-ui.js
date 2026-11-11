@@ -1,25 +1,253 @@
 /**
  * mapa-ui.js
- * Controles del mapa: globo al pasar el ratón y panel de detalle.
+ * Controles del mapa: elección, modo de coloreado, leyenda, globo y panel.
  *
- * MAPA (js/mapa.js) se ocupa del dibujo y no sabe nada de interfaz; aquí se
- * escucha lo que pasa en el mapa y se cuenta en palabras.
+ * MAPA (js/mapa.js) se ocupa del dibujo y no sabe nada de interfaz;
+ * MAPA_DATOS (js/mapa-datos.js), de los resultados. Aquí se juntan los dos.
  */
 
-/** Nombre de la comunidad a la que pertenece una provincia. */
+/* ── Modos de coloreado ─────────────────────────────────────────────
+   Cada modo dice de qué color va cada pieza y qué poner en la leyenda. Los
+   pasos siguientes añaden modos a esta lista sin tocar el resto. */
+
+const MAPA_MODOS = [];
+
+function mapaModo(id) {
+  return MAPA_MODOS.find(m => m.id === id) || MAPA_MODOS[0];
+}
+
+let mapaModoActual = 'ganador';
+
+MAPA_MODOS.push({
+  id: 'ganador',
+  label: 'Partido más votado',
+  /** @returns {Object} códigoPieza → color */
+  colores(porPieza) {
+    const salida = {};
+    porPieza.forEach((agregado, codigo) => {
+      const g = MAPA_DATOS.ganador(agregado);
+      if (g && g.color) salida[codigo] = g.color;
+    });
+    return salida;
+  },
+  /** Leyenda: quién gana y en cuántas circunscripciones. */
+  leyenda(porPieza) {
+    const cuenta = new Map();
+    porPieza.forEach(agregado => {
+      const g = MAPA_DATOS.ganador(agregado);
+      if (!g) return;
+      const fila = cuenta.get(g.siglas) || { siglas: g.siglas, color: g.color, n: 0 };
+      fila.n += 1;
+      cuenta.set(g.siglas, fila);
+    });
+    return [...cuenta.values()].sort((a, b) => b.n - a.n);
+  },
+  /** Línea del globo y del panel. */
+  resumen(agregado) {
+    const g = MAPA_DATOS.ganador(agregado);
+    if (!g) return '';
+    return mapaPastilla(g.siglas, g.color) + ' ' +
+      mapaPorcentaje(g.votos, agregado.candidaturas);
+  },
+});
+
+/* ── Formato ────────────────────────────────────────────────────── */
+
+const mapaNumero = n => (n || 0).toLocaleString('es-ES');
+
+function mapaPorcentaje(parte, total) {
+  if (!total) return '—';
+  return (100 * parte / total).toFixed(1).replace('.', ',') + ' %';
+}
+
+function mapaPastilla(siglas, color) {
+  return '<span class="mapa-pastilla"><i style="background:' +
+    (color || 'var(--text-muted)') + '"></i>' + MAPA.escapar(siglas) + '</span>';
+}
+
+/* ── Estado de la pestaña ───────────────────────────────────────── */
+
+const MAPA_UI = {
+  ambito: null,
+  eleccion: null,
+  cargando: false,
+};
+
+function mapaEstado(texto, error) {
+  const el = document.getElementById('mapa-estado');
+  if (!el) return;
+  el.textContent = texto || '';
+  el.classList.toggle('error', !!error);
+}
+
+/* ── Selectores ─────────────────────────────────────────────────── */
+
+function mapaLlenarAmbitos() {
+  const sel = document.getElementById('mapa-ambito');
+  if (!sel) return;
+  const ambitos = MAPA_DATOS.ambitos();
+  sel.innerHTML = ambitos.map(a =>
+    '<option value="' + MAPA.escapar(a.key) + '">' + MAPA.escapar(a.label) + '</option>').join('');
+  // Se arranca en el Congreso, que es lo que casi todo el mundo busca.
+  const congreso = ambitos.find(a => /congreso/i.test(a.key)) || ambitos[0];
+  if (congreso) {
+    sel.value = congreso.key;
+    MAPA_UI.ambito = congreso.key;
+  }
+}
+
+function mapaLlenarElecciones() {
+  const sel = document.getElementById('mapa-eleccion');
+  if (!sel) return;
+  const ambito = MAPA_DATOS.ambitos().find(a => a.key === MAPA_UI.ambito);
+  const lista = ambito ? ambito.elecciones : [];
+  sel.innerHTML = lista.map(e =>
+    '<option value="' + MAPA.escapar(e.id) + '" data-archivo="' + MAPA.escapar(e.archivo || e.id) + '">' +
+    MAPA.escapar(mapaNombreEleccion(e)) + '</option>').join('');
+  if (lista.length) {
+    sel.value = lista[0].id;
+    MAPA_UI.eleccion = lista[0].id;
+  }
+}
+
+/** «Congreso · 23 de julio de 2023», para encabezar el panel. */
+function mapaTituloEleccion() {
+  const modelo = MAPA_DATOS.eleccionActual();
+  if (!modelo) return '';
+  const [anio, mes, dia] = String(modelo.fecha || '').split('-');
+  const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio',
+                 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  const fecha = anio ? parseInt(dia, 10) + ' de ' + meses[parseInt(mes, 10) - 1] + ' de ' + anio : '';
+  return [modelo.tipo, fecha].filter(Boolean).join(' · ');
+}
+
+
+function mapaNombreEleccion(e) {
+  const [anio, mes, dia] = String(e.fecha || '').split('-');
+  const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio',
+                 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  if (!anio) return e.id;
+  return anio + ' · ' + parseInt(dia, 10) + ' de ' + meses[parseInt(mes, 10) - 1];
+}
+
+function mapaLlenarModos() {
+  const sel = document.getElementById('mapa-modo');
+  if (!sel) return;
+  const modelo = MAPA_DATOS.eleccionActual();
+  const usables = MAPA_MODOS.filter(m => !m.sirve || m.sirve(modelo));
+  sel.innerHTML = usables.map(m =>
+    '<option value="' + m.id + '">' + MAPA.escapar(m.label) + '</option>').join('');
+  if (!usables.some(m => m.id === mapaModoActual)) mapaModoActual = usables[0].id;
+  sel.value = mapaModoActual;
+}
+
+/* ── Pintado ────────────────────────────────────────────────────── */
+
+function mapaRefrescar() {
+  const modelo = MAPA_DATOS.eleccionActual();
+  if (!modelo) {
+    MAPA.despintar();
+    mapaLeyenda([]);
+    mapaPintarPanel();
+    return;
+  }
+  const nivel = MAPA.nivelActual();
+  const porPieza = MAPA_DATOS.porNivel(nivel);
+  const modo = mapaModo(mapaModoActual);
+  MAPA.pintar(modo.colores(porPieza, nivel));
+  mapaLeyenda(modo.leyenda ? modo.leyenda(porPieza, nivel) : []);
+  MAPA_ADORNOS.forEach(fn => fn(porPieza, nivel));
+  mapaPintarPanel();
+}
+
+/** Dibujos que van encima del relleno (puntos de escaños, etiquetas). */
+const MAPA_ADORNOS = [];
+
+function mapaLeyenda(filas) {
+  const el = document.getElementById('mapa-leyenda');
+  if (!el) return;
+  if (!filas || !filas.length) {
+    el.innerHTML = '';
+    el.hidden = true;
+    return;
+  }
+  el.hidden = false;
+  el.innerHTML = filas.map(f => {
+    if (f.rampa) {
+      return '<span class="mapa-leyenda-rampa" title="' + MAPA.escapar(f.titulo || '') + '">' +
+        '<em>' + MAPA.escapar(f.desde) + '</em>' +
+        '<i style="background:linear-gradient(to right,' + f.rampa.join(',') + ')"></i>' +
+        '<em>' + MAPA.escapar(f.hasta) + '</em></span>';
+    }
+    return '<span class="mapa-leyenda-item">' +
+      '<i style="background:' + (f.color || 'var(--text-muted)') + '"></i>' +
+      MAPA.escapar(f.siglas || f.texto) +
+      (f.n != null ? ' <b>' + f.n + '</b>' : '') + '</span>';
+  }).join('');
+}
+
+/* ── Globo ──────────────────────────────────────────────────────── */
+
+const MAPA_GLOBO_EXTRAS = [];
+
+MAPA_GLOBO_EXTRAS.push(pieza => {
+  const agregado = MAPA_DATOS.porNivel(MAPA.nivelActual()).get(pieza.codigo);
+  if (!agregado) return '';
+  const modo = mapaModo(mapaModoActual);
+  const resumen = modo.resumen ? modo.resumen(agregado, pieza) : '';
+  return resumen ? '<span class="mapa-globo-linea">' + resumen + '</span>' : '';
+});
+
+function mapaTextoGlobo(pieza) {
+  let html = '<strong>' + MAPA.escapar(pieza.nombre) + '</strong>';
+  MAPA_GLOBO_EXTRAS.forEach(fn => {
+    const extra = fn(pieza);
+    if (extra) html += extra;
+  });
+  return html;
+}
+
+function mapaGlobo() {
+  const globo = document.getElementById('mapa-globo');
+  const lienzo = document.getElementById('mapa-lienzo');
+  const svg = MAPA.lienzo();
+  if (!globo || !lienzo || !svg) return;
+
+  let dentro = null;
+
+  svg.addEventListener('mousemove', e => {
+    const el = e.target.closest ? e.target.closest('.mapa-pieza') : null;
+    if (!el) { globo.hidden = true; dentro = null; return; }
+    const pieza = MAPA.pieza(el.dataset.codigo);
+    if (!pieza) return;
+    if (dentro !== el.dataset.codigo) {
+      dentro = el.dataset.codigo;
+      globo.innerHTML = mapaTextoGlobo(pieza);
+    }
+    const caja = lienzo.getBoundingClientRect();
+    const x = e.clientX - caja.left;
+    const y = e.clientY - caja.top;
+    globo.hidden = false;
+    const ancho = globo.offsetWidth;
+    globo.style.left = Math.max(4, Math.min(caja.width - ancho - 4, x - ancho / 2)) + 'px';
+    globo.style.top = Math.max(4, y - globo.offsetHeight - 12) + 'px';
+  });
+  svg.addEventListener('mouseleave', () => { globo.hidden = true; dentro = null; });
+}
+
+/* ── Panel lateral ──────────────────────────────────────────────── */
+
 function mapaNombreCCAA(codigoCCAA) {
   const c = MAPA.piezas('ccaa').find(p => p.codigo === codigoCCAA);
   return c ? c.nombre : '';
 }
 
-/** Provincia (pieza del nivel provincial) de un código de circunscripción. */
 function mapaProvinciaDe(pieza) {
   if (!pieza) return null;
   const codigo = pieza.provincia || pieza.codigo;
   return MAPA.piezas('provincias').find(p => p.codigo === codigo) || null;
 }
 
-/** Ficha de una pieza: nombre, código y a qué pertenece. */
 function mapaFicha(pieza, nivel) {
   if (!pieza) return '';
   const esc = MAPA.escapar;
@@ -39,74 +267,50 @@ function mapaFicha(pieza, nivel) {
   } else if (nivel === 'islas') {
     filas.push(['Código', pieza.codigo]);
     const provincia = mapaProvinciaDe(pieza);
-    if (provincia && provincia.codigo !== pieza.codigo.padStart(2, '0')) {
+    if (provincia && MAPA_DATOS.normalizar(provincia.codigo) !== MAPA_DATOS.normalizar(pieza.codigo)) {
       filas.push(['Provincia', provincia.nombre]);
     }
-  } else {
-    filas.push(['Provincias', String(MAPA.piezas('provincias').length)]);
-    filas.push(['Comunidades', String(MAPA.piezas('ccaa').length)]);
   }
 
+  if (!filas.length) return '<h3 class="mapa-ficha-nombre">' + esc(pieza.nombre) + '</h3>';
   return '<h3 class="mapa-ficha-nombre">' + esc(pieza.nombre) + '</h3>' +
          '<dl class="mapa-ficha">' +
          filas.map(([k, v]) => '<dt>' + esc(k) + '</dt><dd>' + esc(v) + '</dd>').join('') +
          '</dl>';
 }
 
-/* ── Globo al pasar el ratón ────────────────────────────────────── */
+/** Tabla de resultados de un agregado. */
+function mapaTablaResultados(agregado) {
+  if (!agregado) return '';
+  const lista = MAPA_DATOS.ordenadas(agregado).filter(p => p.votos > 0);
+  if (!lista.length) return '<p class="mapa-panel-vacio">Sin resultados aquí.</p>';
+  const modelo = MAPA_DATOS.eleccionActual();
+  const conEscanos = modelo && modelo.hayEscanos;
 
-function mapaGlobo() {
-  const globo = document.getElementById('mapa-globo');
-  const lienzo = document.getElementById('mapa-lienzo');
-  const svg = MAPA.lienzo();
-  if (!globo || !lienzo || !svg) return;
-
-  let dentro = null;
-
-  const mover = e => {
-    const el = e.target.closest ? e.target.closest('.mapa-pieza') : null;
-    if (!el) {
-      globo.hidden = true;
-      dentro = null;
-      return;
-    }
-    const pieza = MAPA.pieza(el.dataset.codigo);
-    if (!pieza) return;
-    if (dentro !== el.dataset.codigo) {
-      dentro = el.dataset.codigo;
-      globo.innerHTML = mapaTextoGlobo(pieza);
-    }
-    const caja = lienzo.getBoundingClientRect();
-    const x = e.clientX - caja.left;
-    const y = e.clientY - caja.top;
-    globo.hidden = false;
-    // El globo se aparta del borde para no salirse del recuadro del mapa.
-    const ancho = globo.offsetWidth;
-    globo.style.left = Math.max(4, Math.min(caja.width - ancho - 4, x - ancho / 2)) + 'px';
-    globo.style.top = Math.max(4, y - globo.offsetHeight - 12) + 'px';
-  };
-
-  svg.addEventListener('mousemove', mover);
-  svg.addEventListener('mouseleave', () => { globo.hidden = true; dentro = null; });
-}
-
-/**
- * Texto del globo. Los pasos siguientes le añaden resultados: cada uno
- * registra aquí su propia línea.
- */
-const MAPA_GLOBO_EXTRAS = [];
-
-function mapaTextoGlobo(pieza) {
-  const esc = MAPA.escapar;
-  let html = '<strong>' + esc(pieza.nombre) + '</strong>';
-  MAPA_GLOBO_EXTRAS.forEach(fn => {
-    const extra = fn(pieza);
-    if (extra) html += extra;
+  let html = '<table class="mapa-tabla"><thead><tr><th>Candidatura</th><th>Votos</th><th>%</th>' +
+             (conEscanos ? '<th>Esc.</th>' : '') + '</tr></thead><tbody>';
+  lista.slice(0, 12).forEach(p => {
+    html += '<tr><td>' + mapaPastilla(p.siglas, p.color) + '</td>' +
+            '<td class="num">' + mapaNumero(p.votos) + '</td>' +
+            '<td class="num">' + mapaPorcentaje(p.votos, agregado.candidaturas) + '</td>' +
+            (conEscanos ? '<td class="num">' + (p.escanos || '') + '</td>' : '') + '</tr>';
   });
+  html += '</tbody></table>';
+
+  const extras = [];
+  if (agregado.escanosTotal) extras.push(['Escaños en juego', mapaNumero(agregado.escanosTotal)]);
+  if (agregado.censo) extras.push(['Censo', mapaNumero(agregado.censo)]);
+  if (agregado.votantes && agregado.censo) {
+    extras.push(['Participación', mapaPorcentaje(agregado.votantes, agregado.censo)]);
+  }
+  if (agregado.blanco) extras.push(['Voto en blanco', mapaPorcentaje(agregado.blanco, agregado.validos)]);
+  if (agregado.nulos) extras.push(['Votos nulos', mapaPorcentaje(agregado.nulos, agregado.validos + agregado.nulos)]);
+  if (extras.length) {
+    html += '<dl class="mapa-ficha mapa-ficha-extra">' +
+      extras.map(([k, v]) => '<dt>' + MAPA.escapar(k) + '</dt><dd>' + v + '</dd>').join('') + '</dl>';
+  }
   return html;
 }
-
-/* ── Panel lateral ──────────────────────────────────────────────── */
 
 const MAPA_PANEL_EXTRAS = [];
 
@@ -116,27 +320,90 @@ function mapaPintarPanel() {
   if (!cuerpo) return;
 
   const pieza = MAPA.seleccionActual();
-  if (titulo) titulo.textContent = pieza ? pieza.nombre : 'Detalle';
+  const nivel = MAPA.nivelActual();
+  const modelo = MAPA_DATOS.eleccionActual();
 
-  if (!pieza) {
-    cuerpo.innerHTML = '<p class="mapa-panel-vacio">Pasa el ratón por el mapa para ' +
-      'ver qué es cada pieza, o pulsa una para fijarla aquí.</p>';
-    return;
+  if (titulo) titulo.textContent = pieza ? pieza.nombre : (modelo ? 'Total' : 'Detalle');
+
+  let html = '';
+  if (pieza) {
+    html += mapaFicha(pieza, nivel);
+    if (modelo) {
+      html += mapaTablaResultados(MAPA_DATOS.porNivel(nivel).get(pieza.codigo));
+    }
+  } else if (modelo) {
+    html += '<h3 class="mapa-ficha-nombre">' + MAPA.escapar(mapaTituloEleccion()) + '</h3>' +
+            '<p class="mapa-panel-nota">Resultado del conjunto. Pulsa una pieza del ' +
+            'mapa para ver la suya.</p>' +
+            mapaTablaResultados(modelo.totales);
+  } else {
+    html += '<p class="mapa-panel-vacio">Pasa el ratón por el mapa para ver qué es ' +
+            'cada pieza, o pulsa una para fijarla aquí.</p>';
   }
 
-  let html = mapaFicha(pieza, MAPA.nivelActual());
   MAPA_PANEL_EXTRAS.forEach(fn => {
-    const extra = fn(pieza);
+    const extra = fn(pieza, nivel);
     if (extra) html += extra;
   });
   cuerpo.innerHTML = html;
+}
+
+/* ── Carga de la elección elegida ───────────────────────────────── */
+
+function mapaCargarEleccion() {
+  const sel = document.getElementById('mapa-eleccion');
+  if (!sel || !sel.value) return Promise.resolve();
+  const id = sel.value;
+  const archivo = sel.selectedOptions[0]?.dataset.archivo || id;
+  MAPA_UI.eleccion = id;
+  MAPA_UI.cargando = true;
+  mapaEstado('Cargando resultados…');
+  return MAPA_DATOS.cargarEleccion(id, archivo)
+    .then(() => {
+      MAPA_UI.cargando = false;
+      mapaEstado('');
+      MAPA.permitirNiveles(MAPA_DATOS.nivelesDisponibles());
+      mapaLlenarModos();
+      mapaRefrescar();
+    })
+    .catch(err => {
+      MAPA_UI.cargando = false;
+      mapaEstado(err.message || 'No se han podido cargar los resultados', true);
+      MAPA.despintar();
+      mapaLeyenda([]);
+    });
 }
 
 /* ── Arranque ───────────────────────────────────────────────────── */
 
 function mapaUIInit() {
   MAPA.al('seleccion', mapaPintarPanel);
-  MAPA.al('nivel', mapaPintarPanel);
+  MAPA.al('nivel', mapaRefrescar);
   mapaGlobo();
   mapaPintarPanel();
+
+  const ambito = document.getElementById('mapa-ambito');
+  const eleccion = document.getElementById('mapa-eleccion');
+  const modo = document.getElementById('mapa-modo');
+
+  if (ambito) ambito.addEventListener('change', () => {
+    MAPA_UI.ambito = ambito.value;
+    mapaLlenarElecciones();
+    mapaCargarEleccion();
+  });
+  if (eleccion) eleccion.addEventListener('change', mapaCargarEleccion);
+  if (modo) modo.addEventListener('change', () => {
+    mapaModoActual = modo.value;
+    mapaRefrescar();
+  });
+
+  mapaEstado('Cargando el índice de elecciones…');
+  MAPA_DATOS.cargarIndice()
+    .then(() => {
+      mapaLlenarAmbitos();
+      mapaLlenarElecciones();
+      mapaLlenarModos();
+      return mapaCargarEleccion();
+    })
+    .catch(err => mapaEstado(err.message || 'No se ha podido cargar el índice', true));
 }

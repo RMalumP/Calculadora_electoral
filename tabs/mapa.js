@@ -24,6 +24,22 @@ registerTab('map', 'tab-content', String.raw`
         </div>
       </div>
 
+      <div class="mapa-controles">
+        <label class="mapa-campo">
+          <span>Elección</span>
+          <select id="mapa-ambito" aria-label="Tipo de elección"></select>
+        </label>
+        <label class="mapa-campo">
+          <span>Convocatoria</span>
+          <select id="mapa-eleccion" aria-label="Convocatoria"></select>
+        </label>
+        <label class="mapa-campo">
+          <span>Pintar</span>
+          <select id="mapa-modo" aria-label="Qué pinta el color"></select>
+        </label>
+        <span class="mapa-estado" id="mapa-estado" role="status"></span>
+      </div>
+
       <div class="mapa-cuerpo">
 
         <div class="card mapa-card">
@@ -32,6 +48,7 @@ registerTab('map', 'tab-content', String.raw`
             <p class="mapa-aviso">Cargando el mapa…</p>
           </div>
           <div class="mapa-globo" id="mapa-globo" hidden></div>
+          <div class="mapa-leyenda" id="mapa-leyenda"></div>
         </div>
 
         <aside class="card mapa-panel">

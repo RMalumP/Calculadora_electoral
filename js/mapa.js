@@ -179,17 +179,22 @@ const MAPA = (() => {
    */
   function pintar(colores) {
     if (!svg) return;
-    svg.querySelectorAll('.mapa-capa[data-nivel="' + nivel + '"] .mapa-pieza')
-      .forEach(el => {
-        const color = colores ? colores[el.dataset.codigo] : null;
-        el.style.fill = color || '';
-        el.classList.toggle('sin-datos', !!colores && !color);
-      });
+    const capa = svg.querySelector('.mapa-capa[data-nivel="' + nivel + '"]');
+    if (!capa) return;
+    // Sobre un relleno saturado el trazo gris no se ve: la capa pintada lleva
+    // sus límites en blanco translúcido.
+    capa.classList.toggle('pintado', !!colores && Object.keys(colores).length > 0);
+    capa.querySelectorAll('.mapa-pieza').forEach(el => {
+      const color = colores ? colores[el.dataset.codigo] : null;
+      el.style.fill = color || '';
+      el.classList.toggle('sin-datos', !!colores && !color);
+    });
   }
 
   /** Quita el color de todas las capas. */
   function despintar() {
     if (!svg) return;
+    svg.querySelectorAll('.mapa-capa').forEach(c => c.classList.remove('pintado'));
     svg.querySelectorAll('.mapa-pieza').forEach(el => {
       el.style.fill = '';
       el.classList.remove('sin-datos');

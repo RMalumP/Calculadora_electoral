@@ -34,6 +34,7 @@ const ASSETS = [
   './js/helpers.js',
   './js/hemicycle.js',
   './js/mapa.js',
+  './js/mapa-datos.js',
   './js/mapa-ui.js',
   './js/pactometer.js',
   './js/rows.js',
