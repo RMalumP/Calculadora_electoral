@@ -47,6 +47,58 @@ test('Gibraltar no se dibuja', () => {
   assert.ok(!JSON.stringify(mapa).includes('Gibraltar'));
 });
 
+test('el nivel insular son las circunscripciones del Senado', () => {
+  assert.equal(mapa.islas.length, 59);
+  const propias = mapa.islas.filter(p => p.d);
+  assert.equal(propias.length, 10, 'las diez islas que son circunscripción');
+  assert.deepEqual(propias.map(p => p.codigo).sort(),
+    ['35-1', '35-2', '35-3', '38-4', '38-5', '38-6', '38-7', '7-1', '7-2', '7-3'].sort());
+  // Las demás no repiten el dibujo: lo toman de su provincia.
+  mapa.islas.filter(p => !p.d).forEach(p => {
+    assert.ok(mapa.provincias.some(q => q.codigo === p.provincia),
+      `${p.codigo} apunta a una provincia que no existe`);
+  });
+});
+
+test('los códigos insulares son los del Senado en los datos', () => {
+  const csv = fs.readFileSync(
+    path.join(RAIZ, 'datos/generado/csv/Circunscripciones.csv'), 'utf8');
+  const senado = new Set(csv.split('\n').slice(1).filter(Boolean)
+    .filter(f => f.startsWith('ES-Senado-2023'))
+    .map(f => f.split(',')[1]));
+  assert.equal(senado.size, 59);
+  const enMapa = new Set(mapa.islas.map(p => p.codigo));
+  for (const codigo of senado) {
+    assert.ok(enMapa.has(codigo), `falta la circunscripción ${codigo}`);
+  }
+});
+
+test('cada provincia sabe de qué comunidad es', () => {
+  const ccaa = new Set(mapa.ccaa.map(c => c.codigo));
+  mapa.provincias.forEach(p => {
+    assert.ok(ccaa.has(p.ccaa), `${p.codigo} ${p.nombre} sin comunidad`);
+  });
+  // Casos que no se pueden deducir a ojo y conviene clavar.
+  const de = c => mapa.provincias.find(p => p.codigo === c).ccaa;
+  assert.equal(de('07'), '04');   // Illes Balears
+  assert.equal(de('35'), '05');   // Las Palmas → Canarias
+  assert.equal(de('38'), '05');   // Santa Cruz de Tenerife → Canarias
+  assert.equal(de('51'), '18');   // Ceuta
+  assert.equal(de('52'), '19');   // Melilla
+  assert.equal(de('28'), '13');   // Madrid
+});
+
+test('cada pieza tiene centro dentro del lienzo y superficie', () => {
+  const todas = [...mapa.provincias, ...mapa.ccaa, mapa.nacional,
+                 ...mapa.islas.filter(p => p.d)];
+  todas.forEach(p => {
+    assert.ok(p.area > 0, `${p.codigo} sin superficie`);
+    const [x, y] = p.centro;
+    assert.ok(x >= 0 && x <= mapa.ancho && y >= 0 && y <= mapa.alto,
+      `${p.codigo} con el centro fuera del lienzo`);
+  });
+});
+
 test('cada pieza tiene nombre y una ruta cerrada', () => {
   const piezas = [...mapa.provincias, ...mapa.ccaa, mapa.nacional];
   for (const p of piezas) {

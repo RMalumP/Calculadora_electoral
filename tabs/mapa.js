@@ -8,7 +8,7 @@
  * pero no la de <script>.
  *
  * El dibujo lo pinta js/mapa.js con la geometría de
- * datos/generado/mapa/geometria.js.
+ * datos/generado/mapa/geometria.js; los controles, js/mapa-ui.js.
  */
 
 registerTab('map', 'tab-content', String.raw`
@@ -17,15 +17,30 @@ registerTab('map', 'tab-content', String.raw`
       <div class="mapa-head">
         <h2 class="mapa-title">Mapa</h2>
         <div class="mapa-niveles" role="group" aria-label="Nivel del mapa">
-          <button type="button" class="mapa-nivel-btn" data-nivel="nacional">Nacional</button>
-          <button type="button" class="mapa-nivel-btn" data-nivel="ccaa">Comunidades</button>
-          <button type="button" class="mapa-nivel-btn active" data-nivel="provincias">Provincias</button>
+          <button type="button" class="mapa-nivel-btn" data-nivel="nacional" aria-pressed="false">Nacional</button>
+          <button type="button" class="mapa-nivel-btn" data-nivel="ccaa" aria-pressed="false">Comunidades</button>
+          <button type="button" class="mapa-nivel-btn active" data-nivel="provincias" aria-pressed="true">Provincias</button>
+          <button type="button" class="mapa-nivel-btn" data-nivel="islas" aria-pressed="false">Senado</button>
         </div>
       </div>
 
-      <div class="card mapa-card">
-        <div class="card-header"><span class="dot"></span><span id="mapa-titulo">Provincias</span></div>
-        <div class="mapa-lienzo" id="mapa-lienzo"></div>
+      <div class="mapa-cuerpo">
+
+        <div class="card mapa-card">
+          <div class="card-header"><span class="dot"></span><span id="mapa-titulo">Provincias</span></div>
+          <div class="mapa-lienzo" id="mapa-lienzo">
+            <p class="mapa-aviso">Cargando el mapa…</p>
+          </div>
+          <div class="mapa-globo" id="mapa-globo" hidden></div>
+        </div>
+
+        <aside class="card mapa-panel">
+          <div class="card-header"><span class="dot"></span><span id="mapa-panel-titulo">Detalle</span></div>
+          <div class="mapa-panel-cuerpo" id="mapa-panel-cuerpo">
+            <p class="mapa-panel-vacio">Pasa el ratón por el mapa para ver qué es cada pieza, o pulsa una para fijarla aquí.</p>
+          </div>
+        </aside>
+
       </div>
 
       <p class="mapa-pie">
