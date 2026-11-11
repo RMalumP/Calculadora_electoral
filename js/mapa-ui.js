@@ -167,6 +167,9 @@ function mapaRefrescar() {
 /** Dibujos que van encima del relleno (puntos de escaños, etiquetas). */
 const MAPA_ADORNOS = [];
 
+/** Lo que haya que ajustar al cambiar de elección (el nivel de partida). */
+const MAPA_TRAS_CARGA = [];
+
 function mapaLeyenda(filas) {
   const el = document.getElementById('mapa-leyenda');
   if (!el) return;
@@ -466,6 +469,7 @@ function mapaCargarEleccion() {
       MAPA_UI.cargando = false;
       mapaEstado('');
       MAPA.permitirNiveles(MAPA_DATOS.nivelesDisponibles());
+      MAPA_TRAS_CARGA.forEach(fn => fn(MAPA_DATOS.eleccionActual()));
       mapaLlenarModos();
       mapaLlenarPartidos();
       mapaLlenarUmbral();

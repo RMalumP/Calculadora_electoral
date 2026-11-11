@@ -357,7 +357,12 @@
 }
 
 .mapa-tabla td.num,
-.mapa-tabla th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.mapa-tabla th.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  /* Los nombres largos del Senado estrechan las columnas y parten el «33,6 %». */
+  white-space: nowrap;
+}
 
 .mapa-ficha-extra { margin-top: 10px; }
 

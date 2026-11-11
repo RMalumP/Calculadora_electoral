@@ -38,6 +38,7 @@ const ASSETS = [
   './js/mapa-compara.js',
   './js/mapa-modos.js',
   './js/mapa-puntos.js',
+  './js/mapa-senado.js',
   './js/mapa-simulacion.js',
   './js/mapa-ui.js',
   './js/pactometer.js',
