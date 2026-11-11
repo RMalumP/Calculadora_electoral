@@ -100,7 +100,7 @@ function switchTab(tabName, updateHash = true) {
 
   if (updateHash) {
     const slug = TAB_SLUGS[tabName];
-    if (location.hash.slice(1) !== slug) {
+    if (hashSlug() !== slug) {
       // replaceState evita llenar el historial con cada cambio de pestaña;
       // si no está disponible (file:// en algunos navegadores) se recurre al
       // fragmento directamente.
@@ -118,8 +118,13 @@ function switchTab(tabName, updateHash = true) {
 }
 
 /** Pestaña indicada en la URL, si la hay. */
+function hashSlug() {
+  // «#avanzada&s=…»: lo que sigue al primer & son parámetros (escenario compartido).
+  return decodeURIComponent(location.hash.replace(/^#/, '').split('&')[0]);
+}
+
 function tabFromHash() {
-  return SLUG_TO_TAB[decodeURIComponent(location.hash.replace(/^#/, ''))] || null;
+  return SLUG_TO_TAB[hashSlug()] || null;
 }
 
 /** Abre la pestaña de la URL al cargar y al navegar atrás o adelante. */

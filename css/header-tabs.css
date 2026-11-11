@@ -128,3 +128,7 @@ header span {
   .tabs-container { padding: 0 6px; }
   .tab { padding: 12px 14px; font-size: 0.84rem; white-space: nowrap; flex: 0 0 auto; }
 }
+
+/* La cabecera pasa a varias líneas si los botones no caben (la avanzada añade tres). */
+header { flex-wrap: wrap; }
+.header-actions { flex-wrap: wrap; justify-content: flex-end; }

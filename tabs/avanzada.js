@@ -17,6 +17,8 @@ registerTab('advanced', 'tab-content', String.raw`
           <div class="adv-subtitle" id="adv-subtitle">Cargando datos electorales…</div>
         </div>
         <div class="adv-head-tools">
+          <button type="button" class="adv-compare-btn" id="adv-share-btn"
+                  title="Copiar un enlace que abre esta misma configuración">🔗 Compartir</button>
           <button type="button" class="adv-compare-btn" id="adv-compare-btn"
                   title="Comparar dos configuraciones independientes, lado a lado">⚖ Comparar</button>
           <div class="adv-mode" role="group" aria-label="Modo de la calculadora">

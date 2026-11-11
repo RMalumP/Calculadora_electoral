@@ -17,6 +17,7 @@ const ASSETS = [
   './js/accesibilidad.js',
   './js/advanced-calc.js',
   './js/advanced-compare.js',
+  './js/advanced-exportar.js',
   './js/carga-avanzada.js',
   './js/advanced-compensation.js',
   './js/advanced-data.js',

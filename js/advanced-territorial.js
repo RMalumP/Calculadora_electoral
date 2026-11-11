@@ -69,6 +69,7 @@ function advTerritorialCard() {
   const head = `<div class="card adv-terr-card">
     <div class="card-header"><span class="dot"></span>Voto por territorio
       <span class="adv-card-tools">
+        ${_advTerr.open ? '<button type="button" class="adv-tool-btn" data-adv-export="csv-terr" title="Descargar esta tabla en CSV">CSV</button>' : ''}
         <button type="button" class="adv-tool-btn" id="adv-terr-toggle" aria-expanded="${_advTerr.open}" aria-controls="adv-terr-body">
           ${_advTerr.open ? 'Ocultar desglose' : 'Ver desglose'}</button>
       </span>

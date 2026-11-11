@@ -788,6 +788,8 @@ function advNationalCard() {
         <button type="button" class="adv-tool-btn" data-adv-popup="hemi">Representación visual</button>
         <button type="button" class="adv-tool-btn" data-adv-popup="last">Último escaño</button>
         <button type="button" class="adv-tool-btn" data-adv-popup="coef">Coeficientes</button>
+        <button type="button" class="adv-tool-btn" data-adv-export="csv" title="Descargar el recuento en CSV (Excel)">CSV</button>
+        <button type="button" class="adv-tool-btn" data-adv-export="png" title="Descargar el recuento como imagen">Imagen</button>
       </span>
       <span class="formula-tag">${advEscape(FORMULAS.find(f => f.id === _advConfig.formula)?.name || _advConfig.formula)}</span>
     </div>
@@ -2018,7 +2020,9 @@ function advEnsureLoaded() {
   if (!_advLoaded && !_advLoading) {
     // Si el navegador guardaba una sesión de esta pestaña, se repone en cuanto
     // llegan los datos (autosave.js).
-    advLoadElection(false).then(() => {
+    advLoadElection(false).then(async () => {
+      // Un enlace con escenario manda sobre la sesión guardada en el navegador.
+      if (typeof advAplicarEscenarioDeUrl === 'function' && await advAplicarEscenarioDeUrl()) return;
       if (typeof autoRestoreAdvanced === 'function') autoRestoreAdvanced();
     });
   }
