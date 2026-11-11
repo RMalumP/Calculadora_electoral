@@ -35,9 +35,12 @@ function _assignPartyNames(rows) {
 
 /* ── CÁLCULO PRINCIPAL ─────────────────────────────────────── */
 
+/** Análisis del último escaño del último cálculo (lo rellena allocateSeats). */
+let _calcSeatOut = {};
+
 function calculate() {
   const formula = document.getElementById('formula-select').value;
-  window.lastSeatInfo = null;
+  _calcSeatOut = {};
 
   // Segunda vuelta: flujo simplificado sin lógica de absorción
   if (formula === 'majority_round2') {
@@ -117,7 +120,7 @@ function calculate() {
   let allocated = allocateSeats(
     eligible.map(p => ({ name: p.name, siglas: p.siglas, votes: p.votes, color: p.color })),
     seatsToAllocate, formula
-  );
+  );  // esta primera asignación sólo sirve para decidir qué partidos se absorben
   applyBonus(allocated, bonus);
 
   // ── PASO 4: Identificar partidos minoritarios a absorber ──
@@ -174,7 +177,7 @@ function calculate() {
 
   allocated = allocateSeats(
     eligible2.map(p => ({ name: p.name, siglas: p.siglas, votes: p.votes, color: p.color })),
-    seatsToAllocate, formula
+    seatsToAllocate, formula, _calcSeatOut
   );
   applyBonus(allocated, bonus);
 
@@ -342,7 +345,7 @@ function highlightInputTable(allocated, formula) {
 }
 
 function displayLastSeatInfo() {
-  const info = window.lastSeatInfo;
+  const info = _calcSeatOut.lastSeat;
   const container = document.getElementById('last-seat-container');
   const formula = document.getElementById('formula-select').value;
 
@@ -375,7 +378,11 @@ function displayLastSeatInfo() {
 
   document.getElementById('last-seat-info').innerHTML =
     `<strong>Último ${seatWord}:</strong> ${info.winner} (cociente&nbsp;${info.winnerQuotient.toFixed(4)}) &nbsp;·&nbsp; ` +
-    `<strong>Aspirante:</strong> ${info.loser.name} (cociente&nbsp;${info.loser.quotient.toFixed(4)}) &nbsp;·&nbsp; ${diffText}`;
+    `<strong>Aspirante:</strong> ${info.loser.name} (cociente&nbsp;${info.loser.quotient.toFixed(4)}) &nbsp;·&nbsp; ${diffText}` +
+    (_calcSeatOut.sorteo
+      ? `<br><strong>Empate exacto:</strong> ${_calcSeatOut.sorteo.join(' y ')} tienen el mismo cociente y los mismos votos; ` +
+        `el último ${seatWord} se decidiría por sorteo (aquí se asigna al primero de la lista).`
+      : '');
   container.style.display = 'block';
 }
 
