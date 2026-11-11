@@ -221,3 +221,94 @@ MAPA_MODOS.push(mapaModoPorcentaje(
 MAPA_MODOS.push(mapaModoPorcentaje(
   'nulos', 'Votos nulos', '#7a4b63',
   a => ((a.validos + a.nulos) ? a.nulos / (a.validos + a.nulos) : NaN), 'Nulos'));
+
+/* ── Margen de victoria ─────────────────────────────────────────── */
+
+/** Umbral, en puntos, por debajo del cual una victoria se considera ajustada. */
+let mapaUmbralAjustado = 5;
+
+/** Distancia en tanto por uno entre el primero y el segundo. */
+function mapaMargen(agregado) {
+  const lista = MAPA_DATOS.ordenadas(agregado);
+  if (!lista.length || !agregado.candidaturas) return NaN;
+  const primero = lista[0].votos;
+  const segundo = lista[1] ? lista[1].votos : 0;
+  return (primero - segundo) / agregado.candidaturas;
+}
+
+MAPA_MODOS.push({
+  id: 'margen',
+  label: 'Margen de victoria',
+  necesitaUmbral: true,
+  colores(porPieza) {
+    const r = mapaRango(porPieza, mapaMargen);
+    const salida = {};
+    porPieza.forEach((agregado, codigo) => {
+      const g = MAPA_DATOS.ganador(agregado);
+      const m = mapaMargen(agregado);
+      if (!g || !Number.isFinite(m)) return;
+      // El color es el del ganador; lo que cambia es cuánto se nota.
+      salida[codigo] = mapaIntensidad(g.color || '#888', (m - r.min) / r.ancho);
+    });
+    return salida;
+  },
+  leyenda(porPieza) {
+    const r = mapaRango(porPieza, mapaMargen);
+    const apretadas = [];
+    porPieza.forEach((agregado, codigo) => {
+      const m = mapaMargen(agregado);
+      if (Number.isFinite(m) && m * 100 < mapaUmbralAjustado) apretadas.push(codigo);
+    });
+    return [
+      { texto: 'Pálido = apretado · fuerte = holgado', color: 'transparent' },
+      { texto: 'Por debajo de ' + mapaUmbralAjustado + ' puntos', color: 'transparent',
+        n: apretadas.length },
+      { rampa: ['#d9d4cc', '#8d8880', '#3b3732'],
+        desde: mapaPct(r.min), hasta: mapaPct(r.max), titulo: 'Margen' },
+    ];
+  },
+  resumen(agregado) {
+    const m = mapaMargen(agregado);
+    const g = MAPA_DATOS.ganador(agregado);
+    if (!g || !Number.isFinite(m)) return '';
+    return mapaPastilla(g.siglas, g.color) + ' por <b>' +
+      (m * 100).toFixed(1).replace('.', ',') + '</b> puntos';
+  },
+});
+
+/** Marca con trama las victorias por debajo del umbral. */
+MAPA_ADORNOS.push((porPieza, nivel) => {
+  const capa = MAPA.capa(nivel);
+  if (!capa) return;
+  const activo = mapaModoActual === 'margen';
+  capa.querySelectorAll('.mapa-pieza').forEach(el => {
+    if (!activo) { el.classList.remove('ajustada'); return; }
+    const agregado = porPieza.get(el.dataset.codigo);
+    const m = agregado ? mapaMargen(agregado) : NaN;
+    el.classList.toggle('ajustada', Number.isFinite(m) && m * 100 < mapaUmbralAjustado);
+  });
+});
+
+/** Lista de las victorias más ajustadas, en el panel. */
+MAPA_PANEL_EXTRAS.push((pieza, nivel) => {
+  if (mapaModoActual !== 'margen' || pieza) return '';
+  const porPieza = MAPA_DATOS.porNivel(nivel);
+  const filas = [];
+  porPieza.forEach((agregado, codigo) => {
+    const m = mapaMargen(agregado);
+    const g = MAPA_DATOS.ganador(agregado);
+    if (!g || !Number.isFinite(m)) return;
+    const p = MAPA.pieza(codigo, nivel);
+    filas.push({ nombre: p ? p.nombre : codigo, margen: m, ganador: g });
+  });
+  if (!filas.length) return '';
+  filas.sort((a, b) => a.margen - b.margen);
+
+  return '<h4 class="mapa-subtitulo">Las más ajustadas</h4>' +
+    '<table class="mapa-tabla"><tbody>' +
+    filas.slice(0, 8).map(f =>
+      '<tr><td>' + MAPA.escapar(f.nombre) + '</td>' +
+      '<td>' + mapaPastilla(f.ganador.siglas, f.ganador.color) + '</td>' +
+      '<td class="num">' + (f.margen * 100).toFixed(1).replace('.', ',') + '</td></tr>').join('') +
+    '</tbody></table>';
+});

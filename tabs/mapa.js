@@ -41,6 +41,11 @@ registerTab('map', 'tab-content', String.raw`
           <span>Partido</span>
           <select id="mapa-partido" aria-label="Partido que se pinta"></select>
         </label>
+        <label class="mapa-campo" id="mapa-campo-umbral" hidden>
+          <span>Umbral</span>
+          <input type="number" id="mapa-umbral" min="0" max="50" step="1" value="5"
+                 style="width:70px" aria-label="Puntos por debajo de los cuales la victoria es ajustada">
+        </label>
         <label class="mapa-opcion">
           <input type="checkbox" id="mapa-puntos"> Puntos de escaños
         </label>

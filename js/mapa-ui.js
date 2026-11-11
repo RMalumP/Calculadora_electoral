@@ -180,8 +180,10 @@ function mapaLeyenda(filas) {
         '<i style="background:linear-gradient(to right,' + f.rampa.join(',') + ')"></i>' +
         '<em>' + MAPA.escapar(f.hasta) + '</em></span>';
     }
-    return '<span class="mapa-leyenda-item">' +
-      '<i style="background:' + (f.color || 'var(--text-muted)') + '"></i>' +
+    // Una entrada sin color es una nota, no una candidatura: va sin muestra.
+    const muestra = f.color && f.color !== 'transparent'
+      ? '<i style="background:' + f.color + '"></i>' : '';
+    return '<span class="mapa-leyenda-item' + (muestra ? '' : ' nota') + '">' + muestra +
       MAPA.escapar(f.siglas || f.texto) +
       (f.n != null ? ' <b>' + f.n + '</b>' : '') + '</span>';
   }).join('');
@@ -370,6 +372,15 @@ function mapaLlenarPartidos() {
 }
 
 
+/** El umbral de victoria ajustada, que sólo sale en el modo del margen. */
+function mapaLlenarUmbral() {
+  const campo = document.getElementById('mapa-campo-umbral');
+  if (!campo) return;
+  const modo = mapaModo(mapaModoActual);
+  campo.hidden = !(modo && modo.necesitaUmbral);
+}
+
+
 /** Opciones que sólo valen para algunas elecciones (los escaños, por ahora). */
 function mapaOpcionesSegunEleccion() {
   const modelo = MAPA_DATOS.eleccionActual();
@@ -406,6 +417,7 @@ function mapaCargarEleccion() {
       MAPA.permitirNiveles(MAPA_DATOS.nivelesDisponibles());
       mapaLlenarModos();
       mapaLlenarPartidos();
+      mapaLlenarUmbral();
       mapaOpcionesSegunEleccion();
       mapaRefrescar();
     })
@@ -438,12 +450,20 @@ function mapaUIInit() {
   if (modo) modo.addEventListener('change', () => {
     mapaModoActual = modo.value;
     mapaLlenarPartidos();
+    mapaLlenarUmbral();
     mapaRefrescar();
   });
 
   const partido = document.getElementById('mapa-partido');
   if (partido) partido.addEventListener('change', () => {
     mapaPartidoElegido = partido.value;
+    mapaRefrescar();
+  });
+
+  const umbral = document.getElementById('mapa-umbral');
+  if (umbral) umbral.addEventListener('input', () => {
+    const v = parseFloat(umbral.value);
+    mapaUmbralAjustado = Number.isFinite(v) ? Math.max(0, v) : 0;
     mapaRefrescar();
   });
 

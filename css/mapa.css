@@ -393,3 +393,25 @@
 /* Con los puntos encima el relleno se aclara, para que se cuenten bien. */
 .mapa-capa.con-puntos .mapa-pieza { fill-opacity: 0.32; }
 .mapa-capa.con-puntos .mapa-pieza.sel { fill-opacity: 0.45; }
+
+/* Un campo escondido manda sobre el display:flex de .mapa-campo. */
+.mapa-campo[hidden] { display: none; }
+
+/* Victoria por debajo del umbral: el límite se marca a trazos. */
+.mapa-capa .mapa-pieza.ajustada,
+.mapa-capa.pintado .mapa-pieza.ajustada {
+  stroke: var(--text);
+  stroke-width: 1.6;
+  stroke-dasharray: 3 2.5;
+}
+
+.mapa-subtitulo {
+  margin-top: 14px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.mapa-leyenda-item.nota { color: var(--text-muted); font-style: italic; }
