@@ -71,6 +71,7 @@ const TAB_SLUGS = {
   calculator: 'calculadora',
   pactometer: 'pactometro',
   advanced:   'avanzada',
+  map:        'mapa',
   theory:     'teoria'
 };
 const SLUG_TO_TAB = Object.fromEntries(Object.entries(TAB_SLUGS).map(([k, v]) => [v, k]));
@@ -108,6 +109,8 @@ function switchTab(tabName, updateHash = true) {
       catch (e) { location.hash = slug; }
     }
   }
+
+  if (tabName === 'map') mapaCargar().catch(() => {});
 
   if (tabName === 'advanced') {
     advCargarModulos().then(() => advEnsureLoaded()).catch(() => {

@@ -22,6 +22,7 @@
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/otros-drag-responsive.css">
   <link rel="stylesheet" href="css/advanced.css">
+  <link rel="stylesheet" href="css/mapa.css">
   <link rel="stylesheet" href="css/tema-oscuro.css">
   <script>try{var t=localStorage.getItem('ce-tema');if(t=='dark'||t=='light')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
 </head>
@@ -66,6 +67,7 @@
   <button class="tab active" data-tab="calculator"  onclick="switchTab('calculator')">Calculadora</button>
   <button class="tab"        data-tab="pactometer"  onclick="switchTab('pactometer')">Pactómetro</button>
   <button class="tab"        data-tab="advanced"    onclick="switchTab('advanced')">Calculadora avanzada</button>
+  <button class="tab"        data-tab="map"        onclick="switchTab('map')">Mapa</button>
   <button class="tab"        data-tab="theory"      onclick="switchTab('theory')">Teoría</button>
 </div>
 
@@ -80,6 +82,7 @@
 <script src="tabs/calculadora.js" defer></script>
 <script src="tabs/pactometro.js" defer></script>
 <script src="tabs/avanzada.js" defer></script>
+<script src="tabs/mapa.js" defer></script>
 <script src="tabs/teoria.js" defer></script>
 
 <!-- ══ SCRIPTS (orden de dependencias) ══ -->
@@ -95,6 +98,8 @@
 <!-- La calculadora avanzada (y la base de datos local de datos/generado/) se descarga al abrir su pestaña: js/carga-avanzada.js -->
 <script src="js/carga-avanzada.js" defer></script>
 <script src="js/advanced-compensation.js" defer></script>
+<!-- El mapa descarga su geometría al abrir la pestaña: js/mapa.js -->
+<script src="js/mapa.js" defer></script>
 <script src="js/session.js" defer></script>
 <script src="js/autosave.js" defer></script>
 <script src="js/ui.js" defer></script>
