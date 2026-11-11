@@ -37,6 +37,10 @@ registerTab('map', 'tab-content', String.raw`
           <span>Pintar</span>
           <select id="mapa-modo" aria-label="Qué pinta el color"></select>
         </label>
+        <label class="mapa-campo" id="mapa-campo-comparar" hidden>
+          <span>Comparar con</span>
+          <select id="mapa-comparar" aria-label="Convocatoria con la que comparar"></select>
+        </label>
         <label class="mapa-campo" id="mapa-campo-partido" hidden>
           <span>Partido</span>
           <select id="mapa-partido" aria-label="Partido que se pinta"></select>

@@ -372,6 +372,52 @@ function mapaLlenarPartidos() {
 }
 
 
+/**
+ * El desplegable de «comparar con», que sólo sale en los modos que comparan.
+ * Se arranca en la convocatoria anterior del mismo ámbito, que es con la que
+ * casi siempre se quiere comparar.
+ */
+function mapaLlenarComparar() {
+  const sel = document.getElementById('mapa-comparar');
+  const campo = document.getElementById('mapa-campo-comparar');
+  if (!sel || !campo) return Promise.resolve();
+
+  const modo = mapaModo(mapaModoActual);
+  campo.hidden = !(modo && modo.necesitaComparacion);
+  if (campo.hidden) {
+    MAPA_DATOS.soltar('b');
+    return Promise.resolve();
+  }
+
+  const ambito = MAPA_DATOS.ambitos().find(a => a.key === MAPA_UI.ambito);
+  const lista = (ambito ? ambito.elecciones : []).filter(e => e.id !== MAPA_UI.eleccion);
+  sel.innerHTML = lista.map(e =>
+    '<option value="' + MAPA.escapar(e.id) + '" data-archivo="' +
+    MAPA.escapar(e.archivo || e.id) + '">' + MAPA.escapar(mapaNombreEleccion(e)) +
+    '</option>').join('');
+  if (!lista.length) return Promise.resolve();
+
+  const actual = (ambito.elecciones || []).findIndex(e => e.id === MAPA_UI.eleccion);
+  const anterior = ambito.elecciones[actual + 1];
+  const elegida = lista.some(e => e.id === mapaComparaCon)
+    ? mapaComparaCon
+    : (anterior ? anterior.id : lista[0].id);
+  sel.value = elegida;
+  return mapaCargarComparacion();
+}
+
+function mapaCargarComparacion() {
+  const sel = document.getElementById('mapa-comparar');
+  if (!sel || !sel.value) return Promise.resolve();
+  mapaComparaCon = sel.value;
+  const archivo = sel.selectedOptions[0]?.dataset.archivo || sel.value;
+  mapaEstado('Cargando la convocatoria con la que comparar…');
+  return MAPA_DATOS.cargarEleccion(sel.value, archivo, 'b')
+    .then(() => { mapaEstado(''); mapaRefrescar(); })
+    .catch(err => mapaEstado(err.message || 'No se ha podido cargar', true));
+}
+
+
 /** El umbral de victoria ajustada, que sólo sale en el modo del margen. */
 function mapaLlenarUmbral() {
   const campo = document.getElementById('mapa-campo-umbral');
@@ -420,6 +466,7 @@ function mapaCargarEleccion() {
       mapaLlenarUmbral();
       mapaOpcionesSegunEleccion();
       mapaRefrescar();
+      return mapaLlenarComparar();
     })
     .catch(err => {
       MAPA_UI.cargando = false;
@@ -451,6 +498,7 @@ function mapaUIInit() {
     mapaModoActual = modo.value;
     mapaLlenarPartidos();
     mapaLlenarUmbral();
+    mapaLlenarComparar();
     mapaRefrescar();
   });
 
@@ -459,6 +507,9 @@ function mapaUIInit() {
     mapaPartidoElegido = partido.value;
     mapaRefrescar();
   });
+
+  const comparar = document.getElementById('mapa-comparar');
+  if (comparar) comparar.addEventListener('change', mapaCargarComparacion);
 
   const umbral = document.getElementById('mapa-umbral');
   if (umbral) umbral.addEventListener('input', () => {

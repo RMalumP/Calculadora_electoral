@@ -17,9 +17,14 @@ const MAPA_DATOS = (() => {
   const DIR = 'datos/generado/';
 
   let indice = null;
-  let modelo = null;            // elección cargada y normalizada
   const cacheCruda = {};        // id → datos tal cual vienen del archivo
-  const cacheNivel = {};        // nivel → Map(códigoPieza → agregado)
+
+  // Dos ranuras: «a» es la elección que se ve y «b» la que se compara con
+  // ella. Cada una guarda su modelo y sus sumas por nivel ya calculadas.
+  const ranuras = {
+    a: { modelo: null, niveles: {} },
+    b: { modelo: null, niveles: {} },
+  };
 
   /* ── Carga de archivos ─────────────────────────────────────────── */
 
@@ -185,7 +190,7 @@ const MAPA_DATOS = (() => {
     };
   }
 
-  function cargarEleccion(id, archivo) {
+  function cargarEleccion(id, archivo, ranura = 'a') {
     const ya = cacheCruda[id] || window.CE_DATOS_ELECCIONES?.[id];
     const listo = ya
       ? Promise.resolve(ya)
@@ -194,13 +199,21 @@ const MAPA_DATOS = (() => {
     return listo.then(datos => {
       if (!datos) throw new Error('No hay datos de ' + id);
       cacheCruda[id] = datos;
-      modelo = construir(datos);
-      Object.keys(cacheNivel).forEach(k => delete cacheNivel[k]);
-      return modelo;
+      const r = ranuras[ranura] || ranuras.a;
+      r.modelo = construir(datos);
+      r.niveles = {};
+      return r.modelo;
     });
   }
 
-  function eleccionActual() { return modelo; }
+  function eleccionActual(ranura = 'a') {
+    return (ranuras[ranura] || ranuras.a).modelo;
+  }
+
+  /** Olvida la elección de comparación. */
+  function soltar(ranura) {
+    if (ranuras[ranura]) { ranuras[ranura].modelo = null; ranuras[ranura].niveles = {}; }
+  }
 
   /* ── Agregación por nivel ──────────────────────────────────────── */
 
@@ -217,12 +230,13 @@ const MAPA_DATOS = (() => {
    * Suma de la elección cargada al nivel que se pida.
    * @returns {Map} códigoPieza → agregado
    */
-  function porNivel(nivel) {
-    if (!modelo) return new Map();
-    if (cacheNivel[nivel]) return cacheNivel[nivel];
+  function porNivel(nivel, ranura = 'a') {
+    const r = ranuras[ranura] || ranuras.a;
+    if (!r.modelo) return new Map();
+    if (r.niveles[nivel]) return r.niveles[nivel];
 
     const salida = new Map();
-    modelo.circunscripciones.forEach(entrada => {
+    r.modelo.circunscripciones.forEach(entrada => {
       const codigo = destino(entrada, nivel);
       if (!codigo) return;
       if (!salida.has(codigo)) salida.set(codigo, vacio());
@@ -243,12 +257,13 @@ const MAPA_DATOS = (() => {
         acumulado.escanos[s] = (acumulado.escanos[s] || 0) + v;
       });
     });
-    cacheNivel[nivel] = salida;
+    r.niveles[nivel] = salida;
     return salida;
   }
 
   /** Niveles con datos para la elección cargada. */
   function nivelesDisponibles() {
+    const modelo = eleccionActual();
     if (!modelo) return MAPA.NIVELES;
     return MAPA.NIVELES.filter(n => n !== 'islas' || modelo.hayIslas);
   }
@@ -281,7 +296,7 @@ const MAPA_DATOS = (() => {
   }
 
   return {
-    cargarIndice, ambitos, cargarEleccion, eleccionActual,
+    cargarIndice, ambitos, cargarEleccion, eleccionActual, soltar,
     porNivel, nivelesDisponibles, ordenadas, ganador, ganadorEscanos,
     colorPartido, normalizar,
   };
