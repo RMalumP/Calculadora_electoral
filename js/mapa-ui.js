@@ -349,6 +349,27 @@ function mapaPintarPanel() {
   cuerpo.innerHTML = html;
 }
 
+/** El desplegable de partidos, que sólo sale en los modos que lo piden. */
+function mapaLlenarPartidos() {
+  const sel = document.getElementById('mapa-partido');
+  const campo = document.getElementById('mapa-campo-partido');
+  if (!sel || !campo) return;
+  const modelo = MAPA_DATOS.eleccionActual();
+  const modo = mapaModo(mapaModoActual);
+  campo.hidden = !(modo && modo.necesitaPartido && modelo);
+  if (campo.hidden || !modelo) return;
+
+  const lista = modelo.partidos.slice(0, 25);
+  sel.innerHTML = lista.map(p =>
+    '<option value="' + MAPA.escapar(p.siglas) + '">' + MAPA.escapar(p.siglas) +
+    ' · ' + mapaPorcentaje(p.votos, modelo.totales.candidaturas) + '</option>').join('');
+  if (!lista.some(p => p.siglas === mapaPartidoElegido)) {
+    mapaPartidoElegido = lista.length ? lista[0].siglas : null;
+  }
+  if (mapaPartidoElegido) sel.value = mapaPartidoElegido;
+}
+
+
 /** Opciones que sólo valen para algunas elecciones (los escaños, por ahora). */
 function mapaOpcionesSegunEleccion() {
   const modelo = MAPA_DATOS.eleccionActual();
@@ -384,6 +405,7 @@ function mapaCargarEleccion() {
       mapaEstado('');
       MAPA.permitirNiveles(MAPA_DATOS.nivelesDisponibles());
       mapaLlenarModos();
+      mapaLlenarPartidos();
       mapaOpcionesSegunEleccion();
       mapaRefrescar();
     })
@@ -415,6 +437,13 @@ function mapaUIInit() {
   if (eleccion) eleccion.addEventListener('change', mapaCargarEleccion);
   if (modo) modo.addEventListener('change', () => {
     mapaModoActual = modo.value;
+    mapaLlenarPartidos();
+    mapaRefrescar();
+  });
+
+  const partido = document.getElementById('mapa-partido');
+  if (partido) partido.addEventListener('change', () => {
+    mapaPartidoElegido = partido.value;
     mapaRefrescar();
   });
 

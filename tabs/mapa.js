@@ -37,6 +37,10 @@ registerTab('map', 'tab-content', String.raw`
           <span>Pintar</span>
           <select id="mapa-modo" aria-label="Qué pinta el color"></select>
         </label>
+        <label class="mapa-campo" id="mapa-campo-partido" hidden>
+          <span>Partido</span>
+          <select id="mapa-partido" aria-label="Partido que se pinta"></select>
+        </label>
         <label class="mapa-opcion">
           <input type="checkbox" id="mapa-puntos"> Puntos de escaños
         </label>
