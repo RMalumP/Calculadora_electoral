@@ -91,8 +91,15 @@ function advBuildDistricts(data, config) {
     votosValidos: 0, votosBlanco: 0, votosNulos: 0,
     numRows: 0, minAjuste: 0,
     partyVotes: new Map(), realSeats: new Map(),
-    members: []
+    members: [],
+    // Reglas propias que trae la base de datos para esta circunscripción
+    // («Fórmula (excepción)», «Barrera % (excepción)»). Sólo valen si todas
+    // las de origen agrupadas en ella coinciden.
+    formulaPropia: undefined, barreraPropia: undefined
   });
+
+  const propia = (actual, valor) =>
+    actual === undefined ? (valor ?? null) : (actual === (valor ?? null) ? actual : null);
 
   const accumulate = (d, row) => {
     d.seatsBase     += row.seatsBase;
@@ -105,6 +112,8 @@ function advBuildDistricts(data, config) {
     d.numRows       += 1;
     if (minimoBase != null && row.minimo != null) d.minAjuste += row.minimo - minimoBase;
     d.members.push(row.provName);
+    d.formulaPropia = propia(d.formulaPropia, row.formulaPropia);
+    d.barreraPropia = propia(d.barreraPropia, row.barreraPropia);
     row.parties.forEach(p => {
       if (p.votes)     d.partyVotes.set(p.key, (d.partyVotes.get(p.key) || 0) + p.votes);
       if (p.realSeats) d.realSeats.set(p.key, (d.realSeats.get(p.key) || 0) + p.realSeats);
@@ -158,13 +167,22 @@ function advLockHas(locks, districtId, aspect) {
   return !!(locks && locks[districtId] && locks[districtId][aspect]);
 }
 
-/** Ajustes vigentes para una circunscripción: los congelados si los hay. */
-function advEffectiveConfig(config, locks, districtId) {
+/**
+ * Ajustes vigentes para una circunscripción: los congelados si los hay; si no,
+ * las excepciones que traiga la base de datos para ella (una fórmula o una
+ * barrera distinta de la general); si no, los generales.
+ */
+function advEffectiveConfig(config, locks, districtId, district) {
   const snap = locks?.[districtId]?.snap;
+  const formulaPropia = advFormulaSoportada(district?.formulaPropia);
+  const barreraPropia = district?.barreraPropia;
   return {
-    formula: advLockHas(locks, districtId, 'formula') && snap ? snap.formula : config.formula,
+    formula: advLockHas(locks, districtId, 'formula') && snap ? snap.formula
+           : formulaPropia || config.formula,
     barreras: advLockHas(locks, districtId, 'barrera') && snap
       ? [snap.barrera1, snap.barrera2]
+      : barreraPropia != null
+      ? [{ activa: barreraPropia > 0, nivel: 'circunscripcion', valor: barreraPropia }, config.barrera2]
       : [config.barrera1, config.barrera2]
   };
 }
@@ -407,7 +425,7 @@ function advComputeEligibility(districts, config, locks) {
     // por el candado; si no, las de la configuración general. Los totales de
     // ámbito (comunidad y nacional) se calculan siempre con el criterio
     // general, porque son de toda la elección y no de una circunscripción.
-    const barreras = advEffectiveConfig(config, locks, d.id).barreras
+    const barreras = advEffectiveConfig(config, locks, d.id, d).barreras
       .filter(b => b && b.activa && b.valor > 0);
 
     const ok = new Set();
@@ -458,7 +476,7 @@ function advAllocateDistrict(d, { config, edits, locks, partyMeta, eligibility, 
     .filter(([k, v]) => v > 0 && ok.has(k))
     .map(([k, v]) => ({ key: k, name: partyMeta.get(k)?.name || k, siglas: partyMeta.get(k)?.siglas || '', votes: v }));
 
-  const formula = advEffectiveConfig(config, locks, d.id).formula;
+  const formula = advEffectiveConfig(config, locks, d.id, d).formula;
   const bono = config.bono?.activa ? Math.max(0, parseInt(config.bono.escanos) || 0) : 0;
   const bonoExtra = bono > 0 && config.bono?.modo === 'extra';
   const aRepartir = bonoExtra ? d.seats : Math.max(0, d.seats - bono);

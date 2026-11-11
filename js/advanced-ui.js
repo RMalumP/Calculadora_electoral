@@ -76,6 +76,7 @@ function advFechaLarga({ dia, mes, anio } = {}) {
 function advPartyColor(p) {
   if (p.key && _advPartyColors[p.key]) return _advPartyColors[p.key];
   const k = (p.siglas || p.name || '').toUpperCase();
+  if (typeof ADV_DATA_COLORS !== 'undefined' && ADV_DATA_COLORS[k]) return ADV_DATA_COLORS[k];
   if (ADV_PARTY_COLORS[k]) return ADV_PARTY_COLORS[k];
   if (_advColorCache.has(k)) return _advColorCache.get(k);
   const c = PALETTE[_advColorCache.size % PALETTE.length];
