@@ -7,7 +7,7 @@ Uso:
     python3 scripts/generar_mapa.py [datos/mapa/es-provincias-topo.json] [datos/generado/mapa]
 
 Genera:
-    datos/generado/mapa/geometria.js   rutas SVG de los tres niveles
+    datos/generado/mapa/geometria.js   rutas SVG de los cuatro niveles
 
 El resultado va en un .js (y no en un .json) para que la página siga
 funcionando al abrirla directamente desde el disco, donde el navegador no deja
@@ -40,6 +40,24 @@ REGION_FUERA = {'20'}
 CANARIAS = {'35', '38'}
 CEUTA = '51'
 MELILLA = '52'
+
+# Islas que son circunscripción propia en el Senado, con el código que usa la
+# base de datos. Cada polígono suelto de las provincias insulares se asigna a
+# la isla más cercana de su provincia, así que los islotes (La Graciosa,
+# Cabrera, los Freus) caen donde votan.
+ISLAS = {
+    '07': [('7-1', 'Mallorca', 3.00, 39.60),
+           ('7-2', 'Menorca', 4.05, 39.95),
+           ('7-3', 'Eivissa-Formentera', 1.43, 38.98),
+           ('7-3', 'Eivissa-Formentera', 1.44, 38.70)],
+    '35': [('35-1', 'Gran Canaria', -15.58, 27.96),
+           ('35-2', 'Lanzarote', -13.63, 29.03),
+           ('35-3', 'Fuerteventura', -14.02, 28.36)],
+    '38': [('38-4', 'Tenerife', -16.60, 28.30),
+           ('38-5', 'La Palma', -17.85, 28.68),
+           ('38-6', 'La Gomera', -17.23, 28.12),
+           ('38-7', 'El Hierro', -18.00, 27.74)],
+}
 
 # Escala en píxeles por grado de longitud sobre el paralelo de referencia.
 ESCALA = 118.0
@@ -198,6 +216,89 @@ def fmt(v):
     return ('%.*f' % (DECIMALES, v)).rstrip('0').rstrip('.') or '0'
 
 
+def poligonos(geometria):
+    """Los polígonos de una geometría, cada uno con sus anillos.
+
+    Hace falta para partir las provincias insulares: cada isla es un polígono
+    suelto, mientras que anillos() los mezcla todos.
+    """
+    if geometria['type'] == 'Polygon':
+        return [list(geometria['arcs'])]
+    if geometria['type'] == 'MultiPolygon':
+        return [list(p) for p in geometria['arcs']]
+    return []
+
+
+def area_con_signo(puntos):
+    """Fórmula del zapatero. El signo dice si el anillo es exterior o un hueco."""
+    total = 0.0
+    for i in range(len(puntos)):
+        x1, y1 = puntos[i]
+        x2, y2 = puntos[(i + 1) % len(puntos)]
+        total += x1 * y2 - x2 * y1
+    return total / 2
+
+
+def dentro(punto, anillo):
+    """Punto dentro de un anillo, lanzando un rayo hacia la derecha."""
+    px, py = punto
+    adentro = False
+    for i in range(len(anillo)):
+        x1, y1 = anillo[i]
+        x2, y2 = anillo[(i + 1) % len(anillo)]
+        if (y1 > py) != (y2 > py):
+            corte = x1 + (py - y1) * (x2 - x1) / (y2 - y1)
+            if corte > px:
+                adentro = not adentro
+    return adentro
+
+
+def distancia_al_borde(punto, anillos_puntos):
+    """Distancia del punto al segmento más cercano de cualquier anillo."""
+    px, py = punto
+    mejor = float('inf')
+    for anillo in anillos_puntos:
+        for i in range(len(anillo)):
+            x1, y1 = anillo[i]
+            x2, y2 = anillo[(i + 1) % len(anillo)]
+            dx, dy = x2 - x1, y2 - y1
+            largo2 = dx * dx + dy * dy
+            if largo2 == 0:
+                d2 = (px - x1) ** 2 + (py - y1) ** 2
+            else:
+                t = max(0.0, min(1.0, ((px - x1) * dx + (py - y1) * dy) / largo2))
+                d2 = (px - x1 - t * dx) ** 2 + (py - y1 - t * dy) ** 2
+            mejor = min(mejor, d2)
+    return math.sqrt(mejor)
+
+
+def centro_visual(anillos_puntos, pasos=28):
+    """
+    El punto de dentro más alejado del borde, no el centro de masas.
+
+    En provincias con forma de luna (Cádiz, A Coruña) el centro de masas cae
+    fuera de la provincia, y ahí no se puede poner ni una etiqueta ni los
+    puntos de los escaños.
+    """
+    if not anillos_puntos:
+        return (0.0, 0.0)
+    fuera = max(anillos_puntos, key=lambda a: abs(area_con_signo(a)))
+    xs = [p[0] for p in fuera]
+    ys = [p[1] for p in fuera]
+    x0, x1, y0, y1 = min(xs), max(xs), min(ys), max(ys)
+    mejor, mejor_d = ((x0 + x1) / 2, (y0 + y1) / 2), -1.0
+    for i in range(pasos):
+        for j in range(pasos):
+            p = (x0 + (x1 - x0) * (i + 0.5) / pasos,
+                 y0 + (y1 - y0) * (j + 0.5) / pasos)
+            if not dentro(p, fuera):
+                continue
+            d = distancia_al_borde(p, anillos_puntos)
+            if d > mejor_d:
+                mejor, mejor_d = p, d
+    return mejor
+
+
 def caja(*rutas):
     """Rectángulo que envuelve a unas cuantas listas de puntos proyectados."""
     xs = [p[0] for lista in rutas for p in lista]
@@ -319,42 +420,111 @@ def generar(origen=ORIGEN, destino=DESTINO):
                 (fmt(x), fmt(y), fmt(x + lado), fmt(y),
                  fmt(x + lado), fmt(y + lado), fmt(x), fmt(y + lado)))
 
-    def pieza(g):
-        if g['id'] in plazas:
-            return cuadrado(plazas[g['id']][0], plazas[g['id']][1], LADO_PLAZA)
-        return ruta(anillos(g), arcos, desplazamientos[bloque_de(g['id'])])
+    def puntos_en_lienzo(anillos_geo):
+        """Los anillos de una pieza, en puntos ya colocados en el lienzo."""
+        salida = []
+        for anillo in anillos_geo:
+            primero = anillo[0]
+            b = bloque_arco.get(primero if primero >= 0 else ~primero, 'peninsula')
+            dx, dy = desplazamientos[b]
+            puntos = [(x + dx, y + dy) for x, y in puntos_de_anillo(anillo, arcos)]
+            if len(puntos) >= 4:
+                salida.append(puntos)
+        return salida
+
+    def figura(anillos_geo):
+        """Ruta, centro y superficie de una pieza corriente."""
+        trozos = puntos_en_lienzo(anillos_geo)
+        d = []
+        for puntos in trozos:
+            d.append('M' + 'L'.join(
+                fmt(round(x, DECIMALES)) + ' ' + fmt(round(y, DECIMALES))
+                for x, y in puntos) + 'Z')
+        cx, cy = centro_visual(trozos)
+        return {
+            'd': ''.join(d),
+            'centro': [round(cx, DECIMALES), round(cy, DECIMALES)],
+            'area': round(abs(sum(area_con_signo(p) for p in trozos))),
+        }
+
+    def figura_plaza(codigo):
+        """Ceuta y Melilla: el cuadrado que las representa."""
+        x, y = plazas[codigo]
+        return {
+            'd': cuadrado(x, y, LADO_PLAZA),
+            'centro': [round(x + LADO_PLAZA / 2, DECIMALES),
+                       round(y + LADO_PLAZA / 2, DECIMALES)],
+            'area': round(LADO_PLAZA * LADO_PLAZA),
+        }
 
     datos_provincias = []
     for g in sorted(provincias, key=lambda g: g['id']):
-        datos_provincias.append({
-            'codigo': g['id'],
-            'nombre': g['properties'].get('name', ''),
-            'd': pieza(g),
-        })
+        pieza = figura_plaza(g['id']) if g['id'] in plazas else figura(anillos(g))
+        pieza.update({'codigo': g['id'], 'nombre': g['properties'].get('name', '')})
+        datos_provincias.append(pieza)
 
-    # Una comunidad puede caer en más de un bloque (la península y su archi-
-    # piélago), así que cada anillo se dibuja con el de sus arcos. Las dos
-    # ciudades autónomas son el cuadrado de su provincia.
     cuadrados = {'18': CEUTA, '19': MELILLA}
-
-    def pieza_region(g):
-        if g['id'] in cuadrados:
-            x, y = plazas[cuadrados[g['id']]]
-            return cuadrado(x, y, LADO_PLAZA)
-        trozos = []
-        for anillo in anillos(g):
-            primero = anillo[0]
-            b = bloque_arco.get(primero if primero >= 0 else ~primero, 'peninsula')
-            trozos.append(ruta([anillo], arcos, desplazamientos[b]))
-        return ''.join(trozos)
 
     datos_ccaa = []
     for g in sorted(regiones, key=lambda g: g['id']):
-        datos_ccaa.append({
-            'codigo': g['id'],
-            'nombre': g['properties'].get('name', ''),
-            'd': pieza_region(g),
-        })
+        pieza = (figura_plaza(cuadrados[g['id']]) if g['id'] in cuadrados
+                 else figura(anillos(g)))
+        pieza.update({'codigo': g['id'], 'nombre': g['properties'].get('name', '')})
+        datos_ccaa.append(pieza)
+
+    # A qué comunidad pertenece cada provincia, sacado de la propia geometría:
+    # el centro de la provincia cae dentro de una comunidad y sólo de una. Así
+    # el mapa puede sumar provincias por comunidad sin tabla de equivalencias.
+    anillos_region = {g['id']: puntos_en_lienzo(anillos(g))
+                      for g in regiones if g['id'] not in cuadrados}
+
+    def dentro_pieza(punto, anillos_puntos):
+        """Dentro de la pieza contando huecos: un anillo entra y otro saca."""
+        veces = sum(1 for a in anillos_puntos if dentro(punto, a))
+        return veces % 2 == 1
+
+    ccaa_de = {CEUTA: '18', MELILLA: '19'}
+    for p in datos_provincias:
+        if p['codigo'] in ccaa_de:
+            continue
+        for codigo, anillos_puntos in anillos_region.items():
+            if dentro_pieza(tuple(p['centro']), anillos_puntos):
+                ccaa_de[p['codigo']] = codigo
+                break
+    for p in datos_provincias:
+        p['ccaa'] = ccaa_de.get(p['codigo'], '')
+
+    # Nivel de islas: igual que el provincial, pero las tres provincias
+    # insulares se parten en las circunscripciones del Senado. Cada polígono
+    # suelto va a la isla más cercana de su provincia.
+    def isla_de(poligono, codigo_provincia):
+        primero = poligono[0][0]
+        puntos = arcos_lonlat[primero if primero >= 0 else ~primero]
+        lon = sum(p[0] for p in puntos) / len(puntos)
+        lat = sum(p[1] for p in puntos) / len(puntos)
+        return min(ISLAS[codigo_provincia],
+                   key=lambda i: (lon - i[2]) ** 2 + (lat - i[3]) ** 2)
+
+    datos_islas = []
+    for g in sorted(provincias, key=lambda g: g['id']):
+        if g['id'] not in ISLAS:
+            # El dibujo es el mismo que el de la provincia: se referencia en
+            # vez de repetirlo, que son casi doscientos kilobytes de rutas.
+            datos_islas.append({
+                'codigo': g['id'].lstrip('0'),
+                'nombre': g['properties'].get('name', ''),
+                'provincia': g['id'],
+            })
+            continue
+        reparto = {}
+        for poligono in poligonos(g):
+            codigo, nombre, _, _ = isla_de(poligono, g['id'])
+            reparto.setdefault((codigo, nombre), []).extend(poligono)
+        for (codigo, nombre), anillos_isla in reparto.items():
+            pieza = figura(anillos_isla)
+            pieza.update({'codigo': codigo, 'nombre': nombre, 'provincia': g['id']})
+            datos_islas.append(pieza)
+    datos_islas.sort(key=lambda p: (p['provincia'], p['codigo']))
 
     # Nivel nacional: el relleno es la suma de las provincias, y el contorno se
     # queda sólo con los arcos que usa una única provincia, que son justo la
@@ -393,15 +563,22 @@ def generar(origen=ORIGEN, destino=DESTINO):
          'alto': round(alto_recuadros, DECIMALES)},
     ]
 
+    nacional = figura([anillo for g in provincias if g['id'] not in plazas
+                       for anillo in anillos(g)])
+    nacional.update({
+        'codigo': 'ES', 'nombre': 'España',
+        'd': relleno_nacional, 'contorno': contorno_nacional,
+    })
+
     mapa = {
         'ancho': round(ancho, DECIMALES),
         'alto': round(alto, DECIMALES),
         'escalas': {'canarias': ESCALA_CANARIAS, 'ladoPlaza': LADO_PLAZA},
         'recuadros': recuadros,
-        'nacional': {'codigo': 'ES', 'nombre': 'España',
-                     'd': relleno_nacional, 'contorno': contorno_nacional},
+        'nacional': nacional,
         'ccaa': datos_ccaa,
         'provincias': datos_provincias,
+        'islas': datos_islas,
     }
 
     os.makedirs(destino, exist_ok=True)
@@ -415,7 +592,8 @@ def generar(origen=ORIGEN, destino=DESTINO):
 
     print('%s  (%.0f KB)' % (ruta_js, os.path.getsize(ruta_js) / 1024))
     print('  lienzo %.0f × %.0f px' % (mapa['ancho'], mapa['alto']))
-    print('  %d provincias, %d comunidades' % (len(datos_provincias), len(datos_ccaa)))
+    print('  %d provincias, %d comunidades, %d circunscripciones insulares'
+          % (len(datos_provincias), len(datos_ccaa), len(datos_islas)))
     return mapa
 
 

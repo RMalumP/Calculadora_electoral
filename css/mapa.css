@@ -148,3 +148,403 @@
   .mapa-wrap { padding: 16px 12px 28px; }
   .mapa-nivel-btn { padding: 7px 11px; font-size: 0.8rem; }
 }
+
+/* ── Cuerpo: mapa y panel lateral ───────────────────────────── */
+
+.mapa-cuerpo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 290px;
+  gap: 16px;
+  align-items: start;
+}
+
+.mapa-card { overflow: visible; position: relative; }
+
+.mapa-panel { position: sticky; top: 12px; }
+
+.mapa-panel-cuerpo { padding: 14px 16px 18px; }
+
+.mapa-panel-vacio {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+.mapa-ficha-nombre {
+  font-family: 'Libre Baskerville', serif;
+  font-size: 1.05rem;
+  margin-bottom: 8px;
+  color: var(--text);
+}
+
+.mapa-ficha {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 10px;
+  font-size: 0.82rem;
+}
+
+.mapa-ficha dt {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.mapa-ficha dd { color: var(--text); }
+
+/* ── Globo ──────────────────────────────────────────────────── */
+
+.mapa-globo {
+  position: absolute;
+  z-index: 5;
+  pointer-events: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  line-height: 1.35;
+  max-width: 230px;
+  white-space: nowrap;
+}
+
+.mapa-globo[hidden] { display: none; }
+
+/* ── Pieza elegida ──────────────────────────────────────────── */
+
+.mapa-pieza.sel {
+  stroke: var(--accent);
+  stroke-width: 2.2;
+  paint-order: stroke;
+}
+
+.mapa-pieza.sin-datos { fill: var(--mapa-tierra); opacity: 0.55; }
+
+@media (max-width: 980px) {
+  .mapa-cuerpo { grid-template-columns: minmax(0, 1fr); }
+  .mapa-panel { position: static; }
+}
+
+/* ── Controles ──────────────────────────────────────────────── */
+
+.mapa-controles {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.mapa-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.mapa-campo select,
+.mapa-campo input[type="number"] {
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 6px 9px;
+  cursor: pointer;
+  max-width: 260px;
+}
+
+.mapa-opcion {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: var(--text);
+  cursor: pointer;
+  padding-bottom: 6px;
+}
+
+.mapa-estado {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-style: italic;
+  padding-bottom: 7px;
+}
+
+.mapa-estado.error { color: var(--danger-text); font-style: normal; }
+
+/* ── Leyenda ────────────────────────────────────────────────── */
+
+.mapa-leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  padding: 10px 14px 12px;
+  border-top: 1px solid var(--border-light);
+  font-size: 0.78rem;
+}
+
+.mapa-leyenda[hidden] { display: none; }
+
+.mapa-leyenda-item { display: inline-flex; align-items: center; gap: 5px; }
+
+.mapa-leyenda-item i,
+.mapa-pastilla i {
+  width: 11px;
+  height: 11px;
+  border-radius: 2px;
+  display: inline-block;
+  flex: none;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+}
+
+.mapa-leyenda-item b { font-variant-numeric: tabular-nums; color: var(--text-muted); }
+
+.mapa-leyenda-rampa { display: inline-flex; align-items: center; gap: 6px; }
+.mapa-leyenda-rampa i {
+  width: 120px;
+  height: 11px;
+  border-radius: 2px;
+  display: inline-block;
+  border: 1px solid var(--border);
+}
+.mapa-leyenda-rampa em { color: var(--text-muted); font-style: normal; }
+
+/* ── Pastillas y tablas del panel ───────────────────────────── */
+
+.mapa-pastilla {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 600;
+}
+
+.mapa-globo-linea { display: block; margin-top: 2px; }
+
+.mapa-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  font-size: 0.8rem;
+}
+
+.mapa-tabla th {
+  text-align: left;
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  padding: 3px 4px;
+}
+
+.mapa-tabla td {
+  padding: 3px 4px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.mapa-tabla td.num,
+.mapa-tabla th.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  /* Los nombres largos del Senado estrechan las columnas y parten el «33,6 %». */
+  white-space: nowrap;
+}
+
+.mapa-ficha-extra { margin-top: 10px; }
+
+/* Límites sobre un relleno de color: el gris no se vería. */
+.mapa-capa.pintado .mapa-pieza {
+  stroke: rgba(255, 255, 255, 0.62);
+  stroke-width: 0.7;
+}
+
+.mapa-capa.pintado .mapa-pieza.sin-datos {
+  stroke: var(--mapa-linea);
+}
+
+.mapa-panel-nota {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-top: 2px;
+}
+
+/* ── Puntos de escaños ──────────────────────────────────────── */
+
+.mapa-adornos { pointer-events: none; }
+
+.mapa-punto {
+  stroke: rgba(255, 255, 255, 0.85);
+  stroke-width: 0.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.mapa-opcion.apagada { color: var(--text-muted); opacity: 0.6; cursor: not-allowed; }
+
+/* Con los puntos encima el relleno se aclara, para que se cuenten bien. */
+.mapa-capa.con-puntos .mapa-pieza { fill-opacity: 0.32; }
+.mapa-capa.con-puntos .mapa-pieza.sel { fill-opacity: 0.45; }
+
+/* Un campo escondido manda sobre el display:flex de .mapa-campo. */
+.mapa-campo[hidden] { display: none; }
+
+/* Victoria por debajo del umbral: el límite se marca a trazos. */
+.mapa-capa .mapa-pieza.ajustada,
+.mapa-capa.pintado .mapa-pieza.ajustada {
+  stroke: var(--text);
+  stroke-width: 1.6;
+  stroke-dasharray: 3 2.5;
+}
+
+.mapa-subtitulo {
+  margin-top: 14px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.mapa-leyenda-item.nota { color: var(--text-muted); font-style: italic; }
+
+/* ── Comparación ────────────────────────────────────────────── */
+
+.mapa-cifra {
+  fill: var(--text);
+  font-family: 'Source Sans 3', sans-serif;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: central;
+  paint-order: stroke;
+  stroke: var(--surface);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+}
+
+.mapa-tabla td.sube { color: #2b7a9e; font-weight: 600; }
+.mapa-tabla td.baja { color: #c9702f; font-weight: 600; }
+
+/* ── Enlace con la calculadora avanzada ─────────────────────────── */
+
+.mapa-boton {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 7px 10px;
+  font: inherit;
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--accent);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  cursor: pointer;
+}
+
+.mapa-boton:hover { background: var(--bg-soft, rgba(127, 127, 127, .08)); }
+
+/* La circunscripción a la que lleva el botón, un momento resaltada para
+   encontrarla entre las cincuenta y tantas de la lista. */
+.adv-resaltada {
+  animation: adv-resaltar 2.4s ease-out;
+}
+
+@keyframes adv-resaltar {
+  0%, 40% { box-shadow: 0 0 0 3px var(--accent); }
+  100%    { box-shadow: 0 0 0 3px transparent; }
+}
+
+/* ── Cartograma ─────────────────────────────────────────────────── */
+
+/* Con el cartograma encendido el mapa de verdad se queda debajo, apagado:
+   sirve para situarse, pero lo que se lee son las burbujas. */
+.mapa-capa.apagada .mapa-pieza {
+  fill: none;
+  stroke: var(--mapa-linea);
+  opacity: .55;
+}
+
+.mapa-burbuja {
+  stroke: rgba(255, 255, 255, .7);
+  stroke-width: 0.9;
+  vector-effect: non-scaling-stroke;
+  pointer-events: all;
+  cursor: pointer;
+  transition: fill var(--transition);
+}
+
+.mapa-burbuja:hover { stroke: var(--text); stroke-width: 1.6; }
+
+/* ── Exportar ───────────────────────────────────────────────────── */
+
+.mapa-herramientas {
+  margin-left: auto;
+  display: inline-flex;
+  gap: 6px;
+}
+
+.mapa-herramientas button {
+  font: inherit;
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  padding: 3px 9px;
+  color: inherit;
+  background: rgba(255, 255, 255, .12);
+  border: 1px solid rgba(255, 255, 255, .25);
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.mapa-herramientas button:hover { background: rgba(255, 255, 255, .24); }
+
+/* ── Zoom y tabla equivalente ───────────────────────────────────── */
+
+.mapa-lienzo svg { touch-action: none; }
+
+/* Acercado, el cursor dice que el mapa se puede arrastrar. */
+.mapa-lienzo svg.acercado { cursor: grab; }
+.mapa-lienzo svg.acercado:active { cursor: grabbing; }
+
+.mapa-herramientas button[disabled] { opacity: .4; cursor: default; }
+
+.mapa-equivalente {
+  border-top: 1px solid var(--border-light, var(--border));
+  padding: 8px 12px 12px;
+}
+
+.mapa-equivalente summary {
+  cursor: pointer;
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  padding: 4px 0;
+}
+
+.mapa-equivalente summary:hover { color: var(--text); }
+
+.mapa-equivalente .mapa-tabla { margin-top: 8px; }
+
+/* En pantallas pequeñas el mapa se queda alto de más: se limita por altura
+   y la tabla pasa a ser la forma cómoda de leerlo. */
+@media (max-width: 760px) {
+  .mapa-lienzo svg { max-height: 62vh; }
+  /* Los seis botones no caben en una línea junto al título: se van debajo. */
+  .mapa-card .card-header { flex-wrap: wrap; row-gap: 8px; }
+  .mapa-herramientas { gap: 4px; flex-wrap: wrap; }
+  .mapa-herramientas button { padding: 4px 9px; }
+}

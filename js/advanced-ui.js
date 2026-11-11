@@ -679,6 +679,8 @@ function advRun() {
   advRefreshEditBar();
   advRefreshExceptions();
   if (typeof advPopupRefresh === 'function') advPopupRefresh();
+  // El mapa puede estar enseñando esta misma simulación.
+  if (typeof mapaSimulacionActualizar === 'function') mapaSimulacionActualizar();
 }
 
 function advRenderSummary() {

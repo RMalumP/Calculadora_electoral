@@ -26,11 +26,30 @@
 /** Guiones que la copia no necesita: dependen de la hoja de cálculo externa. */
 const SAVE_SKIP_SCRIPT = /(^|\/)(advanced-[\w-]+\.js|avanzada\.js|teoria\.js)(\?|$)/;
 
+/** Y los del mapa, que sólo se llevan si el mapa se ha llegado a abrir. */
+const SAVE_SKIP_MAPA = /(^|\/)(mapa[\w-]*\.js)(\?|$)/;
+
 /** Hojas de estilo que sólo usa la calculadora avanzada. */
 const SAVE_SKIP_STYLE = /(^|\/)advanced\.css(\?|$)/;
 
+const SAVE_SKIP_STYLE_MAPA = /(^|\/)mapa\.css(\?|$)/;
+
 /** Pestañas que se conservan en la copia. */
 const SAVE_KEEP_TABS = ['calculator', 'pactometer'];
+
+/**
+ * El mapa va en la copia sólo si se ha abierto: sin abrirlo, su geometría no
+ * está descargada y llevarse sus guiones sería engordar el archivo con una
+ * pestaña que no se puede dibujar.
+ */
+function _sesionConMapa() {
+  return typeof window !== 'undefined' && !!window.MAPA_ES;
+}
+
+/** Pestañas de esta copia, que son dos o tres según lo anterior. */
+function _sesionPestanas() {
+  return _sesionConMapa() ? [...SAVE_KEEP_TABS, 'map'] : SAVE_KEEP_TABS;
+}
 
 /* ── Anotación de la sesión ────────────────────────────────── */
 
@@ -95,6 +114,9 @@ function sesionAnotar() {
       grupos: groupingStates,
       desglose: document.body.classList.contains('breakdown-visible')
     },
+    // La vista del mapa, si se ha llegado a abrir: la copia se reabre en ella.
+    mapa: (_sesionConMapa() && typeof mapaVistaActual === 'function')
+      ? mapaVistaActual() : null,
     pactometro: {
       filas: pactFilas,
       etiquetas: select('#block-labels')?.value || 'izq-der',
@@ -211,7 +233,12 @@ function sesionRecuperar(s) {
 
   _sesionRecuperarCalculadora(s.calculadora || {});
   _sesionRecuperarPactometro(s.pactometro || {});
-  if (SAVE_KEEP_TABS.includes(s.pestana)) switchTab(s.pestana);
+  if (_sesionPestanas().includes(s.pestana)) switchTab(s.pestana);
+  if (s.mapa && typeof mapaCargar === 'function') {
+    // El mapa se monta al abrir su pestaña; la vista guardada se repone en
+    // cuanto termine de montarse, esté abierta o no.
+    mapaCargar().then(() => mapaAplicarVista(s.mapa)).catch(() => {});
+  }
   return true;
 }
 
@@ -242,6 +269,7 @@ async function _sesionIncrustarRecursos(raiz) {
     const href = link.getAttribute('href') || '';
     if (/^https?:/i.test(href)) continue;          // tipografías: siguen fuera
     if (SAVE_SKIP_STYLE.test(href)) { link.remove(); continue; }
+    if (SAVE_SKIP_STYLE_MAPA.test(href) && !_sesionConMapa()) { link.remove(); continue; }
     const style = document.createElement('style');
     style.textContent = await _sesionLeerRecurso(href);
     link.replaceWith(style);
@@ -250,6 +278,7 @@ async function _sesionIncrustarRecursos(raiz) {
   for (const script of [...raiz.querySelectorAll('script[src]')]) {
     const src = script.getAttribute('src') || '';
     if (SAVE_SKIP_SCRIPT.test(src)) { script.remove(); continue; }
+    if (SAVE_SKIP_MAPA.test(src) && !_sesionConMapa()) { script.remove(); continue; }
     const inline = document.createElement('script');
     inline.textContent = _sesionTextoDeGuion(await _sesionLeerRecurso(src));
     script.replaceWith(inline);
@@ -258,8 +287,9 @@ async function _sesionIncrustarRecursos(raiz) {
 
 /** Quita de la copia todo lo que pertenece a las pestañas que no se guardan. */
 function _sesionPodarCopia(raiz) {
+  const pestanas = _sesionPestanas();
   raiz.querySelectorAll('.tab').forEach(tab => {
-    if (!SAVE_KEEP_TABS.includes(tab.dataset.tab)) tab.remove();
+    if (!pestanas.includes(tab.dataset.tab)) tab.remove();
   });
   raiz.querySelectorAll('.adv-session-btn, #adv-session-file, #ce-sesion')
     .forEach(el => el.remove());
@@ -283,13 +313,35 @@ function sesionDescargar(contenido, nombre, tipo) {
   URL.revokeObjectURL(a.href);
 }
 
+/**
+ * Los datos que el mapa necesita para dibujarse sin red: la geometría, el
+ * índice de elecciones y sólo las convocatorias que están puestas, que llevar
+ * las cuarenta y tantas engordaría el archivo sin falta ninguna.
+ */
+function _sesionDatosDelMapa() {
+  const usadas = {};
+  const todas = window.CE_DATOS_ELECCIONES || {};
+  [MAPA_DATOS.eleccionActual()?.id, MAPA_DATOS.eleccionActual('b')?.id]
+    .filter(Boolean)
+    .forEach(id => { if (todas[id]) usadas[id] = todas[id]; });
+
+  return 'window.MAPA_ES = ' + JSON.stringify(window.MAPA_ES) + ';\n' +
+         'window.CE_DATOS_INDICE = window.CE_DATOS_INDICE || ' +
+           JSON.stringify(window.CE_DATOS_INDICE || { ambitos: [], colores: {} }) + ';\n' +
+         'window.CE_DATOS_ELECCIONES = Object.assign(window.CE_DATOS_ELECCIONES || {}, ' +
+           JSON.stringify(usadas) + ');';
+}
+
 function sesionMarcaDeTiempo() {
   return new Date().toISOString().slice(0, 16).replace('T', '_').replace(':', '-');
 }
 
 /**
- * Guarda la calculadora y el pactómetro en un archivo HTML autónomo. La
- * pestaña avanzada queda fuera a propósito: sus datos vienen de una hoja de
+ * Guarda la calculadora y el pactómetro en un archivo HTML autónomo, y el mapa
+ * si se ha llegado a abrir: entonces su geometría y la convocatoria que está
+ * puesta se incrustan también, y la copia lo dibuja sin red.
+ *
+ * La pestaña avanzada queda fuera a propósito: sus datos vienen de una hoja de
  * cálculo externa y se guardan aparte, con «Guardar información».
  */
 async function saveHTML() {
@@ -308,6 +360,13 @@ async function saveHTML() {
         'vuelve a guardar.'
       : `No se ha podido guardar la copia: falta ${err.message}`);
     return;
+  }
+
+  if (_sesionConMapa()) {
+    const mapa = document.createElement('script');
+    mapa.id = 'ce-mapa-datos';
+    mapa.textContent = _sesionTextoDeGuion(_sesionDatosDelMapa());
+    raiz.querySelector('body')?.appendChild(mapa);
   }
 
   const datos = document.createElement('script');
