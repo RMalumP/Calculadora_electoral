@@ -33,7 +33,7 @@ from base_datos import (  # noqa: E402
 )
 from esquema_datos import (  # noqa: E402
     COLS_CIRCUNSCRIPCIONES, COLS_ELECCIONES, COLS_PARTIDOS, COLS_RESULTADOS,
-    HOJA_CIRCUNSCRIPCIONES, HOJA_ELECCIONES, HOJA_PARTIDOS, HOJAS_FIJAS,
+    HOJA_CIRCUNSCRIPCIONES, HOJA_ELECCIONES, HOJA_PARTIDOS, HOJAS_FIJAS, TIPOS_ENLACE,
 )
 import archivos  # noqa: E402
 
@@ -319,12 +319,62 @@ class Modelo:
         self._despues()
         return p
 
+    # ── Enlaces entre partidos (coaliciones y evolución) ─────────────
+
+    def enlazados_con(self, siglas):
+        return [texto(p.get('Siglas')) for p in self.partidos if texto(p.get('Enlazado con')) == siglas]
+
+    def cadena(self, siglas):
+        """[siglas, enlace, enlace del enlace, …] hasta el final (la familia)."""
+        out = [siglas]
+        while True:
+            p = self.partido(out[-1])
+            e = texto(p.get('Enlazado con')) if p else ''
+            if not e or e in out:
+                return out
+            out.append(e)
+
+    def familia(self, siglas):
+        return self.cadena(siglas)[-1]
+
+    def enlazar(self, siglas, destino, tipo='Coalición'):
+        """Enlaza un partido con otro (destino vacío quita el enlace)."""
+        p = self.partido(siglas)
+        if not p:
+            raise ErrorModelo(f'No existe el partido «{siglas}».')
+        destino = (destino or '').strip()
+        if destino:
+            if destino == siglas:
+                raise ErrorModelo('Un partido no se puede enlazar consigo mismo.')
+            if not self.partido(destino):
+                raise ErrorModelo(f'No existe ningún partido con las siglas «{destino}».')
+            if siglas in self.cadena(destino):
+                raise ErrorModelo(f'«{destino}» ya va enlazado (directa o indirectamente) con «{siglas}»: '
+                                  'saldría un círculo.')
+            if tipo not in TIPOS_ENLACE:
+                raise ErrorModelo(f'El tipo de enlace es {" o ".join(TIPOS_ENLACE)}.')
+        self._antes()
+        p['Enlazado con'] = destino or None
+        p['Tipo de enlace'] = (tipo if destino else None)
+        self._despues()
+
     def editar_partido(self, siglas, campo, valor):
         p = self.partido(siglas)
         if not p:
             raise ErrorModelo(f'No existe el partido «{siglas}».')
         if campo == 'Siglas':
             return self.renombrar_siglas(siglas, texto(valor))
+        if campo == 'Enlazado con':
+            tipo = texto(p.get('Tipo de enlace')) or 'Coalición'
+            return self.enlazar(siglas, texto(valor), tipo)
+        if campo == 'Tipo de enlace':
+            t = texto(valor).strip()
+            opciones = {x.lower(): x for x in TIPOS_ENLACE}
+            if t and t.lower() not in opciones:
+                raise ErrorModelo(f'El tipo de enlace es {" o ".join(TIPOS_ENLACE)}.')
+            if not texto(p.get('Enlazado con')):
+                raise ErrorModelo('Escribe antes en «Enlazado con» las siglas del otro partido.')
+            return self.enlazar(siglas, texto(p.get('Enlazado con')), opciones.get(t.lower(), 'Coalición'))
         valor = valor_de_texto(campo, valor) if isinstance(valor, str) else valor
         self._antes()
         p[campo] = valor
@@ -375,6 +425,12 @@ class Modelo:
                     r['Partido'] = nombre_destino
                 quedan.append(r)
             self.t['resultados'][h] = quedan
+        for p in self.partidos:
+            if texto(p.get('Enlazado con')) == vieja:
+                p['Enlazado con'] = nueva
+        if destino and texto(destino.get('Enlazado con')) == nueva:
+            destino['Enlazado con'] = None       # se había enlazado con el que absorbe
+            destino['Tipo de enlace'] = None
         if destino and origen:
             self.partidos.remove(origen)
             msg = f'«{vieja}» fusionado con «{nueva}».'
@@ -399,6 +455,9 @@ class Modelo:
         return len(sin)
 
     def borrar_partido(self, siglas):
+        hijos = self.enlazados_con(siglas)
+        if hijos:
+            raise ErrorModelo(f'«{siglas}» tiene enlazados {", ".join(hijos)}: quita antes esos enlaces.')
         usos = self.usos_partido(siglas)
         if usos:
             raise ErrorModelo(f'«{siglas}» aparece en {len(usos)} elección(es). Quítalo de sus resultados '
@@ -668,9 +727,12 @@ class Modelo:
             if s not in siglas:
                 siglas.append(s)
         filas, por_codigo = [], {}
+        # Con voto a personas (Senado) la suma de partidos no tiene que dar las papeletas.
+        por_listas = texto(self.eleccion(eid).get('Forma de voto')) != 'Voto personalizado'
         for c in self.circunscripciones(eid):
             f = {'codigo': self.codigo_circ(c), 'nombre': texto(c.get('Circunscripción')),
-                 'votos': {}, 'reales': {}, 'candidaturas': entero(c.get('Votos a candidaturas')),
+                 'votos': {}, 'reales': {},
+                 'candidaturas': entero(c.get('Votos a candidaturas')) if por_listas else None,
                  'escanos': entero(c.get('Escaños'))}
             filas.append(f)
             por_codigo[f['codigo']] = f

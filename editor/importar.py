@@ -145,18 +145,20 @@ CAMPOS_CIRC = {
     'Votantes CERA': ['votantes cera', 'total votantes cera'],
     'Votantes total': ['votantes', 'total votantes', 'votantes total', 'votos emitidos', 'votants', 'turnout'],
     'Votos válidos': ['votos validos', 'validos', 'exprimes', 'suffrages exprimes', 'valid votes'],
-    'Votos a candidaturas': ['votos a candidaturas', 'a candidaturas', 'votos candidaturas', 'candidaturas'],
+    'Votos a candidaturas': ['votos a candidaturas', 'papeletas a candidaturas', 'a candidaturas', 'votos candidaturas', 'candidaturas'],
     'Votos en blanco': ['votos en blanco', 'en blanco', 'blancos', 'blanco', 'blancs', 'votes blancs'],
     'Votos nulos': ['votos nulos', 'nulos', 'nulo', 'nuls', 'votes nuls', 'invalid votes'],
 }
 _ALIAS_CIRC = {a: campo for campo, alias in CAMPOS_CIRC.items() for a in alias}
 
-NOMBRES_CIRC = ['circunscripcion', 'provincia', 'nombre de provincia', 'nombre provincia', 'distrito',
+NOMBRES_CIRC = ['circunscripcion', 'nombre de circunscripcion', 'nombre circunscripcion', 'provincia',
+                'nombre de provincia', 'nombre provincia', 'distrito',
                 'municipio', 'nombre de municipio', 'departamento', 'circonscription', 'constituency', 'isla',
                 'nombre', 'territorio', 'ambito']
 CODIGOS_CIRC = ['codigo', 'cod', 'codigo circunscripcion', 'codigo de circunscripcion', 'codigo de provincia',
                 'codigo provincia', 'cod provincia', 'cod. provincia', 'cod prov', 'codigo de municipio',
                 'codigo municipio', 'codigo distrito', 'id', 'ine', 'code', 'code departement']
+DISTRITOS = ['distrito electoral', 'cod distrito', 'codigo de distrito', 'n distrito']
 REGIONES = ['comunidad', 'comunidad autonoma', 'nombre de comunidad', 'ccaa', 'region', 'nombre de region']
 COD_REGIONES = ['codigo de comunidad', 'codigo comunidad', 'codigo region', 'codigo de region', 'cod ccaa',
                 'cod comunidad']
@@ -187,6 +189,8 @@ def _tipo_columna(titulo):
         return 'ignorar'
     if t in COD_REGIONES:
         return 'codigo_region'
+    if t in DISTRITOS:
+        return 'distrito'
     if t in CODIGOS_CIRC:
         return 'codigo'
     if t in REGIONES:
@@ -266,6 +270,8 @@ def _leer_cabecera(filas):
         else:
             vals = [f[j] for f in bloque if f[j]]
             titulos.append(ultima[j] or (vals[-1] if vals else ''))
+            if ultima[j] and len(vals) >= 2:
+                nombres.setdefault(ultima[j], vals[-2])     # Senado: candidato / partido / siglas
     datos = [list(f) + [''] * (ancho - len(f)) for f in filas[d:]]
     return titulos, sub, nombres, datos
 
@@ -381,6 +387,11 @@ def avisos(plan):
         out.append(f'{len(nuevos)} partido(s) nuevo(s) se darán de alta en Partidos: '
                    + ', '.join(nuevos[:10]) + ('…' if len(nuevos) > 10 else '')
                    + '. Si alguno ya existe con otras siglas, cámbialo en la lista (doble clic).')
+    enl = [f'{p["siglas"]} → {p["enlace"]}' for p in plan['partidos'] if not p['existe'] and p.get('enlace')]
+    if enl:
+        out.append(f'{len(enl)} partido(s) nuevo(s) llevan el nombre de otro que ya existe y se enlazarán con él '
+                   '(«Coalición»): ' + ', '.join(enl[:8]) + ('…' if len(enl) > 8 else '')
+                   + '. Se puede cambiar luego en Partidos.')
     parecidos = [f'{p["etiqueta"]} → {p["siglas"]}' for p in plan['partidos'] if p.get('parecido')]
     if parecidos:
         out.append(f'{len(parecidos)} partido(s) se juntan con uno que se escribe casi igual (en azul, «¿mismo?»): '
@@ -390,11 +401,16 @@ def avisos(plan):
 
 
 def _nuevo_partido(modelo, etiqueta, pais, nombre=''):
-    s = buscar_partido(modelo, etiqueta, pais) or buscar_partido(modelo, nombre, pais)
-    # «parecido»: no son las mismas siglas, sino unas que se escriben casi igual (B.N.G. / BNG) o el
-    # mismo nombre. La vista previa lo marca para que se compruebe.
-    return {'etiqueta': etiqueta, 'siglas': s or etiqueta, 'nombre': nombre or etiqueta, 'existe': bool(s),
-            'parecido': bool(s) and s != etiqueta}
+    s = buscar_partido(modelo, etiqueta, pais)
+    # «parecido»: no son las mismas siglas, sino unas que se escriben casi igual (B.N.G. / BNG).
+    # La vista previa lo marca para que se compruebe.
+    p = {'etiqueta': etiqueta, 'siglas': s or etiqueta, 'nombre': nombre or etiqueta, 'existe': bool(s),
+         'parecido': bool(s) and s != etiqueta, 'enlace': None}
+    # Siglas nuevas pero con el nombre de otro partido (UNIDAS PODEMOS se presentó como PODEMOS-IU-EQUO
+    # y luego como PODEMOS-IU): no se juntan, se da de alta y se enlaza con él como «Coalición».
+    if not s and nombre and norm(nombre) != norm(etiqueta):
+        p['enlace'] = buscar_partido(modelo, nombre, pais)
+    return p
 
 
 def _es_fila_total(codigo, nombre):
@@ -403,27 +419,31 @@ def _es_fila_total(codigo, nombre):
 
 def _analizar_ancha(cab, sub, datos, modelo, eid, pais, nombres=None):
     avisos = []
-    cols = {'codigo': None, 'nombre': None, 'region': None, 'codigo_region': None, 'vuelta': None}
+    nombres = nombres or {}
+    cols = {'codigo': None, 'nombre': None, 'region': None, 'codigo_region': None, 'vuelta': None,
+            'distrito': None}
     circ_cols, partidos, cols_partido = {}, [], []   # cols_partido: (j, etiqueta, 'votos'|'escanos')
     vistos = {}
+
+    def partido(titulo):
+        if titulo not in vistos:
+            vistos[titulo] = _nuevo_partido(modelo, titulo, pais, nombres.get(titulo, ''))
+            partidos.append(vistos[titulo])
+
     for j, titulo in enumerate(cab):
         tipo = _tipo_columna(titulo)
         s = sub[j] if sub else ''
         if s:
             if s == 'ignorar' or not titulo:
                 continue
-            if titulo not in vistos:
-                vistos[titulo] = _nuevo_partido(modelo, titulo, pais, (nombres or {}).get(titulo, ''))
-                partidos.append(vistos[titulo])
+            partido(titulo)
             cols_partido.append((j, titulo, s))
-        elif tipo in cols and cols[tipo] is None:
-            cols[tipo] = j
+        elif tipo in cols and (cols[tipo] is None or (tipo == 'nombre' and 'circunscripcion' in _cab(titulo))):
+            cols[tipo] = j            # «Nombre de Circunscripción» gana a «Nombre de Provincia»
         elif tipo.startswith('circ:'):
             circ_cols.setdefault(tipo[5:], j)
         elif tipo == 'partido' and not sub:
-            if titulo not in vistos:
-                vistos[titulo] = _nuevo_partido(modelo, titulo, pais)
-                partidos.append(vistos[titulo])
+            partido(titulo)
             cols_partido.append((j, titulo, 'votos'))
         elif tipo == 'partido':
             avisos.append(f'Se ignora la columna «{titulo}» (no sé qué es).')
@@ -434,37 +454,105 @@ def _analizar_ancha(cab, sub, datos, modelo, eid, pais, nombres=None):
         cols_partido = [c for c in cols_partido if c[0] != 0]
     if not cols_partido:
         raise ErrorModelo('No encuentro columnas de partidos con votos.')
-    circs = _Circs(modelo, eid)
-    filas = []
+    # Votos a candidatos (Senado): varias columnas con las mismas siglas, una por candidato.
+    # El partido se queda con los votos de su candidato más votado, y los escaños son los
+    # de los candidatos más votados de la circunscripción.
+    veces = {}
+    for _j, et, que in cols_partido:
+        if que == 'votos':
+            veces[et] = veces.get(et, 0) + 1
+    candidatos = any(n > 1 for n in veces.values())
+
+    def celda(f, clave):
+        return texto(f[cols[clave]]).strip() if cols[clave] is not None else ''
+
+    crudas, total = [], None
     for k, f in enumerate(datos):
-        codigo = texto(f[cols['codigo']]).strip() if cols['codigo'] is not None else ''
-        nombre = texto(f[cols['nombre']]).strip() if cols['nombre'] is not None else ''
+        codigo, nombre = celda(f, 'codigo'), celda(f, 'nombre')
         if not codigo and not nombre:
             continue
         if _es_fila_total(codigo, nombre):
             avisos.append(f'Se ignora la fila «{nombre}» (es un total).')
+            total = (k, f, '', nombre)
             continue
-        fila = {'fila': k + 1, 'codigo': codigo, 'nombre': nombre, 'destino': circs.buscar(codigo, nombre),
+        crudas.append((k, f, codigo, nombre))
+    # Una provincia partida en varias circunscripciones (islas en el Senado): código «7-1».
+    repetidos = {c for c in [x[2] for x in crudas] if c and [x[2] for x in crudas].count(c) > 1}
+    circs = _Circs(modelo, eid)
+    filas, sin_escanos = [], [0]
+
+    def hacer_fila(k, f, codigo, nombre, destino):
+        fila = {'fila': k + 1, 'codigo': codigo, 'nombre': nombre, 'destino': destino,
                 'circ': {}, 'votos': {}, 'escanos': {}, 'vuelta': None,
-                'region': texto(f[cols['region']]).strip() if cols['region'] is not None else '',
-                'codigo_region': texto(f[cols['codigo_region']]).strip() if cols['codigo_region'] is not None
-                else ''}
+                'region': celda(f, 'region'), 'codigo_region': celda(f, 'codigo_region')}
         if cols['vuelta'] is not None:
             fila['vuelta'] = _numero(f[cols['vuelta']])
         for campo, j in circ_cols.items():
             n = _numero(f[j])
             if n is not None:
                 fila['circ'][campo] = n
+        lista = []
         for j, et, que in cols_partido:
             n = _numero(f[j])
             if texto(f[j]).strip() and n is None:
                 avisos.append(f'Fila «{nombre or codigo}», columna «{et}»: «{texto(f[j])}» no es un número; se ignora.')
                 continue
-            if n:
+            if not n:
+                continue
+            if candidatos and que == 'votos':
+                lista.append((n, et))
+                fila['votos'][et] = max(fila['votos'].get(et, 0), n)
+            else:
                 d = fila[que]
                 d[et] = d.get(et, 0) + n
-        filas.append(fila)
-    return {'formato': 'ancha', 'partidos': partidos, 'filas': filas, 'avisos': avisos}
+        if candidatos:
+            c = modelo.circunscripcion(eid, destino) if destino else None
+            n_esc = entero(c.get('Escaños')) if c else fila['circ'].get('Escaños')
+            if n_esc:
+                for _n, et in sorted(lista, key=lambda x: -x[0])[:n_esc]:
+                    fila['escanos'][et] = fila['escanos'].get(et, 0) + 1
+            else:
+                sin_escanos[0] += 1
+        return fila
+
+    for k, f, codigo, nombre in crudas:
+        if codigo in repetidos and celda(f, 'distrito'):
+            codigo = f'{codigo}-{celda(f, "distrito")}'
+        destino = circs.buscar(codigo, nombre) if codigo not in repetidos else circs.buscar('', nombre)
+        filas.append(hacer_fila(k, f, codigo, nombre, destino))
+    total = hacer_fila(*total, None) if total and not candidatos else None
+    sin_escanos = sin_escanos[0]
+    if candidatos:
+        avisos.insert(0, 'Votos a candidatos (como en el Senado): cada partido se queda con los votos de su '
+                         'candidato más votado, y los escaños reales son los de los candidatos más votados.')
+        if sin_escanos:
+            avisos.append(f'{sin_escanos} circunscripción(es) sin escaños: no se pueden saber los electos. '
+                          'Pon antes sus escaños en la pestaña Circunscripciones.')
+    return {'formato': 'ancha', 'partidos': partidos, 'filas': filas, 'avisos': avisos, 'candidatos': candidatos,
+            'total': total}
+
+
+def juntar(plan, modelo, eid):
+    """Suma todas las filas en una sola circunscripción (elecciones de circunscripción única, como las
+    europeas en España, cuando el archivo viene por provincias)."""
+    circs = modelo.circunscripciones(eid)
+    unica = modelo.codigo_circ(circs[0]) if len(circs) == 1 else None
+    nombre = texto(circs[0].get('Circunscripción')) if unica else (texto(modelo.eleccion(eid).get('País')) or 'Total')
+    f = {'fila': 1, 'codigo': unica or '', 'nombre': nombre, 'destino': unica, 'circ': {}, 'votos': {},
+         'escanos': {}, 'vuelta': None, 'region': '', 'codigo_region': ''}
+    # Si la tabla trae fila de TOTAL (los archivos del Ministerio sí), se usa ésa: lleva los escaños
+    # nacionales, que por provincia vienen vacíos.
+    origen = [plan['total']] if plan.get('total') else plan['filas']
+    for x in origen:
+        for clave in ('circ', 'votos', 'escanos'):
+            for k, n in x[clave].items():
+                f[clave][k] = f[clave].get(k, 0) + n
+    if 'Escaños' in f['circ'] and unica:
+        del f['circ']['Escaños']          # la suma de escaños por provincia no vale aquí
+    nuevo = dict(plan, filas=[f], avisos=[a for a in plan['avisos'] if 'no coinciden' not in a])
+    nuevo['avisos'].insert(0, ('Se usa la fila de TOTAL de la tabla' if plan.get('total') else
+                               f'Se suman las {len(plan["filas"])} filas') + f' en una sola circunscripción ({nombre}).')
+    return nuevo
 
 
 def _analizar_larga(cab, tipos, datos, modelo, eid, pais):
@@ -531,6 +619,8 @@ def cambiar_siglas(plan, modelo, etiqueta, siglas):
             p['siglas'] = siglas.strip() or etiqueta
             p['existe'] = bool(modelo.partido(p['siglas']))
             p['parecido'] = False
+            if p['existe'] or p.get('enlace') == p['siglas']:
+                p['enlace'] = None
 
 
 # ── Aplicar ──────────────────────────────────────────────────────────
@@ -590,11 +680,16 @@ def aplicar(plan, modelo, eid, vuelta=1, sustituir=True, actualizar_circ=True, c
         nombres = {}
         for et, s in siglas_de.items():
             nombres.setdefault(s, nombre_de[et])
+        enlaces = {p['siglas']: p['enlace'] for p in plan['partidos'] if p.get('enlace')}
         nuevos = []
         for s in dict.fromkeys(k[2] for k in suma):
-            _, nuevo = modelo._asegurar_partido(s, nombres.get(s, s), pais)
+            p, nuevo = modelo._asegurar_partido(s, nombres.get(s, s), pais)
             if nuevo:
                 nuevos.append(s)
+                e = enlaces.get(s)
+                if e and modelo.partido(e) and s not in modelo.cadena(e):
+                    p['Enlazado con'], p['Tipo de enlace'] = e, 'Coalición'
+                    p['Color'] = texto(modelo.partido(e).get('Color')) or p.get('Color')   # mismo color
         n_filas, total = 0, 0
         for (cod, v, s), (votos, esc) in suma.items():
             if not sustituir:

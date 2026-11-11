@@ -14,6 +14,7 @@ import tkinter as tk
 from tkinter import colorchooser, messagebox, simpledialog, ttk
 
 from base_datos import es_color, texto
+from esquema_datos import TIPOS_ENLACE
 from modelo import ErrorModelo
 from tabla import TablaEditable
 
@@ -29,20 +30,27 @@ class PestanaPartidos(ttk.Frame):
         ttk.Button(barra, text='🎨 Color…', command=self.color).pack(side='left', padx=2)
         ttk.Button(barra, text='Colores a los que no tienen', command=self.colores_auto).pack(side='left', padx=2)
         ttk.Button(barra, text='Fusionar con…', command=self.fusionar).pack(side='left', padx=2)
+        ttk.Button(barra, text='🔗 Enlazar con…', command=self.enlazar).pack(side='left', padx=2)
         ttk.Button(barra, text='Borrar', command=self.borrar).pack(side='left', padx=2)
         ttk.Button(barra, text='Dónde aparece', command=self.usos).pack(side='left', padx=2)
         self.tabla = TablaEditable(self, al_editar=self._editar, con_imagen=True)
         self.tabla.pack(fill='both', expand=True)
         self.tabla.poner_columnas([
-            {'clave': 'Siglas', 'titulo': 'Siglas', 'ancho': 160, 'editable': True},
-            {'clave': 'Nombre', 'titulo': 'Nombre', 'ancho': 420, 'editable': True, 'estirar': True},
+            {'clave': 'Siglas', 'titulo': 'Siglas', 'ancho': 150, 'editable': True},
+            {'clave': 'Nombre', 'titulo': 'Nombre', 'ancho': 330, 'editable': True, 'estirar': True},
             {'clave': 'Color', 'titulo': 'Color', 'ancho': 90, 'editable': True},
-            {'clave': 'País', 'titulo': 'País', 'ancho': 120, 'editable': True},
+            {'clave': 'País', 'titulo': 'País', 'ancho': 100, 'editable': True},
+            {'clave': 'Enlazado con', 'titulo': 'Enlazado con', 'ancho': 140, 'editable': True},
+            {'clave': 'Tipo de enlace', 'titulo': 'Tipo de enlace', 'ancho': 100, 'editable': True},
+            {'clave': '__familia', 'titulo': 'Familia', 'ancho': 130},
             {'clave': '__usos', 'titulo': 'Elecciones', 'ancho': 80, 'alinear': 'e'},
         ])
         self.tabla.tree.bind('<Double-1>', self._doble, add='+')
         ttk.Label(self, text='Doble clic en el color para elegirlo. Cambiar unas siglas las cambia en todas '
-                             'las elecciones; si ya existen, fusiona los dos partidos.',
+                             'las elecciones; si ya existen, fusiona los dos partidos. «Enlazado con»: la '
+                             'coalición de la que es marca (Coalición) o el partido del que viene (Viene de); '
+                             '«Familia» es el final de la cadena.',
+                  wraplength=1100, justify='left',
                   foreground='#6b625a').pack(fill='x', pady=(6, 0))
 
     def _imagen(self, color):
@@ -65,7 +73,9 @@ class PestanaPartidos(ttk.Frame):
         for p in sorted(m.partidos, key=lambda p: (texto(p.get('País')), texto(p.get('Siglas')).lower())):
             s = texto(p.get('Siglas'))
             c = texto(p.get('Color'))
-            filas.append((s, [s, texto(p.get('Nombre')), c, texto(p.get('País')), usos.get(s, 0)],
+            fam = m.familia(s)
+            filas.append((s, [s, texto(p.get('Nombre')), c, texto(p.get('País')), texto(p.get('Enlazado con')),
+                              texto(p.get('Tipo de enlace')), fam if fam != s else '', usos.get(s, 0)],
                           (), self._imagen('#' + c.lstrip('#') if c else '')))
         self.tabla.cargar(filas)
 
@@ -139,6 +149,11 @@ class PestanaPartidos(ttk.Frame):
             return
         self.app.estado(self.app.modelo.renombrar_siglas(iid, destino.strip()))
 
+    def enlazar(self):
+        iid, _ = self._actual()
+        if iid:
+            DialogoEnlace(self, self.app, iid)
+
     def borrar(self):
         iid, _ = self._actual()
         if not iid:
@@ -159,3 +174,62 @@ class PestanaPartidos(ttk.Frame):
 
     def ir_a(self, siglas):
         self.tabla.ir_a(siglas, 'Siglas')
+
+
+class DialogoEnlace(tk.Toplevel):
+    """Enlazar un partido con otro: coalición con otro nombre o partido anterior."""
+
+    def __init__(self, pestana, app, siglas):
+        super().__init__(pestana)
+        self.app, self.siglas = app, siglas
+        m = app.modelo
+        p = m.partido(siglas)
+        self.title(f'Enlazar {siglas}')
+        self.transient(pestana.winfo_toplevel())
+        self.resizable(False, False)
+        f = ttk.Frame(self, padding=14)
+        f.pack(fill='both', expand=True)
+        ttk.Label(f, text=f'¿Con qué partido se enlaza «{siglas}»?').grid(row=0, column=0, columnspan=2, sticky='w')
+        pais = texto(p.get('País'))
+        otros = sorted((x for x in m.partidos if texto(x.get('Siglas')) != siglas),
+                       key=lambda x: (texto(x.get('País')) != pais, texto(x.get('Siglas')).lower()))
+        self._todos = [texto(x.get('Siglas')) for x in otros]
+        self.destino = tk.StringVar(value=texto(p.get('Enlazado con')))
+        self.combo = ttk.Combobox(f, textvariable=self.destino, values=self._todos, width=36)
+        self.combo.grid(row=1, column=0, columnspan=2, sticky='we', pady=(4, 10))
+        self.combo.bind('<KeyRelease>', self._filtrar)
+        self.combo.focus_set()
+        self.tipo = tk.StringVar(value=texto(p.get('Tipo de enlace')) or TIPOS_ENLACE[0])
+        ayudas = {'Coalición': 'es la misma coalición con otro nombre o una marca regional '
+                               '(En Comú Podem → Unidas Podemos)',
+                  'Viene de': 'continúa a un partido o coalición anterior (Sumar → Unidas Podemos)'}
+        for i, t in enumerate(TIPOS_ENLACE):
+            ttk.Radiobutton(f, text=t, value=t, variable=self.tipo).grid(row=2 + i, column=0, sticky='w')
+            ttk.Label(f, text=ayudas.get(t, ''), foreground='#6b625a').grid(row=2 + i, column=1, sticky='w')
+        cadena = m.cadena(siglas)
+        if len(cadena) > 1:
+            ttk.Label(f, text='Ahora: ' + ' → '.join(cadena), foreground='#6b625a').grid(
+                row=5, column=0, columnspan=2, sticky='w', pady=(8, 0))
+        b = ttk.Frame(f)
+        b.grid(row=6, column=0, columnspan=2, sticky='e', pady=(12, 0))
+        ttk.Button(b, text='Cancelar', command=self.destroy).pack(side='right', padx=4)
+        ttk.Button(b, text='Quitar enlace', command=lambda: self._guardar(quitar=True)).pack(side='right', padx=4)
+        ttk.Button(b, text='Enlazar', command=self._guardar).pack(side='right')
+        self.bind('<Return>', lambda e: self._guardar())
+        self.bind('<Escape>', lambda e: self.destroy())
+        self.grab_set()
+
+    def _filtrar(self, ev):
+        t = self.destino.get().lower()
+        self.combo.configure(values=[s for s in self._todos if t in s.lower()] if t else self._todos)
+
+    def _guardar(self, quitar=False):
+        try:
+            self.app.modelo.enlazar(self.siglas, '' if quitar else self.destino.get(), self.tipo.get())
+        except ErrorModelo as ex:
+            messagebox.showerror('Enlazar', str(ex), parent=self)
+            return
+        self.destroy()
+        fam = self.app.modelo.familia(self.siglas)
+        self.app.estado(f'«{self.siglas}» sin enlace.' if quitar else
+                        f'«{self.siglas}» enlazado. Familia: {fam}.')

@@ -35,7 +35,11 @@ COLS_CIRCUNSCRIPCIONES = [
     'Fórmula (excepción)', 'Barrera % (excepción)',
 ]
 
-COLS_PARTIDOS = ['Siglas', 'Nombre', 'Color', 'País']
+COLS_PARTIDOS = ['Siglas', 'Nombre', 'Color', 'País', 'Enlazado con', 'Tipo de enlace']
+# «Enlazado con»: las siglas del partido con el que se enlaza. «Coalición»: es la marca de una
+# coalición mayor con otro nombre (En Comú Podem → Unidas Podemos). «Viene de»: es la
+# continuación de un partido o coalición anterior (Sumar → Unidas Podemos).
+TIPOS_ENLACE = ['Coalición', 'Viene de']
 
 COLS_RESULTADOS = [
     'Elección', 'Código circunscripción', 'Circunscripción', 'Vuelta',

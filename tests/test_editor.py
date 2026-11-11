@@ -314,6 +314,46 @@ class TestImportar(BaseCopia):
         self.assertEqual(self.m.circunscripcion(eid, '2')['Escaños'], 4)
         self.assertEqual(self.votos(eid, '2', 'PSOE'), 70000)
 
+    def test_zip_senado_votos_a_candidatos(self):
+        """Senado 2023: una columna por candidato; islas como circunscripciones propias."""
+        self.m.nuevo_ambito('Prueba.Senado')
+        eid = self.m.nueva_eleccion('Prueba.Senado', {'Fecha': '23/07/2023', 'País': 'España', 'Tipo': 'Senado'})
+        self.m.editar_eleccion(eid, 'Forma de voto', 'Voto personalizado')
+        ruta = os.path.join(RAIZ, 'tests', 'datos', 'PROV_03_202307_1.zip')
+        plan = self.imp.analizar(self.imp.leer_archivo(ruta), self.m, eid)
+        self.assertTrue(plan['candidatos'])
+        codigos = [f['codigo'] for f in plan['filas']]
+        self.assertEqual(len(codigos), 59)
+        self.assertIn('7-1', codigos)
+        islas3 = {'Mallorca', 'Gran Canaria', 'Tenerife'}
+        for f in plan['filas']:
+            n = 2 if f['nombre'] in ('Ceuta', 'Melilla') else 3 if f['nombre'] in islas3 else \
+                1 if '-' in f['codigo'] else 4
+            self.m.nueva_circunscripcion(eid, f['codigo'], f['nombre'], Escaños=n)
+        plan = self.imp.analizar(self.imp.leer_archivo(ruta), self.m, eid)
+        almeria = next(f for f in plan['filas'] if f['nombre'] == 'Almería')
+        self.assertEqual(almeria['votos']['PP'], 129806)          # su candidato más votado
+        self.assertEqual(almeria['escanos'], {'PP': 3, 'PSOE': 1})
+        self.imp.aplicar(plan, self.m, eid)
+        reales = {}
+        for r in self.m.resultados(eid):
+            reales[r['Siglas']] = reales.get(r['Siglas'], 0) + (r.get('Escaños reales') or 0)
+        self.assertEqual(sum(reales.values()), 208)
+        self.assertEqual(reales['PP'], 120)
+        self.assertFalse(self.m.comprobar().errores)
+
+    def test_zip_europeas_en_circunscripcion_unica(self):
+        self.m.nuevo_ambito('Prueba.Europa')
+        eid = self.m.nueva_eleccion('Prueba.Europa', {'Fecha': '09/06/2024', 'País': 'España', 'Tipo': 'Europeas'})
+        self.m.nueva_circunscripcion(eid, 'ES', 'España', Escaños=61)
+        ruta = os.path.join(RAIZ, 'tests', 'datos', 'PROV_07_202406_1.zip')
+        plan = self.imp.juntar(self.imp.analizar(self.imp.leer_archivo(ruta), self.m, eid), self.m, eid)
+        self.assertEqual(len(plan['filas']), 1)
+        self.assertEqual(plan['filas'][0]['escanos']['PP'], 22)    # de la fila de TOTAL
+        self.imp.aplicar(plan, self.m, eid)
+        self.assertEqual(self.votos(eid, 'ES', 'PSOE'), 5291102)
+        self.assertEqual(self.m.circunscripcion(eid, 'ES')['Escaños'], 61)
+
     def test_tabla_sin_partidos_da_error(self):
         with self.assertRaises(ErrorModelo):
             self.imp.analizar(self.imp.leer_texto('hola\nadiós'), self.m, EID)
@@ -335,3 +375,36 @@ class TestImportar(BaseCopia):
         self.assertEqual(self.m.circunscripcion(eid, '4')['Censo CERA'], 41988)
         self.assertEqual(self.m.partido('PODEMOS-IU')['Nombre'], 'UNIDAS PODEMOS')
         self.assertFalse(self.m.comprobar().errores)
+
+
+class TestEnlaces(BaseCopia):
+    """Enlazar partidos: coaliciones con otro nombre y evolución."""
+
+    def test_enlazar_familia_y_guardar(self):
+        self.m.nuevo_partido('ECP', 'En Comú Podem', 'España')
+        self.m.nuevo_partido('UP', 'Unidas Podemos', 'España')
+        self.m.enlazar('ECP', 'UP', 'Coalición')
+        self.m.enlazar('SUMAR', 'UP', 'Viene de')
+        self.assertEqual(self.m.cadena('ECP'), ['ECP', 'UP'])
+        self.assertEqual(self.m.familia('SUMAR'), 'UP')
+        with self.assertRaises(ErrorModelo):
+            self.m.enlazar('UP', 'SUMAR')            # círculo
+        with self.assertRaises(ErrorModelo):
+            self.m.enlazar('UP', 'NO-EXISTE')
+        with self.assertRaises(ErrorModelo):
+            self.m.borrar_partido('UP')               # tiene enlazados
+        self.m.renombrar_siglas('UP', 'UNIDAS PODEMOS')
+        self.assertEqual(self.m.partido('ECP')['Enlazado con'], 'UNIDAS PODEMOS')
+        self.m.guardar()
+        m2 = Modelo.abrir(self.ruta)
+        self.assertEqual(m2.partido('SUMAR')['Tipo de enlace'], 'Viene de')
+        inf = m2.comprobar()
+        self.assertEqual(inf.errores, [])
+        import base_datos
+        _inf, _e, partidos = base_datos.comprobar(m2.t, base_datos.Informe())
+        self.assertEqual(partidos['SUMAR']['familia'], 'UNIDAS PODEMOS')
+        self.assertEqual(partidos['SUMAR']['tipoEnlace'], 'Viene de')
+
+    def test_enlace_roto_es_error(self):
+        self.m.partido('PP')['Enlazado con'] = 'NADA'
+        self.assertTrue(any('NADA' in e['msg'] for e in self.m.comprobar().errores))

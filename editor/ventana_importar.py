@@ -38,7 +38,7 @@ class VentanaImportar(tk.Toplevel):
         self.ruta = None
         self.title('Importar resultados')
         self.transient(app.raiz)
-        self.geometry('1060x680')
+        self.geometry('1180x700')
         self.minsize(860, 520)
 
         f = ttk.Frame(self, padding=12)
@@ -78,6 +78,10 @@ class VentanaImportar(tk.Toplevel):
                         variable=self.actualizar).pack(side='left', padx=4)
         ttk.Checkbutton(opc, text='Crear las circunscripciones que falten', variable=self.crear,
                         command=self._pintar).pack(side='left', padx=4)
+        self.juntar = tk.BooleanVar(value=len(m.circunscripciones(self.eid)) == 1)
+        ttk.Checkbutton(opc, text='Sumar todas las filas en una (circunscripción única)', variable=self.juntar,
+                        command=lambda: self.filas is not None and self._analizar(self.filas)).pack(
+            side='left', padx=4)
 
         paneles = ttk.PanedWindow(f, orient='horizontal')
         paneles.pack(fill='both', expand=True)
@@ -174,6 +178,8 @@ class VentanaImportar(tk.Toplevel):
         self.filas = filas
         try:
             self.plan = importar.analizar(filas, self.app.modelo, self.eid)
+            if self.juntar.get():
+                self.plan = importar.juntar(self.plan, self.app.modelo, self.eid)
         except ErrorModelo as ex:
             self.plan = None
             self._pintar()
@@ -197,7 +203,7 @@ class VentanaImportar(tk.Toplevel):
             self.btn.state(['disabled'])
             return
         for i, x in enumerate(p['partidos']):
-            estado, tag = ('NUEVO', 'nuevo') if not x['existe'] else (
+            estado, tag = (('NUEVO 🔗' if x.get('enlace') else 'NUEVO'), 'nuevo') if not x['existe'] else (
                 ('¿mismo?', 'parecido') if x.get('parecido') else ('ya existe', ''))
             self.t_partidos.insert('', 'end', iid=str(i), tags=(tag,) if tag else (),
                                    values=(x['etiqueta'], x['siglas'], estado,

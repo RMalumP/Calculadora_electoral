@@ -28,7 +28,7 @@ La pestaña **Léeme** del propio Excel lo explica. En resumen:
 | --- | --- | --- |
 | Elecciones | elección | ID, pestaña de resultados, país, fecha, reglas (fórmula, barreras, prorrateo, mínimo) |
 | Circunscripciones | elección y circunscripción | escaños, censo, votantes, blancos, nulos y, si hace falta, fórmula o barrera propias |
-| Partidos | partido | siglas, nombre y color |
+| Partidos | partido | siglas, nombre, color y, si se quiere, «Enlazado con» (otro partido: «Coalición» si es la misma coalición con otro nombre, «Viene de» si lo continúa) |
 | Una por ámbito (`España.Congreso`, `Francia.Presidenciales`, `Europa`…) | elección, circunscripción y partido | votos (y escaños reales, opcional) |
 | Listas | — | valores de los desplegables |
 

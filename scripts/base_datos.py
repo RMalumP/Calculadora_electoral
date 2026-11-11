@@ -26,7 +26,7 @@ from openpyxl.worksheet.datavalidation import DataValidation
 from esquema_datos import (
     AMBITOS_BARRERA, CLASES, COLS_CIRCUNSCRIPCIONES, COLS_ELECCIONES, COLS_PARTIDOS,
     COLS_RESULTADOS, FORMAS_VOTO, FORMULAS, HOJA_CIRCUNSCRIPCIONES, HOJA_ELECCIONES,
-    HOJA_LEEME, HOJA_LISTAS, HOJA_PARTIDOS, HOJAS_FIJAS, MAGNITUDES, PRORRATEOS, VUELTAS,
+    HOJA_LEEME, HOJA_LISTAS, HOJA_PARTIDOS, HOJAS_FIJAS, MAGNITUDES, PRORRATEOS, TIPOS_ENLACE, VUELTAS,
 )
 
 # ── Valores de celda ─────────────────────────────────────────────────
@@ -207,6 +207,10 @@ _NUMS_CIRC = (('Población', 'poblacion'), ('Mesas', 'mesas'), ('Censo sin CERA'
               ('Votos en blanco', 'votosBlanco'), ('Votos nulos', 'votosNulos'))
 
 
+# Columnas añadidas después: si faltan, se crean al guardar.
+COLUMNAS_OPCIONALES = {'Enlazado con', 'Tipo de enlace'}
+
+
 def comprobar(t, inf=None):
     """Comprueba las tablas y monta cada elección para la app.
     Devuelve (informe, elecciones, partidos)."""
@@ -218,7 +222,7 @@ def comprobar(t, inf=None):
             inf.error(hoja, None, 'falta la pestaña')
             continue
         for c in cols:
-            if c not in cab[hoja]:
+            if c not in cab[hoja] and c not in COLUMNAS_OPCIONALES:
                 inf.error(hoja, 1, f'falta la columna «{c}»')
     for h in t.get('resultados', {}):
         for c in COLS_RESULTADOS:
@@ -334,7 +338,40 @@ def comprobar(t, inf=None):
             inf.aviso(HOJA_PARTIDOS, i + 2, f'las siglas «{s}» están repetidas')
             continue
         partidos[s] = {'nombre': texto(f.get('Nombre')),
-                       'color': ('#' + color.lstrip('#').lower()) if color else None}
+                       'color': ('#' + color.lstrip('#').lower()) if color else None,
+                       '_fila': i + 2}
+        enlace = texto(f.get('Enlazado con')).strip()
+        if enlace:
+            partidos[s]['enlace'] = enlace
+            tipo = texto(f.get('Tipo de enlace')).strip()
+            if tipo and tipo not in TIPOS_ENLACE:
+                inf.aviso(HOJA_PARTIDOS, i + 2, f'«Tipo de enlace» debe ser {" o ".join(TIPOS_ENLACE)}')
+            partidos[s]['tipoEnlace'] = tipo if tipo in TIPOS_ENLACE else 'Coalición'
+    # Enlaces entre partidos: el destino tiene que existir y no puede haber círculos.
+    # La «familia» es el último partido de la cadena (ECP → PODEMOS-IU → … ).
+    for s, p in partidos.items():
+        e = p.get('enlace')
+        if e and e not in partidos:
+            inf.error(HOJA_PARTIDOS, p['_fila'], f'«{s}» está enlazado con «{e}», que no está en la lista')
+            del p['enlace']
+            p.pop('tipoEnlace', None)
+        elif e == s:
+            inf.error(HOJA_PARTIDOS, p['_fila'], f'«{s}» no puede estar enlazado consigo mismo')
+            del p['enlace']
+            p.pop('tipoEnlace', None)
+    for s, p in partidos.items():
+        visto, actual = [s], s
+        while partidos[actual].get('enlace'):
+            actual = partidos[actual]['enlace']
+            if actual in visto:
+                inf.error(HOJA_PARTIDOS, p['_fila'], 'enlaces en círculo: ' + ' → '.join(visto + [actual]))
+                actual = s
+                break
+            visto.append(actual)
+        if actual != s:
+            p['familia'] = actual
+    for p in partidos.values():
+        del p['_fila']
 
     usadas = {e['pestana'] for e in elecciones.values()}
     for h, filas in t.get('resultados', {}).items():
@@ -386,9 +423,12 @@ def comprobar(t, inf=None):
             vistos.add((cod, vuelta, siglas))
             if vuelta == 1:
                 suma[cod] = suma.get(cod, 0) + votos
+        # Con voto a personas (Senado) los votos del partido son los de su mejor candidato: no suman
+        # las papeletas, así que no se comparan.
+        por_listas = e.get('formaVoto') != 'Voto personalizado'
         for c in e['circunscripciones']:
             s = suma.get(c['codigo'], 0)
-            if c['votosCandidaturas'] and s != c['votosCandidaturas']:
+            if por_listas and c['votosCandidaturas'] and s != c['votosCandidaturas']:
                 inf.aviso(HOJA_CIRCUNSCRIPCIONES, c['_fila'],
                           f'{c["nombre"]}: la suma de votos de los partidos ({miles(s)}) no coincide '
                           f'con «Votos a candidaturas» ({miles(c["votosCandidaturas"])})', eid)
@@ -413,7 +453,7 @@ FMT_FECHA = 'dd/mm/yyyy'
 
 ANCHOS = {'ID': 26, 'Pestaña': 20, 'Fórmula': 24, 'Notas': 50, 'Fuente': 30, 'Elección': 26,
           'Circunscripción': 24, 'Región': 24, 'Fórmula (excepción)': 22, 'Siglas': 20,
-          'Partido': 50, 'Nombre': 55, 'Color': 12, 'País': 14}
+          'Partido': 50, 'Nombre': 55, 'Color': 12, 'País': 14, 'Enlazado con': 20, 'Tipo de enlace': 16}
 FORMATOS = {'Fecha': FMT_FECHA, 'Fecha 2ª vuelta': FMT_FECHA, 'Votos': FMT_MILES,
             **{c: FMT_MILES for c, _ in _NUMS_CIRC}}
 
@@ -426,7 +466,10 @@ LEEME = [
     '• Circunscripciones: una fila por elección y circunscripción (escaños, censo, votantes, blancos, nulos). '
     'Las columnas «Fórmula (excepción)» y «Barrera % (excepción)» sólo se rellenan si esa circunscripción '
     'no sigue la regla general de la elección.',
-    '• Partidos: siglas, nombre y color de cada candidatura (se usa para colorear gráficos).',
+    '• Partidos: siglas, nombre y color de cada candidatura (se usa para colorear gráficos). '
+    '«Enlazado con» (opcional) une un partido con otro: «Coalición» si es la misma coalición con otro '
+    'nombre (En Comú Podem → Unidas Podemos) y «Viene de» si continúa a uno anterior (Sumar → Unidas '
+    'Podemos). Así se puede seguir la evolución de cada espacio político.',
     '• Pestañas de resultados (por ejemplo «España.Congreso»): una fila por elección, circunscripción y '
     'candidatura. El nombre de la pestaña debe coincidir con la columna «Pestaña» de Elecciones.',
     '',
@@ -449,6 +492,7 @@ _LISTAS = [
     ('Fórmula', [n for n, _ in FORMULAS]), ('Magnitud', MAGNITUDES),
     ('Prorrateo', PRORRATEOS), ('Forma de voto', FORMAS_VOTO),
     ('Ámbito de barrera', AMBITOS_BARRERA), ('Clase', CLASES), ('Vuelta', VUELTAS),
+    ('Tipo de enlace', TIPOS_ENLACE),
 ]
 _RANGO_LISTA = {titulo: f'{HOJA_LISTAS}!${get_column_letter(j)}$2:${get_column_letter(j)}$40'
                 for j, (titulo, _) in enumerate(_LISTAS, 1)}
@@ -457,6 +501,7 @@ _DESPLEGABLES = {
                       ('Forma de voto', 'Forma de voto'), ('Fórmula', 'Fórmula'),
                       ('Barrera 1 ámbito', 'Ámbito de barrera'), ('Barrera 2 ámbito', 'Ámbito de barrera')],
     HOJA_CIRCUNSCRIPCIONES: [('Fórmula (excepción)', 'Fórmula')],
+    HOJA_PARTIDOS: [('Tipo de enlace', 'Tipo de enlace')],
     '_resultados': [('Vuelta', 'Vuelta')],
 }
 
@@ -476,7 +521,14 @@ def _hoja_leeme(wb):
 
 def _hoja_listas(wb):
     ws = wb.create_sheet(HOJA_LISTAS, 1 if HOJA_LEEME in wb.sheetnames else 0)
+    _rellenar_listas(ws)
+
+
+def _rellenar_listas(ws):
+    """Escribe las listas que falten en la pestaña Listas (las que ya están no se tocan)."""
     for j, (titulo, valores) in enumerate(_LISTAS, 1):
+        if texto(ws.cell(1, j).value):      # ya está (o la columna la usa otra cosa)
+            continue
         ws.cell(1, j, titulo).font = CAB_FONT
         ws.cell(1, j).fill = CAB_FILL
         ws.column_dimensions[get_column_letter(j)].width = 28
@@ -557,13 +609,16 @@ def escribir_libro(ruta, t, base=None):
         _hoja_listas(wb)
     if HOJA_LISTAS not in wb.sheetnames:
         _hoja_listas(wb)
+    else:
+        _rellenar_listas(wb[HOJA_LISTAS])
 
     cab = t.setdefault('cabeceras', {})
     fijas = ((HOJA_ELECCIONES, 'elecciones', COLS_ELECCIONES),
              (HOJA_CIRCUNSCRIPCIONES, 'circunscripciones', COLS_CIRCUNSCRIPCIONES),
              (HOJA_PARTIDOS, 'partidos', COLS_PARTIDOS))
     for hoja, clave, cols in fijas:
-        columnas = cab.get(hoja) or list(cols)
+        columnas = list(cab.get(hoja) or cols)
+        columnas += [c for c in cols if c not in columnas]     # columnas nuevas del esquema
         ws = wb[hoja] if hoja in wb.sheetnames else _hoja_tabla_nueva(wb, hoja, list(columnas))
         cab[hoja] = _volcar(ws, list(columnas), t[clave])
         _asegurar_desplegables(ws, hoja, cab[hoja])

@@ -148,8 +148,18 @@
     · Una fila por circunscripción y partido: columnas Provincia (o
       Circunscripción, Código...), Siglas (o Partido), Votos y, si quieres,
       Escaños y Vuelta.
+    · Votos a candidatos, como el Senado (varias columnas con las mismas
+      siglas, una por candidato): cada partido se queda con los votos de su
+      candidato más votado y los escaños reales son los candidatos más
+      votados de cada circunscripción (por eso hay que tener puestos antes
+      sus escaños). Las islas salen como circunscripciones propias (7-1 =
+      Mallorca).
   Las circunscripciones se buscan por código o por nombre (da igual «Alicante/
   Alacant» o «Balears (Illes)»). Las filas de TOTAL se saltan solas.
+  «Sumar todas las filas en una» sirve para elecciones de circunscripción
+  única que vienen por provincias (europeas): usa la fila de TOTAL del
+  archivo, que trae los escaños nacionales. Se marca sola si la elección
+  tiene una sola circunscripción.
   Los .xls antiguos hay que guardarlos antes como .xlsx desde Excel.
 
 
@@ -166,6 +176,20 @@
     «Colores a los que no tienen» reparte colores a los que están en blanco.
   · Sólo se puede borrar un partido que no está en ninguna elección.
     «Dónde aparece» lista sus elecciones.
+
+  ENLAZAR PARTIDOS (coaliciones y evolución)
+  · «🔗 Enlazar con…» (o escribir en la columna «Enlazado con») une un
+    partido con otro, sin fusionarlos: cada uno conserva sus votos.
+       Coalición .. es la misma coalición con otro nombre, o su marca en una
+                    comunidad: PSC → PSOE, ECP-GUANYEM EL CANVI → PODEMOS-IU.
+       Viene de ... continúa a un partido o coalición anterior:
+                    SUMAR → PODEMOS-IU.
+  · Los enlaces se pueden encadenar. «Familia» es el final de la cadena: el
+    espacio político al que pertenece (ECP → PODEMOS-IU → PODEMOS-IU-EQUO).
+  · No se admiten círculos ni enlaces a partidos que no existen.
+  · Al importar, un partido nuevo que lleva el nombre de otro que ya existe
+    (UNIDAS PODEMOS con otras siglas) se enlaza solo como «Coalición» y toma
+    su color. Se puede cambiar después.
 
 
 ────────────────────────────────────────────────────────────────────────────────

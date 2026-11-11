@@ -98,7 +98,7 @@ class PestanaResultados(ttk.Frame):
                     mostrar(dif) if dif else ''] + [mostrar(f[clave_val].get(s)) if f[clave_val].get(s) else ''
                                                     for s in siglas]
             datos.append((f['codigo'], vals, ('aviso',) if dif and v == 1 else ()))
-        total = ('__total__', ['TOTAL', mostrar(total_esc), mostrar(total_suma), mostrar(total_cand),
+        total = ('__total__', ['TOTAL', mostrar(total_esc), mostrar(total_suma), mostrar(total_cand) if total_cand else '',
                                mostrar(total_suma - total_cand) if total_cand and total_suma != total_cand else '']
                  + [mostrar(totales[s]) for s in siglas], ('total',))
         self.tabla.cargar([total] + datos)
