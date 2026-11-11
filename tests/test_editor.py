@@ -408,3 +408,42 @@ class TestEnlaces(BaseCopia):
     def test_enlace_roto_es_error(self):
         self.m.partido('PP')['Enlazado con'] = 'NADA'
         self.assertTrue(any('NADA' in e['msg'] for e in self.m.comprobar().errores))
+
+
+class TestRespaldo(BaseCopia):
+    """Respaldo en Google Sheets: exportar y apuntar el gid de cada pestaña."""
+
+    def test_gid_por_pestana_y_enlace(self):
+        from modelo import leer_enlace
+        self.assertEqual(leer_enlace(
+            'https://docs.google.com/spreadsheets/d/1abcdefghijklmnopqrstuvwxyz/edit#gid=12345'),
+            ('1abcdefghijklmnopqrstuvwxyz', 12345))
+        self.assertEqual(leer_enlace('987'), ('', 987))
+        self.m.poner_respaldo({'España.Congreso': ('DOC', 5)})
+        with self.assertRaises(ErrorModelo):
+            self.m.poner_respaldo({'España.Congreso': ('DOC', 'x')})
+        self.m.renombrar_ambito('España.Congreso', 'España.Diputados')
+        self.m.guardar()
+        m2 = Modelo.abrir(self.ruta)
+        self.assertEqual(m2.respaldo()['España.Diputados'], ('DOC', 5))
+        import convertir_datos
+        _inf, indice = convertir_datos.generar(m2.t, os.path.join(self.dir, 'gen'))
+        self.assertEqual(indice['respaldo']['España.Diputados'], {'doc': 'DOC', 'gid': 5})
+
+    def test_exportar_formato_antiguo(self):
+        import openpyxl
+        ruta = os.path.join(self.dir, 'respaldo.xlsx')
+        hechas = self.m.exportar_respaldo(ruta)
+        self.assertIn('España.Congreso', hechas)
+        ws = openpyxl.load_workbook(ruta)['España.Congreso']
+        filas = list(ws.iter_rows(values_only=True))
+        cab = list(filas[0])
+        self.assertEqual(cab[cab.index('Fórmula electoral')], 'Fórmula electoral')
+        i = cab.index('Votos')
+        self.assertEqual(cab[i:i + 3], ['Votos', 'Partido', 'Siglas partido'])
+        madrid = next(f for f in filas[1:] if f[cab.index('Nombre de Provincia')] == 'Madrid'
+                      and f[0] == 2023)
+        self.assertEqual(madrid[cab.index('Fórmula electoral')], 7)            # D'Hondt en el libro de códigos
+        self.assertEqual(madrid[cab.index('Número diputados por provincia')], 37)
+        pp = cab.index('PP') if 'PP' in cab else next(j for j in range(i, len(cab), 3) if madrid[j + 2] == 'PP')
+        self.assertGreater(madrid[pp], 1000000)

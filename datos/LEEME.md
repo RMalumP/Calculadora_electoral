@@ -34,9 +34,15 @@ La pestaña **Léeme** del propio Excel lo explica. En resumen:
 
 ## Respaldo en Google Sheets
 
-El mismo `.xlsx` se puede subir a Google Drive y abrir con Google Sheets
-(Archivo › Importar). La app mantiene el ámbito «Google Sheets (respaldo)»,
-que lee la hoja antigua con su formato de siempre.
+La app usa siempre esta base interna. Sólo si no puede cargar una elección,
+lee la hoja de Google Sheets de respaldo y lo avisa en pantalla.
+
+- El editor exporta el archivo para Google (botón «⇪ Respaldo…» ›
+  «Exportar archivo de respaldo»), en el formato antiguo que la app sabe leer
+  de Google: una pestaña por ámbito. Desde la línea de órdenes:
+  `python3 scripts/respaldo_google.py`.
+- En esa misma ventana se apunta el gid de cada pestaña de Google (pestaña
+  «Respaldo Google» del Excel). Llega a la app en `datos/generado/indice.js`.
 
 ## Archivos generados (no editar a mano)
 

@@ -660,7 +660,11 @@ function advRun() {
     advRenderStatus(`<div class="adv-notice error"><strong>Error al calcular.</strong><br>${advEscape(err.message)}</div>`);
     return;
   }
-  advRenderStatus(_advResult.warnings.map(w =>
+  const avisoRespaldo = _advParties.respaldo
+    ? `<div class="adv-notice warn"><strong>Datos de respaldo (Google Sheets).</strong> No se ha podido cargar la base
+         de datos interna (${advEscape(_advParties.respaldo)}); se muestran los de la hoja de Google.</div>`
+    : '';
+  advRenderStatus(avisoRespaldo + _advResult.warnings.map(w =>
     `<div class="adv-notice warn"><strong>Aviso sobre los datos de origen:</strong> ${advEscape(w)}</div>`).join(''));
   advComputePristine();
   advRenderSummary();

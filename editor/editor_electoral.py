@@ -36,6 +36,7 @@ except ImportError:
 import archivos  # noqa: E402
 import git_sync  # noqa: E402
 import ventana_publicar  # noqa: E402
+import ventana_respaldo  # noqa: E402
 from base_datos import Informe, texto  # noqa: E402
 from esquema_datos import HOJA_CIRCUNSCRIPCIONES, HOJA_ELECCIONES, HOJA_PARTIDOS  # noqa: E402
 from modelo import RAIZ, RUTA_EXCEL, ErrorModelo, Modelo, mostrar  # noqa: E402
@@ -107,7 +108,7 @@ class Editor:
         if 'clam' in s.theme_names():
             s.theme_use('clam')
         s.configure('Barra.TFrame', background='#211c18')
-        s.configure('Barra.TButton', padding=(8, 4))
+        s.configure('Barra.TButton', padding=(3, 4))
         s.configure('Publicar.TButton', padding=(10, 4), foreground='#ffffff', background='#8b1a1a')
         s.map('Publicar.TButton', background=[('active', '#a52a2a')])
         s.configure('Titulo.TLabel', background='#211c18', foreground='#f3ede6',
@@ -124,6 +125,7 @@ class Editor:
                             ('↶ Deshacer', self.deshacer), ('↷ Rehacer', self.rehacer),
                             ('✔ Comprobar', self.comprobar), ('👁 Ver en la app', self.ver_en_app),
                             ('⟳ Traer lo último', lambda: ventana_publicar.traer(self)),
+                            ('⇪ Respaldo…', lambda: ventana_respaldo.DialogoRespaldo(self)),
                             ('? Ayuda', self.ayuda)):
             ttk.Button(b, text=texto_, command=cmd, style='Barra.TButton').pack(side='left', padx=2)
         ttk.Button(b, text='☁ Publicar…', command=lambda: ventana_publicar.publicar(self),

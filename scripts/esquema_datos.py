@@ -17,7 +17,11 @@ HOJA_LISTAS = 'Listas'
 HOJA_ELECCIONES = 'Elecciones'
 HOJA_CIRCUNSCRIPCIONES = 'Circunscripciones'
 HOJA_PARTIDOS = 'Partidos'
-HOJAS_FIJAS = {HOJA_LEEME, HOJA_LISTAS, HOJA_ELECCIONES, HOJA_CIRCUNSCRIPCIONES, HOJA_PARTIDOS}
+# Respaldo en Google Sheets: qué pestaña de la hoja de Google corresponde a cada pestaña de
+# resultados. La app sólo la usa si no puede cargar los datos de la base interna.
+HOJA_RESPALDO = 'Respaldo Google'
+COLS_RESPALDO = ['Pestaña', 'ID de la hoja de Google', 'gid']
+HOJAS_FIJAS = {HOJA_LEEME, HOJA_LISTAS, HOJA_ELECCIONES, HOJA_CIRCUNSCRIPCIONES, HOJA_PARTIDOS, HOJA_RESPALDO}
 
 COLS_ELECCIONES = [
     'ID', 'Pestaña', 'País', 'Clase', 'Tipo', 'Fecha', 'Fecha 2ª vuelta',

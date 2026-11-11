@@ -33,7 +33,8 @@ from base_datos import (  # noqa: E402
 )
 from esquema_datos import (  # noqa: E402
     COLS_CIRCUNSCRIPCIONES, COLS_ELECCIONES, COLS_PARTIDOS, COLS_RESULTADOS,
-    HOJA_CIRCUNSCRIPCIONES, HOJA_ELECCIONES, HOJA_PARTIDOS, HOJAS_FIJAS, TIPOS_ENLACE,
+    COLS_RESPALDO, HOJA_CIRCUNSCRIPCIONES, HOJA_ELECCIONES, HOJA_PARTIDOS, HOJA_RESPALDO, HOJAS_FIJAS,
+    TIPOS_ENLACE,
 )
 import archivos  # noqa: E402
 
@@ -128,6 +129,20 @@ NUMERICAS = {'Escaños', 'Mínimo', 'Población', 'Mesas', 'Censo sin CERA', 'Ce
              'Censo total', 'Votantes CER', 'Votantes CERA', 'Votantes total', 'Votos válidos',
              'Votos a candidaturas', 'Votos en blanco', 'Votos nulos', 'Votos', 'Escaños reales',
              'Vuelta', 'Mínimo por circunscripción'}
+
+
+def leer_enlace(t):
+    """De un enlace de Google Sheets (o de un ID o un gid sueltos) saca (ID de la hoja, gid)."""
+    t = (t or '').strip()
+    doc = re.search(r'/spreadsheets/d/([A-Za-z0-9_-]{20,})', t)
+    gid = re.search(r'[#&?]gid=(\d+)', t)
+    if doc or gid:
+        return (doc.group(1) if doc else ''), (int(gid.group(1)) if gid else None)
+    if re.fullmatch(r'\d+', t):
+        return '', int(t)
+    if re.fullmatch(r'[A-Za-z0-9_-]{20,}', t):
+        return t, None
+    return None
 
 
 class Modelo:
@@ -501,6 +516,41 @@ class Modelo:
         self.t.setdefault('borradas', set()).discard(nombre)
         self._despues()
 
+    # ── Respaldo en Google Sheets ────────────────────────────────────
+
+    def respaldo(self):
+        """{pestaña: (ID de la hoja de Google, gid)} de la pestaña «Respaldo Google»."""
+        out = {}
+        for r in self.t.get('respaldo') or []:
+            p = texto(r.get('Pestaña')).strip()
+            if p:
+                out[p] = (texto(r.get('ID de la hoja de Google')).strip(), entero(r.get('gid')))
+        return out
+
+    def poner_respaldo(self, valores):
+        """valores: {pestaña: (ID de la hoja, gid)}. Sustituye la tabla entera (un paso de deshacer)."""
+        filas = []
+        for p, (doc, gid) in valores.items():
+            doc = (doc or '').strip()
+            if gid is not None and not isinstance(gid, int):
+                g = entero(gid)
+                if texto(gid).strip() and g is None:
+                    raise ErrorModelo(f'El gid de «{p}» tiene que ser un número.')
+                gid = g
+            if doc or gid is not None:
+                filas.append({'Pestaña': p, 'ID de la hoja de Google': doc or None, 'gid': gid})
+        self._antes()
+        self.t['respaldo'] = filas
+        self.t.setdefault('cabeceras', {})[HOJA_RESPALDO] = list(COLS_RESPALDO)
+        self._despues()
+
+    def exportar_respaldo(self, ruta):
+        import respaldo_google
+        try:
+            return respaldo_google.exportar(self.t, ruta)
+        except ValueError as ex:
+            raise ErrorModelo(str(ex))
+
     def renombrar_ambito(self, viejo, nuevo):
         nuevo = (nuevo or '').strip()
         if nuevo == viejo:
@@ -520,6 +570,9 @@ class Modelo:
         for e in self.elecciones:
             if texto(e.get('Pestaña')) == viejo:
                 e['Pestaña'] = nuevo
+        for r in self.t.get('respaldo') or []:
+            if texto(r.get('Pestaña')) == viejo:
+                r['Pestaña'] = nuevo
         self._despues()
 
     def borrar_ambito(self, nombre):

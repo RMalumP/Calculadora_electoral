@@ -26,7 +26,7 @@ from openpyxl.worksheet.datavalidation import DataValidation
 from esquema_datos import (
     AMBITOS_BARRERA, CLASES, COLS_CIRCUNSCRIPCIONES, COLS_ELECCIONES, COLS_PARTIDOS,
     COLS_RESULTADOS, FORMAS_VOTO, FORMULAS, HOJA_CIRCUNSCRIPCIONES, HOJA_ELECCIONES,
-    HOJA_LEEME, HOJA_LISTAS, HOJA_PARTIDOS, HOJAS_FIJAS, MAGNITUDES, PRORRATEOS, TIPOS_ENLACE, VUELTAS,
+    COLS_RESPALDO, HOJA_LEEME, HOJA_LISTAS, HOJA_PARTIDOS, HOJA_RESPALDO, HOJAS_FIJAS, MAGNITUDES, PRORRATEOS, TIPOS_ENLACE, VUELTAS,
 )
 
 # ── Valores de celda ─────────────────────────────────────────────────
@@ -178,9 +178,10 @@ def leer_libro(ruta_o_wb):
         {'elecciones': [...], 'circunscripciones': [...], 'partidos': [...],
          'resultados': {pestaña: [...]}, 'cabeceras': {pestaña: [...]}}"""
     wb = ruta_o_wb if hasattr(ruta_o_wb, 'sheetnames') else openpyxl.load_workbook(ruta_o_wb, data_only=True)
-    t = {'elecciones': [], 'circunscripciones': [], 'partidos': [], 'resultados': {}, 'cabeceras': {}}
+    t = {'elecciones': [], 'circunscripciones': [], 'partidos': [], 'respaldo': [], 'resultados': {},
+         'cabeceras': {}}
     for hoja, clave in ((HOJA_ELECCIONES, 'elecciones'), (HOJA_CIRCUNSCRIPCIONES, 'circunscripciones'),
-                        (HOJA_PARTIDOS, 'partidos')):
+                        (HOJA_PARTIDOS, 'partidos'), (HOJA_RESPALDO, 'respaldo')):
         if hoja in wb.sheetnames:
             t['cabeceras'][hoja], t[clave] = _leer_hoja(wb[hoja])
     for h in hojas_resultados(wb):
@@ -189,8 +190,29 @@ def leer_libro(ruta_o_wb):
     return t
 
 
+def respaldo_de(t, inf=None):
+    """{pestaña: {'doc': ID de la hoja de Google, 'gid': n}} de la pestaña «Respaldo Google»."""
+    out = {}
+    pestanas = set(t.get('resultados', {}))
+    for i, f in enumerate(t.get('respaldo') or []):
+        p = texto(f.get('Pestaña')).strip()
+        if not p:
+            continue
+        doc = texto(f.get('ID de la hoja de Google')).strip()
+        gid = entero(f.get('gid'))
+        if inf is not None:
+            if p not in pestanas:
+                inf.aviso(HOJA_RESPALDO, i + 2, f'«{p}» no es ninguna pestaña de resultados')
+            if texto(f.get('gid')).strip() and gid is None:
+                inf.error(HOJA_RESPALDO, i + 2, 'el gid es un número (el que sale en el enlace detrás de «gid=»)')
+        if gid is None and not doc:
+            continue
+        out[p] = {k: v for k, v in (('doc', doc), ('gid', gid)) if v not in (None, '')}
+    return out
+
+
 def tablas_vacias():
-    return {'elecciones': [], 'circunscripciones': [], 'partidos': [], 'resultados': {},
+    return {'elecciones': [], 'circunscripciones': [], 'partidos': [], 'respaldo': [], 'resultados': {},
             'cabeceras': {HOJA_ELECCIONES: list(COLS_ELECCIONES),
                           HOJA_CIRCUNSCRIPCIONES: list(COLS_CIRCUNSCRIPCIONES),
                           HOJA_PARTIDOS: list(COLS_PARTIDOS)},
@@ -374,6 +396,7 @@ def comprobar(t, inf=None):
         del p['_fila']
 
     usadas = {e['pestana'] for e in elecciones.values()}
+    t['_respaldo'] = respaldo_de(t, inf)
     for h, filas in t.get('resultados', {}).items():
         if h not in usadas:
             if filas:
@@ -616,6 +639,8 @@ def escribir_libro(ruta, t, base=None):
     fijas = ((HOJA_ELECCIONES, 'elecciones', COLS_ELECCIONES),
              (HOJA_CIRCUNSCRIPCIONES, 'circunscripciones', COLS_CIRCUNSCRIPCIONES),
              (HOJA_PARTIDOS, 'partidos', COLS_PARTIDOS))
+    if t.get('respaldo') or HOJA_RESPALDO in wb.sheetnames:
+        fijas += ((HOJA_RESPALDO, 'respaldo', COLS_RESPALDO),)
     for hoja, clave, cols in fijas:
         columnas = list(cab.get(hoja) or cols)
         columnas += [c for c in cols if c not in columnas]     # columnas nuevas del esquema

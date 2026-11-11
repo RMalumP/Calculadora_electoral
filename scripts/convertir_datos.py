@@ -91,6 +91,8 @@ def generar(t, destino):
         'origen': 'Datos_electorales.xlsx',
         'ambitos': [{'key': k, 'label': k.replace('.', ' · '), 'elecciones': v} for k, v in ambitos.items()],
         'colores': {s: p['color'] for s, p in partidos.items() if p['color']},
+        # Pestaña de Google Sheets de cada ámbito, sólo para cuando falle la base interna.
+        'respaldo': t.get('_respaldo') or {},
     }
     escribir_js(os.path.join(tmp, 'indice.js'), 'window.CE_DATOS_INDICE', indice)
     escribir_csv(t, os.path.join(tmp, 'csv'))

@@ -25,7 +25,7 @@ const ADV_SHEET_ID = '1pjggxoPWBxMo9HSN0kVo-HFPvMxYj1g7x8-AMlu6rCM';
 // Se incrementa con cada cambio relevante del parser. Sirve para comprobar a
 // simple vista, desde el panel de diagnóstico o la consola, si el navegador
 // está sirviendo una versión en caché de este archivo.
-const ADV_PARSER_VERSION = '2025-sistema-electoral';
+const ADV_PARSER_VERSION = '2026-respaldo-google';
 console.log('[Calculadora avanzada] advanced-data.js versión', ADV_PARSER_VERSION);
 
 /**
@@ -64,15 +64,39 @@ const ADV_ELECTIONS = [
  */
 const ADV_DATOS_DIR = 'datos/generado/';
 
+/**
+ * Ámbitos de Google Sheets que no salen en el desplegable: con base interna,
+ * Google sólo se usa si falla la carga de una elección (ver advGetElectionData).
+ * Cada ámbito local lleva su pestaña de respaldo, la que se apunta en el editor
+ * (pestaña «Respaldo Google» del Excel).
+ */
+const ADV_ELECTIONS_OCULTAS = [];
+
 (function advRegistrarAmbitosLocales() {
   const indice = typeof window !== 'undefined' ? window.CE_DATOS_INDICE : null;
   if (!indice?.ambitos?.length) return;
+  const respaldo = indice.respaldo || {};
   const locales = indice.ambitos.map(a => ({
-    key: `local:${a.key}`, label: a.label, local: true, ambito: a.key, elecciones: a.elecciones || []
+    key: `local:${a.key}`, label: a.label, local: true, ambito: a.key, elecciones: a.elecciones || [],
+    respaldo: respaldo[a.key] || null
   }));
-  ADV_ELECTIONS.forEach(e => { if (!e.local) e.label = `${e.label} (Google Sheets, respaldo)`; });
-  ADV_ELECTIONS.unshift(...locales);
+  // Las de Google se quitan de la lista (siguen disponibles como respaldo).
+  ADV_ELECTIONS_OCULTAS.push(...ADV_ELECTIONS.splice(0, ADV_ELECTIONS.length));
+  ADV_ELECTIONS.push(...locales);
+  locales.forEach(l => {
+    if (!l.respaldo) return;
+    ADV_ELECTIONS_OCULTAS.push({
+      key: `google:${l.ambito}`, label: `${l.label} (Google Sheets, respaldo)`,
+      candidatas: [{ doc: l.respaldo.doc || ADV_SHEET_ID, gid: l.respaldo.gid ?? null }]
+    });
+  });
 })();
+
+/** Configuración de un ámbito, visible o de respaldo. */
+function _advCfg(key) {
+  return ADV_ELECTIONS.find(e => e.key === key) || ADV_ELECTIONS_OCULTAS.find(e => e.key === key) ||
+         ADV_ELECTIONS[0];
+}
 
 /** Colores de partido que trae la pestaña Partidos del Excel (siglas en mayúsculas). */
 const ADV_DATA_COLORS = (() => {
@@ -97,7 +121,7 @@ function _advCargarEleccionLocal(e) {
     script.onerror = () => {
       script.remove();
       reject(new Error(`No se ha encontrado el archivo de datos de ${e.id}. ` +
-        'Puede que los datos se estén regenerando: prueba en un minuto o elige el ámbito de Google Sheets.'));
+        'Puede que los datos se estén regenerando: prueba en un minuto.'));
     };
     document.head.appendChild(script);
   });
@@ -411,7 +435,7 @@ function advFetchTable(target, opts = {}) {
               : (target != null ? { gid: target } : {});
   return new Promise((resolve, reject) => {
     const cb = `_advGvizCb${Date.now()}_${_advJsonpSeq++}`;
-    const url = `https://docs.google.com/spreadsheets/d/${ADV_SHEET_ID}/gviz/tq` +
+    const url = `https://docs.google.com/spreadsheets/d/${seNas.doc || ADV_SHEET_ID}/gviz/tq` +
                 `?tqx=out:json;responseHandler:${cb}` +
                 (seNas.gid != null ? `&gid=${encodeURIComponent(seNas.gid)}` : '') +
                 (seNas.sheet ? `&sheet=${encodeURIComponent(seNas.sheet)}` : '') +
@@ -736,7 +760,7 @@ function _advQueryValue(v, tipo) {
  * descartan y se sigue con la siguiente.
  */
 async function advGetLayout(electionKey) {
-  const cfg = ADV_ELECTIONS.find(e => e.key === electionKey) || ADV_ELECTIONS[0];
+  const cfg = _advCfg(electionKey);
   if (_advCache[cfg.key]?.layout) return _advCache[cfg.key].layout;
 
   const candidatas = cfg.candidatas?.length ? cfg.candidatas : [{ gid: cfg.gid ?? null }];
@@ -810,7 +834,7 @@ function advElectionKey(e) {
  * miles de filas: hasta que no se elige una, no se pide nada más.
  */
 async function advGetElectionIndex(electionKey) {
-  const cfg = ADV_ELECTIONS.find(e => e.key === electionKey) || ADV_ELECTIONS[0];
+  const cfg = _advCfg(electionKey);
   if (_advCache[cfg.key]?.index) return _advCache[cfg.key].index;
 
   if (cfg.local) {
@@ -870,7 +894,7 @@ async function advGetElectionIndex(electionKey) {
  * última del índice, que es con la que abre la pestaña.
  */
 async function advGetElectionData(electionKey, eleccionKey) {
-  const cfg = ADV_ELECTIONS.find(e => e.key === electionKey) || ADV_ELECTIONS[0];
+  const cfg = _advCfg(electionKey);
   const { elecciones, layout } = await advGetElectionIndex(cfg.key);
 
   if (cfg.local) {
@@ -879,7 +903,15 @@ async function advGetElectionData(electionKey, eleccionKey) {
     const cacheKey = `${cfg.key}::${elegida.key}`;
     if (_advCache[cacheKey]) return _advCache[cacheKey];
     const registro = cfg.elecciones.find(e => e.id === elegida.key);
-    const data = advModeloLocal(await _advCargarEleccionLocal(registro));
+    let data;
+    try {
+      data = advModeloLocal(await _advCargarEleccionLocal(registro));
+    } catch (err) {
+      // La base interna ha fallado: se prueba la pestaña de respaldo de Google, si la hay.
+      if (!cfg.respaldo) throw err;
+      console.warn('[Calculadora avanzada] Base interna no disponible, se usa Google Sheets:', err.message);
+      data = await _advDesdeRespaldo(cfg, elegida, err);
+    }
     data.eleccion = elegida;
     data.elecciones = elecciones;
     data.debug.eleccionesEnPestana = elecciones.length;
@@ -919,6 +951,33 @@ async function advGetElectionData(electionKey, eleccionKey) {
 
   _advCache[cacheKey] = data;
   return data;
+}
+
+/**
+ * Datos de una elección leídos de la hoja de respaldo de Google, buscando la
+ * convocatoria de la misma fecha que la elegida en la base interna.
+ */
+async function _advDesdeRespaldo(cfg, elegida, errorLocal) {
+  const gkey = `google:${cfg.ambito}`;
+  let index;
+  try {
+    index = await advGetElectionIndex(gkey);
+  } catch (err) {
+    throw new Error(`${errorLocal.message} Tampoco se ha podido leer la hoja de respaldo: ${err.message}`);
+  }
+  const misma = index.elecciones.find(e =>
+    String(parseInt(e.anio, 10)) === String(parseInt(elegida.anio, 10)) &&
+    (parseInt(e.mes, 10) || 0) === (parseInt(elegida.mes, 10) || 0) &&
+    (parseInt(e.dia, 10) || 0) === (parseInt(elegida.dia, 10) || 0) &&
+    (!e.pais || !elegida.pais || e.pais === elegida.pais));
+  if (!misma) {
+    throw new Error(`${errorLocal.message} La hoja de respaldo no tiene la elección del ` +
+      `${elegida.dia}/${elegida.mes}/${elegida.anio}.`);
+  }
+  const data = await advGetElectionData(gkey, misma.key);
+  const copia = { ...data, respaldo: errorLocal.message, debug: { ...data.debug } };
+  copia.debug.hojaUsada = `Google Sheets (respaldo) · ${data.debug?.hojaUsada || ''}`;
+  return copia;
 }
 
 function advClearCache() {

@@ -29,7 +29,7 @@
 ────────────────────────────────────────────────────────────────────────────────
 
   Arriba: los botones (Abrir, Guardar, Deshacer, Rehacer, Comprobar, Ver en la
-  app, Traer lo último, Ayuda y ☁ Publicar).
+  app, Traer lo último, Respaldo, Ayuda y ☁ Publicar).
 
   Debajo: «Ámbito» y «Elección». El ámbito es una pestaña de resultados del
   Excel (España.Congreso, Francia.Presidenciales, Europa…). La elección elegida
@@ -224,6 +224,18 @@
          iniciar sesión. Si falla, haz un «Push» desde GitHub Desktop una vez.
      El editor nunca ve tu contraseña ni tu token: los gestiona git.
 
+  ⇪ Respaldo…
+     La app usa siempre la base interna. Sólo si no puede cargar una elección
+     usa la hoja de Google Sheets de respaldo (y avisa de ello). Esta ventana:
+     · «⇪ Exportar archivo de respaldo…»: guarda un Excel con el formato que
+       la app lee de Google (una pestaña por ámbito). Súbelo a la hoja de
+       respaldo: Archivo › Importar › Subir › «Reemplazar hoja de cálculo».
+     · La tabla: para cada pestaña de la base, el gid de su pestaña en Google
+       (el número detrás de «gid=» al abrirla). Puedes pegar el enlace entero.
+       Ojo: al reemplazar la hoja los gid cambian; vuelve a copiarlos.
+     Se guarda en la pestaña «Respaldo Google» del Excel y llega a la app al
+     publicar.
+
   ⟳ Traer lo último
      Baja de GitHub los cambios que no tienes (por ejemplo, los que hiciste
      desde otro ordenador) y vuelve a cargar el Excel si ha cambiado. Al
@@ -239,6 +251,7 @@
   tabla.py                 La tabla editable que usan todas las pestañas.
   pestana_*.py             Una pestaña cada uno.
   ventana_publicar.py      Publicar y traer lo último.
+  ventana_respaldo.py      Exportar el respaldo y los gid de Google Sheets.
   importar.py              Leer y emparejar tablas para importarlas.
   ventana_importar.py      La ventana de importar con la vista previa.
   git_sync.py              Habla con git (adaptado del editor de SupuestosC1).
