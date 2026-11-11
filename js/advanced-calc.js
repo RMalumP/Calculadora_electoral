@@ -36,7 +36,7 @@ function advDefaultConfig(meta) {
     },
     blancoEnDenominador: true,
     seatsMode: 'sheet',      // 'sheet' | 'custom'
-    totalSeats: 350,
+    totalSeats: meta?.escanosTotales || 350,
     minPorCircunscripcion: meta?.minimoDefault != null ? meta.minimoDefault : 2,
     repartoBase: 'poblacion', // 'poblacion' | 'censo'
     // Añadidos que no trae la hoja: apagados mientras nadie los encienda.
@@ -138,7 +138,31 @@ function advBuildDistricts(data, config) {
     accumulate(d, row);
   });
 
+  advSeatsFromTotal(districts, data);
   return districts;
+}
+
+/**
+ * Elecciones de circunscripción única con los datos por provincias (las europeas en
+ * España): las filas no traen escaños, sólo el total del país. Al agrupar por país, la
+ * circunscripción se queda con todos; por comunidad o provincia, se reparten por
+ * población (resto mayor), como si cada una fuera una circunscripción propia.
+ */
+function advSeatsFromTotal(districts, data) {
+  const total = parseInt(data.meta?.escanosTotales) || 0;
+  if (!total || !districts.length || districts.some(d => d.seatsBase > 0)) return;
+  const basis = districts.map(d => d.poblacion || d.censoTotal || 0);
+  const sum = basis.reduce((a, b) => a + b, 0) || 1;
+  const exact = basis.map(b => b / sum * total);
+  const seats = exact.map(Math.floor);
+  let left = total - seats.reduce((a, b) => a + b, 0);
+  exact.map((e, i) => ({ i, r: e - seats[i] })).sort((a, b) => b.r - a.r || basis[b.i] - basis[a.i])
+    .forEach(({ i }) => { if (left > 0) { seats[i]++; left--; } });
+  districts.forEach((d, i) => { d.seatsBase = seats[i]; });
+  const reales = data.meta?.escanosReales;
+  if (reales && districts.length === 1) {
+    districts[0].realSeats = new Map(Object.entries(reales));
+  }
 }
 
 /* ── Candados por circunscripción ──────────────────────────── */
@@ -599,6 +623,10 @@ function advCalculate(data, config, edits, locks) {
       t.realSeats += p.realSeats;
     });
   });
+
+  // Escaños reales dados sólo para todo el país (europeas por provincias).
+  const realesPais = data.meta?.escanosReales;
+  if (realesPais) totals.forEach(t => { t.realSeats = realesPais[t.key] || 0; });
 
   // Las adicionales sólo aportan escaños: sus votos son los mismos de la base
   // agregados, así que sumarlos otra vez contaría a todo el mundo dos veces.

@@ -22,7 +22,8 @@ registerTab('theory', 'tab-content', String.raw`
 
               <div style="padding:5px 8px 3px;font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);border-bottom:1px solid var(--border-light);margin-bottom:4px">Sistemas mayoritarios</div>
               <button class="theory-system-btn" data-system="majority"        onclick="showTheorySystem('majority')"        style="width:100%;text-align:left;padding:7px 8px;margin-bottom:2px;border:1px solid var(--border);background:white;color:var(--text);border-radius:var(--radius);cursor:pointer;font-family:'Source Sans 3',sans-serif;font-size:0.82rem;font-weight:600;transition:all 0.15s">Mayoritario (1ª vuelta)</button>
-              <button class="theory-system-btn" data-system="majority-round2" onclick="showTheorySystem('majority-round2')" style="width:100%;text-align:left;padding:7px 8px;margin-bottom:6px;border:1px solid var(--border);background:white;color:var(--text);border-radius:var(--radius);cursor:pointer;font-family:'Source Sans 3',sans-serif;font-size:0.82rem;font-weight:600;transition:all 0.15s">Mayoritario (2ª vuelta)</button>
+              <button class="theory-system-btn" data-system="majority-round2" onclick="showTheorySystem('majority-round2')" style="width:100%;text-align:left;padding:7px 8px;margin-bottom:2px;border:1px solid var(--border);background:white;color:var(--text);border-radius:var(--radius);cursor:pointer;font-family:'Source Sans 3',sans-serif;font-size:0.82rem;font-weight:600;transition:all 0.15s">Mayoritario (2ª vuelta)</button>
+              <button class="theory-system-btn" data-system="limited-vote" onclick="showTheorySystem('limited-vote')" style="width:100%;text-align:left;padding:7px 8px;margin-bottom:6px;border:1px solid var(--border);background:white;color:var(--text);border-radius:var(--radius);cursor:pointer;font-family:'Source Sans 3',sans-serif;font-size:0.82rem;font-weight:600;transition:all 0.15s">Mayoritario plurinominal parcial</button>
 
               <div style="padding:5px 8px 3px;font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);border-bottom:1px solid var(--border-light);margin-bottom:4px">Proporcionales · Resto mayor</div>
               <button class="theory-system-btn" data-system="imperiali"  onclick="showTheorySystem('imperiali')"  style="width:100%;text-align:left;padding:7px 8px;margin-bottom:2px;border:1px solid var(--border);background:white;color:var(--text);border-radius:var(--radius);cursor:pointer;font-family:'Source Sans 3',sans-serif;font-size:0.82rem;font-weight:600;transition:all 0.15s">Cuota Imperiali</button>
@@ -148,6 +149,16 @@ registerTab('theory', 'tab-content', String.raw`
               <div style="background:var(--accent-bg);padding:15px;border-radius:var(--radius);margin-bottom:15px;font-family:monospace">Primera vuelta: Si alguien &gt; 50%, gana<br>Segunda vuelta: Los 2 más votados<br>Gana quien obtenga más votos</div>
               <h4 style="color:var(--text);margin-top:25px;margin-bottom:10px;font-size:1.1rem;font-weight:600">Ejemplo</h4>
               <p style="line-height:1.6;color:var(--text)">Primera vuelta: A: 40%, B: 35%, C: 25%. Segunda vuelta entre A y B. Si B obtiene 52%, gana aunque tuvo menos votos inicialmente.</p>
+            </div>
+
+            <div id="theory-limited-vote" class="theory-content-section">
+              <h3 style="font-family:'Libre Baskerville',serif;color:var(--accent);margin-bottom:15px;font-size:1.5rem">Mayoritario plurinominal parcial (voto limitado)</h3>
+              <h4 style="color:var(--text);margin-top:25px;margin-bottom:10px;font-size:1.1rem;font-weight:600">Descripción</h4>
+              <p style="line-height:1.6;color:var(--text);margin-bottom:15px">Se eligen varios escaños por circunscripción, pero cada elector puede votar a menos candidatos de los que se eligen. Las candidaturas son individuales (listas abiertas) y se puede votar a candidatos de partidos distintos. Ganan los candidatos más votados. Como un partido sólo puede llevar tantos candidatos como votos tiene el elector, la minoría más votada se asegura algún escaño. Es el sistema del Senado de España: 208 senadores de elección directa.</p>
+              <h4 style="color:var(--text);margin-top:25px;margin-bottom:10px;font-size:1.1rem;font-weight:600">Fórmula</h4>
+              <div style="background:var(--accent-bg);padding:15px;border-radius:var(--radius);margin-bottom:15px;font-family:monospace">4 escaños (provincias): hasta 3 votos<br>3 escaños (Gran Canaria, Mallorca, Tenerife): hasta 2 votos<br>2 escaños (Ceuta, Melilla): hasta 2 votos<br>1 escaño (islas menores): 1 voto<br>Ganan los candidatos con más votos</div>
+              <h4 style="color:var(--text);margin-top:25px;margin-bottom:10px;font-size:1.1rem;font-weight:600">Cómo lo calcula la calculadora</h4>
+              <p style="line-height:1.6;color:var(--text)">Toma como votos de cada partido los de su candidato más votado y supone que todos sus candidatos sacan esos votos. Así, en una provincia de 4 escaños el primer partido se lleva 3 y el segundo 1. En la realidad, el voto cruzado a veces da un 2-2.</p>
             </div>
 
             <div id="theory-compensatorios" class="theory-content-section">

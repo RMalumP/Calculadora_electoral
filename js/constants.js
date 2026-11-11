@@ -7,6 +7,7 @@ const FORMULAS = [
   // ── Sistemas mayoritarios ──
   { id: 'majority',        group: 'maj', name: "Mayoritario (primera vuelta)",   desc: "El partido con más votos se lleva todos los escaños. Sistema de mayoría simple (first-past-the-post)." },
   { id: 'majority_round2', group: 'maj', name: "Mayoritario (segunda vuelta)",   desc: "El ganador de la segunda vuelta se lleva todos los escaños. Introduce los resultados de segunda vuelta abajo." },
+  { id: 'limited_vote',    group: 'maj', name: "Mayoritario plurinominal parcial (voto limitado)", desc: "Cada elector vota a menos candidatos de los que se eligen (3 de 4, 2 de 3), así que un partido no puede llevarse todos los escaños: el primero se lleva los que permite el voto y el resto va al siguiente. Es el sistema del Senado de España." },
   // ── Sistemas proporcionales ──
   { id: 'imperiali',       group: 'pr',  name: "Cuota Imperiali",                desc: "Cociente V/(E+2), más bajo que Hare. Produce más escaños directos; beneficia a mayores." },
   { id: 'droop',           group: 'pr',  name: "Cuota de Droop",                 desc: "Cuota mínima garantizada V/(E+1). Reduce el desperdicio de votos." },

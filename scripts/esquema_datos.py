@@ -27,8 +27,12 @@ COLS_ELECCIONES = [
     'ID', 'Pestaña', 'País', 'Clase', 'Tipo', 'Fecha', 'Fecha 2ª vuelta',
     'Magnitud', 'Circunscripción base', 'Prorrateo', 'Mínimo por circunscripción',
     'Forma de voto', 'Fórmula', 'Barrera 1 ámbito', 'Barrera 1 %',
-    'Barrera 2 ámbito', 'Barrera 2 %', 'Fuente', 'Notas',
+    'Barrera 2 ámbito', 'Barrera 2 %', 'Escaños totales', 'Escaños reales (total)', 'Fuente', 'Notas',
 ]
+# «Escaños totales» y «Escaños reales (total)»: para elecciones de circunscripción única cuyos
+# datos vienen por provincias (europeas en España). Las provincias van con 0 escaños, los
+# escaños se reparten en la app al nivel elegido y los reales se dan para todo el país,
+# como «PP: 22; PSOE: 20».
 
 COLS_CIRCUNSCRIPCIONES = [
     'Elección', 'Código', 'Circunscripción', 'Código región', 'Región',
@@ -64,6 +68,7 @@ FORMULAS = [
     ('Sainte-Laguë modificada', 'saintlague_m'),
     ('Sainte-Laguë', 'saintlague'),
     ('Media más elevada (Adams)', 'highest_avg'),
+    ('Mayoritario plurinominal parcial', 'limited_vote'),
 ]
 MAGNITUDES = ['Uninominal', 'Plurinominal', 'Única']
 PRORRATEOS = ['Demográfico', 'Territorial', 'Combinado']

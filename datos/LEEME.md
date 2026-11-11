@@ -26,7 +26,7 @@ La pestaña **Léeme** del propio Excel lo explica. En resumen:
 
 | Pestaña | Una fila por… | Contenido |
 | --- | --- | --- |
-| Elecciones | elección | ID, pestaña de resultados, país, fecha, reglas (fórmula, barreras, prorrateo, mínimo) |
+| Elecciones | elección | ID, pestaña de resultados, país, fecha, reglas (fórmula, barreras, prorrateo, mínimo). Opcional: «Escaños totales» y «Escaños reales (total)» para una circunscripción única con datos por provincias (europeas) |
 | Circunscripciones | elección y circunscripción | escaños, censo, votantes, blancos, nulos y, si hace falta, fórmula o barrera propias |
 | Partidos | partido | siglas, nombre, color y, si se quiere, «Enlazado con» (otro partido: «Coalición» si es la misma coalición con otro nombre, «Viene de» si lo continúa) |
 | Una por ámbito (`España.Congreso`, `Francia.Presidenciales`, `Europa`…) | elección, circunscripción y partido | votos (y escaños reales, opcional) |

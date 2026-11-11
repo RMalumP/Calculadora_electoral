@@ -332,7 +332,8 @@ class TestImportar(BaseCopia):
             self.m.nueva_circunscripcion(eid, f['codigo'], f['nombre'], Escaños=n)
         plan = self.imp.analizar(self.imp.leer_archivo(ruta), self.m, eid)
         almeria = next(f for f in plan['filas'] if f['nombre'] == 'Almería')
-        self.assertEqual(almeria['votos']['PP'], 129806)          # su candidato más votado
+        # Media de sus 3 candidatos más votados (el elector vota 3 de 4).
+        self.assertEqual(almeria['votos']['PP'], 126619)
         self.assertEqual(almeria['escanos'], {'PP': 3, 'PSOE': 1})
         self.imp.aplicar(plan, self.m, eid)
         reales = {}
@@ -447,3 +448,42 @@ class TestRespaldo(BaseCopia):
         self.assertEqual(madrid[cab.index('Número diputados por provincia')], 37)
         pp = cab.index('PP') if 'PP' in cab else next(j for j in range(i, len(cab), 3) if madrid[j + 2] == 'PP')
         self.assertGreater(madrid[pp], 1000000)
+
+
+class TestSenadoYEuropeas(BaseCopia):
+    """Voto limitado del Senado y europeas por provincias con circunscripción única."""
+
+    def test_senado_con_voto_limitado(self):
+        from base_datos import comprobar
+        _inf, elecciones, _p = comprobar(self.m.t)
+        self.assertEqual(elecciones['ES-Senado-2023-07-23']['formula'], 'limited_vote')
+
+    def test_europeas_por_provincias(self):
+        from base_datos import comprobar
+        inf, elecciones, _p = comprobar(self.m.t)
+        e = elecciones['ES-Europeas-2024-06-09']
+        self.assertEqual(len(e['circunscripciones']), 52)
+        self.assertTrue(all(c['escanos'] == 0 for c in e['circunscripciones']))
+        self.assertEqual(e['escanosTotales'], 61)
+        self.assertEqual(e['escanosReales']['PP'], 22)
+        self.assertEqual(sum(e['escanosReales'].values()), 61)
+
+    def test_escanos_reales_total_y_renombrar(self):
+        from base_datos import leer_reales
+        self.assertEqual(leer_reales('PP: 22; PSOE: 20'), ({'PP': 22, 'PSOE': 20}, []))
+        self.assertEqual(leer_reales('PP 22')[1], ['PP 22'])
+        self.m.renombrar_siglas('PP', 'P.P.')
+        e = self.m.eleccion('ES-Europeas-2024-06-09')
+        self.assertIn('P.P.: 22', e['Escaños reales (total)'])
+        self.m.editar_eleccion('ES-Europeas-2024-06-09', 'Escaños reales (total)', 'PP 22')
+        self.assertTrue(self.m.comprobar().errores)
+
+    def test_respaldo_europeas_en_una_fila(self):
+        import openpyxl
+        ruta = os.path.join(self.dir, 'respaldo.xlsx')
+        self.m.exportar_respaldo(ruta)
+        ws = openpyxl.load_workbook(ruta)['Europeas España']
+        filas = list(ws.iter_rows(values_only=True))
+        cab = list(filas[0])
+        f2024 = next(f for f in filas[1:] if f[0] == 2024)
+        self.assertEqual(f2024[cab.index('Número diputados por provincia')], 61)

@@ -32,6 +32,9 @@ AYUDA = {
     'Fecha 2ª vuelta': 'dd/mm/aaaa, sólo si la hubo',
     'Barrera 1 %': '3 = 3 %', 'Barrera 2 %': '3 = 3 %',
     'Mínimo por circunscripción': 'Escaños garantizados a cada una',
+    'Escaños totales': 'Sólo si los escaños no van por circunscripción (europeas por provincias): '
+                       'la app los reparte al nivel que se elija',
+    'Escaños reales (total)': 'Escaños reales de todo el país: «PP: 22; PSOE: 20; …»',
 }
 
 
@@ -71,7 +74,7 @@ class PestanaElecciones(ttk.Frame):
         self.vars = {}
         self.widgets = {}
         for i, col in enumerate(COLS_ELECCIONES):
-            fila, columna = (i % 10), (i // 10) * 2
+            fila, columna = (i % 11), (i // 11) * 2
             ttk.Label(ficha, text=col + ':').grid(row=fila, column=columna, sticky='e', padx=(18 if columna else 0, 4),
                                                   pady=3)
             v = tk.StringVar()

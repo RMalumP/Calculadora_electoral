@@ -455,13 +455,16 @@ def _analizar_ancha(cab, sub, datos, modelo, eid, pais, nombres=None):
     if not cols_partido:
         raise ErrorModelo('No encuentro columnas de partidos con votos.')
     # Votos a candidatos (Senado): varias columnas con las mismas siglas, una por candidato.
-    # El partido se queda con los votos de su candidato más votado, y los escaños son los
-    # de los candidatos más votados de la circunscripción.
+    # El partido se queda con la media de sus candidatos más votados (tantos como votos tiene el
+    # elector), y los escaños son los de los candidatos más votados de la circunscripción.
     veces = {}
     for _j, et, que in cols_partido:
         if que == 'votos':
             veces[et] = veces.get(et, 0) + 1
     candidatos = any(n > 1 for n in veces.values())
+
+    def votos_por_elector(n):
+        return n - 1 if n >= 3 else n
 
     def celda(f, clave):
         return texto(f[cols[clave]]).strip() if cols[clave] is not None else ''
@@ -491,7 +494,7 @@ def _analizar_ancha(cab, sub, datos, modelo, eid, pais, nombres=None):
             n = _numero(f[j])
             if n is not None:
                 fila['circ'][campo] = n
-        lista = []
+        lista, por_cand = [], {}
         for j, et, que in cols_partido:
             n = _numero(f[j])
             if texto(f[j]).strip() and n is None:
@@ -501,13 +504,19 @@ def _analizar_ancha(cab, sub, datos, modelo, eid, pais, nombres=None):
                 continue
             if candidatos and que == 'votos':
                 lista.append((n, et))
-                fila['votos'][et] = max(fila['votos'].get(et, 0), n)
+                por_cand.setdefault(et, []).append(n)
             else:
                 d = fila[que]
                 d[et] = d.get(et, 0) + n
         if candidatos:
             c = modelo.circunscripcion(eid, destino) if destino else None
             n_esc = entero(c.get('Escaños')) if c else fila['circ'].get('Escaños')
+            # Votos del partido: la media de sus candidatos que caben en la papeleta (3 de 4, 2 de 3…).
+            # Con el voto limitado es lo que mejor reproduce el reparto real.
+            k = votos_por_elector(n_esc) if n_esc else 1
+            for et, votos in por_cand.items():
+                mejores = sorted(votos, reverse=True)[:k]
+                fila['votos'][et] = round(sum(mejores) / len(mejores))
             if n_esc:
                 for _n, et in sorted(lista, key=lambda x: -x[0])[:n_esc]:
                     fila['escanos'][et] = fila['escanos'].get(et, 0) + 1
@@ -523,8 +532,8 @@ def _analizar_ancha(cab, sub, datos, modelo, eid, pais, nombres=None):
     total = hacer_fila(*total, None) if total and not candidatos else None
     sin_escanos = sin_escanos[0]
     if candidatos:
-        avisos.insert(0, 'Votos a candidatos (como en el Senado): cada partido se queda con los votos de su '
-                         'candidato más votado, y los escaños reales son los de los candidatos más votados.')
+        avisos.insert(0, 'Votos a candidatos (como en el Senado): cada partido se queda con la media de sus '
+                         'candidatos más votados (tantos como votos tiene el elector), y los escaños reales son los de los candidatos más votados.')
         if sin_escanos:
             avisos.append(f'{sin_escanos} circunscripción(es) sin escaños: no se pueden saber los electos. '
                           'Pon antes sus escaños en la pestaña Circunscripciones.')

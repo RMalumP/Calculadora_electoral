@@ -25,7 +25,7 @@ const ADV_SHEET_ID = '1pjggxoPWBxMo9HSN0kVo-HFPvMxYj1g7x8-AMlu6rCM';
 // Se incrementa con cada cambio relevante del parser. Sirve para comprobar a
 // simple vista, desde el panel de diagnóstico o la consola, si el navegador
 // está sirviendo una versión en caché de este archivo.
-const ADV_PARSER_VERSION = '2026-respaldo-google';
+const ADV_PARSER_VERSION = '2026-senado-europeas';
 console.log('[Calculadora avanzada] advanced-data.js versión', ADV_PARSER_VERSION);
 
 /**
@@ -213,6 +213,10 @@ function advModeloLocal(datos) {
     segundaVuelta: datos.fecha2
       ? { ...fechaDe(datos.fecha2), candidaturas: parties2 }
       : null,
+    // Circunscripción única con los datos por provincias (europeas): las provincias no traen
+    // escaños; se reparten los del total al nivel que se elija, y los reales son del país.
+    escanosTotales: datos.escanosTotales || null,
+    escanosReales: datos.escanosReales || null,
     fuente: datos.fuente || '',
     notas: datos.notas || ''
   };
@@ -330,6 +334,7 @@ const ADV_FORMULA_CODES = {
   8:  'saintlague_m',    // Sainte-Laguë modificada
   9:  'saintlague',      // Sainte-Laguë
   10: 'highest_avg',     // Media más elevada (Adams)
+  11: 'limited_vote',    // Mayoritario plurinominal parcial (Senado)
 };
 
 let _advCache = {};

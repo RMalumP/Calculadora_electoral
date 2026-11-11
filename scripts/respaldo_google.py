@@ -56,6 +56,26 @@ def _nivel_barrera(b, base):
     return base or 'Provincia' if a == 'Circunscripción' else a
 
 
+def _una_circunscripcion(e):
+    """Circunscripción única con los datos por provincias (europeas): la hoja de Google no sabe
+    repartir el total, así que se exporta como una sola fila del país con todos los escaños."""
+    circs = e['circunscripciones']
+    if not e.get('escanosTotales') or any(c.get('escanos') for c in circs):
+        return e
+    pais = {'codigo': 'ES' if e.get('pais') == 'España' else (e.get('pais') or 'Total'),
+            'nombre': e.get('pais') or 'Total', 'region': e.get('pais') or 'Total', 'codigoRegion': '',
+            'escanos': e['escanosTotales'], 'minimo': None}
+    for k in DE_CIRC.values():
+        pais[k] = sum(c.get(k) or 0 for c in circs) or None
+    votos = {}
+    for cod, vuelta, s, n, v, _r in e['resultados']:
+        clave = (vuelta, s)
+        votos[clave] = (n, votos.get(clave, (n, 0))[1] + (v or 0))
+    res = [[pais['codigo'], vuelta, s, n, v, (e.get('escanosReales') or {}).get(s, 0)]
+           for (vuelta, s), (n, v) in votos.items()]
+    return dict(e, circunscripciones=[pais], resultados=res)
+
+
 def _filas_ambito(elecciones, partidos):
     """(cabecera, filas) de una pestaña del respaldo."""
     total, total2, hay2 = {}, {}, False
@@ -121,7 +141,7 @@ def exportar(t, ruta):
     wb.remove(wb.active)
     hechas = {}
     for amb in sorted(por_ambito, key=lambda a: (not a.startswith('España'), a)):
-        cab, filas = _filas_ambito(por_ambito[amb], partidos)
+        cab, filas = _filas_ambito([_una_circunscripcion(e) for e in por_ambito[amb]], partidos)
         ws = wb.create_sheet(amb[:31])
         ws.append(cab)
         for c in ws[1]:
