@@ -246,6 +246,7 @@ const MAPA = (() => {
     dibujar, verNivel, nivelActual, permitirNiveles,
     piezas, pieza, seleccionar, seleccionActual,
     pintar, despintar, adornos, limpiarAdornos, lienzo, capa, al, escapar,
+    TITULOS,
   };
 
 })();

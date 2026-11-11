@@ -36,6 +36,7 @@ const ASSETS = [
   './js/mapa.js',
   './js/mapa-cartograma.js',
   './js/mapa-datos.js',
+  './js/mapa-exportar.js',
   './js/mapa-compara.js',
   './js/mapa-modos.js',
   './js/mapa-puntos.js',

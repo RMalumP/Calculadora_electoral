@@ -62,7 +62,13 @@ registerTab('map', 'tab-content', String.raw`
       <div class="mapa-cuerpo">
 
         <div class="card mapa-card">
-          <div class="card-header"><span class="dot"></span><span id="mapa-titulo">Provincias</span></div>
+          <div class="card-header"><span class="dot"></span><span id="mapa-titulo">Provincias</span>
+            <span class="mapa-herramientas">
+              <button type="button" id="mapa-png" title="Descargar el mapa como imagen PNG">PNG</button>
+              <button type="button" id="mapa-svg" title="Descargar el mapa como SVG, que no pierde calidad">SVG</button>
+              <button type="button" id="mapa-enlace" title="Copiar un enlace que abre el mapa tal y como está">Enlace</button>
+            </span>
+          </div>
           <div class="mapa-lienzo" id="mapa-lienzo">
             <p class="mapa-aviso">Cargando el mapa…</p>
           </div>

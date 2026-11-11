@@ -540,13 +540,17 @@ function mapaUIInit() {
   const cartograma = document.getElementById('mapa-cartograma');
   if (cartograma) cartograma.addEventListener('change', () => MAPA_CARTOGRAMA.encender(cartograma.checked));
 
+  if (typeof mapaExportarInit === 'function') mapaExportarInit();
+
   mapaEstado('Cargando el índice de elecciones…');
   MAPA_DATOS.cargarIndice()
     .then(() => {
       mapaLlenarAmbitos();
       mapaLlenarElecciones();
       mapaLlenarModos();
-      return mapaCargarEleccion();
+      // Un enlace compartido trae la vista entera; si no, la de partida.
+      const vista = typeof mapaLeerVistaDeUrl === 'function' ? mapaLeerVistaDeUrl() : null;
+      return vista ? mapaAplicarVista(vista) : mapaCargarEleccion();
     })
     .catch(err => mapaEstado(err.message || 'No se ha podido cargar el índice', true));
 }
