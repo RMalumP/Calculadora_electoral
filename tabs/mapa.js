@@ -29,9 +29,9 @@ registerTab('map', 'tab-content', String.raw`
       </div>
 
       <p class="mapa-pie">
-        Canarias va en su recuadro junto a la península, y Ceuta y Melilla como
-        dos cuadrados, igual que en los mapas electorales de siempre.
-        Límites del Instituto Geográfico Nacional.
+        Canarias va en su recuadro junto a la península; Ceuta y Melilla, como
+        dos cuadrados en su sitio al sur del Estrecho, porque a escala real no
+        se verían. Límites del Instituto Geográfico Nacional.
       </p>
 
     </div>

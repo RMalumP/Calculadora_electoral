@@ -15,8 +15,9 @@ leer archivos con fetch. Así el mapa no necesita ninguna librería externa:
 el navegador sólo pinta rutas ya calculadas.
 
 El encuadre imita al de los mapas escolares: península y Baleares en su sitio,
-Canarias en un recuadro bajo el suroeste y Ceuta y Melilla ampliadas en otro
-recuadro, porque a escala real no se podrían ni pulsar.
+Canarias en un recuadro bajo el suroeste, y Ceuta y Melilla como dos cuadrados
+en su posición aproximada, al sur del Estrecho, porque a escala real no se
+podrían ni ver ni pulsar.
 
 Todo se proyecta con una cónica conforme de Lambert (la que usan el IGN y el
 atlas nacional), una por bloque para que ninguna isla salga deformada.
@@ -250,36 +251,47 @@ def generar(origen=ORIGEN, destino=DESTINO):
         usados = [arcos[i] for i, b in bloque_arco.items() if b == nombre]
         return caja(*usados)
 
-    cp = caja_bloque('peninsula')
+    # Ceuta y Melilla van como cuadrados, igual que en los mapas electorales de
+    # siempre: el contorno real que trae esta geometría está tan simplificado
+    # (diez y seis vértices) que ampliado no se parecería a nada. Van en su
+    # sitio aproximado, al sur del Estrecho, centrados en el término municipal
+    # proyectado como el resto de la península.
+    def centro_plaza(codigo):
+        puntos = [p for g in provincias if g['id'] == codigo
+                  for anillo in anillos(g) for indice in anillo
+                  for p in arcos[indice if indice >= 0 else ~indice]]
+        return (sum(x for x, _ in puntos) / len(puntos),
+                sum(y for _, y in puntos) / len(puntos))
+
+    esquinas_plazas = []
+    centros_plazas = {}
+    for codigo in (CEUTA, MELILLA):
+        cx, cy = centro_plaza(codigo)
+        centros_plazas[codigo] = (cx, cy)
+        esquinas_plazas += [(cx - LADO_PLAZA / 2, cy - LADO_PLAZA / 2),
+                            (cx + LADO_PLAZA / 2, cy + LADO_PLAZA / 2)]
+
+    # La caja de la península incluye las dos plazas, que quedan más al sur que
+    # Tarifa y alargan el lienzo por abajo.
+    arcos_peninsula = [arcos[i] for i, b in bloque_arco.items()
+                       if b in ('peninsula', 'ceuta', 'melilla')]
+    cp = caja(*arcos_peninsula, esquinas_plazas)
     cc = caja_bloque('canarias')
 
     ancho_p, alto_p = cp[2] - cp[0], cp[3] - cp[1]
     ancho_c, alto_c = cc[2] - cc[0], cc[3] - cc[1]
-    # Ceuta y Melilla van como cuadrados, igual que en los mapas electorales de
-    # siempre: el contorno real que trae esta geometría está tan simplificado
-    # (diez y seis vértices) que ampliado no se parecería a nada.
-    ancho_ce = alto_ce = ancho_me = alto_me = LADO_PLAZA
 
-    # La península manda en el tamaño del lienzo; los recuadros cuelgan abajo a
-    # la izquierda, en el hueco que deja el Atlántico frente a Huelva.
-    alto_marco_c = alto_c + 2 * HUECO_RECUADRO
-    ancho_marco_c = ancho_c + 2 * HUECO_RECUADRO
-
-    alto_plazas = max(alto_ce, alto_me)
-    ancho_marco_p = ancho_ce + ancho_me + 3 * HUECO_RECUADRO
-    alto_marco_p = alto_plazas + 2 * HUECO_RECUADRO
-
-    alto_recuadros = max(alto_marco_c, alto_marco_p)
-    ancho_recuadros = ancho_marco_c + HUECO_RECUADRO + ancho_marco_p
+    # El único recuadro es el de Canarias, abajo a la izquierda, en el hueco
+    # que deja el Atlántico frente a Huelva.
+    alto_recuadros = alto_c + 2 * HUECO_RECUADRO
+    ancho_recuadros = ancho_c + 2 * HUECO_RECUADRO
     alto = MARGEN * 2 + alto_p
 
-    # Los recuadros van abajo a la izquierda, en el Atlántico frente a Huelva.
-    # Como ahí no caben de ancho, el lienzo se ensancha por la izquierda (la
-    # península se corre a la derecha) hasta que dejan de pisar la costa. Se
+    # Como ahí no cabe de ancho, el lienzo se ensancha por la izquierda (la
+    # península se corre a la derecha) hasta que deja de pisar la costa. Se
     # ensancha en vez de crecer hacia abajo para que el mapa siga siendo
     # apaisado y aproveche mejor la pantalla.
-    tierra = [(x, y) for i, b in bloque_arco.items() if b == 'peninsula'
-              for x, y in arcos[i]]
+    tierra = [p for lista in arcos_peninsula for p in lista] + esquinas_plazas
     arriba = alto - MARGEN - alto_recuadros
     borde = min([x for x, y in tierra if y - cp[1] + MARGEN >= arriba],
                 default=cp[2])
@@ -290,17 +302,12 @@ def generar(origen=ORIGEN, destino=DESTINO):
     desp_p = (ancho - MARGEN - ancho_p - cp[0], MARGEN - cp[1])
 
     marco_c_x = MARGEN
-    marco_c_y = alto - MARGEN - alto_marco_c
+    marco_c_y = alto - MARGEN - alto_recuadros
     desp_c = (marco_c_x + HUECO_RECUADRO - cc[0], marco_c_y + HUECO_RECUADRO - cc[1])
 
-    marco_p_x = marco_c_x + ancho_marco_c + HUECO_RECUADRO
-    marco_p_y = alto - MARGEN - alto_marco_p
-    plazas = {
-        CEUTA: (marco_p_x + HUECO_RECUADRO,
-                marco_p_y + (alto_marco_p - LADO_PLAZA) / 2),
-        MELILLA: (marco_p_x + 2 * HUECO_RECUADRO + LADO_PLAZA,
-                  marco_p_y + (alto_marco_p - LADO_PLAZA) / 2),
-    }
+    plazas = {codigo: (cx + desp_p[0] - LADO_PLAZA / 2,
+                       cy + desp_p[1] - LADO_PLAZA / 2)
+              for codigo, (cx, cy) in centros_plazas.items()}
 
     desplazamientos = {
         'peninsula': desp_p,
@@ -382,12 +389,8 @@ def generar(origen=ORIGEN, destino=DESTINO):
     recuadros = [
         {'nombre': 'Canarias', 'x': round(marco_c_x, DECIMALES),
          'y': round(marco_c_y, DECIMALES),
-         'ancho': round(ancho_marco_c, DECIMALES),
-         'alto': round(alto_marco_c, DECIMALES)},
-        {'nombre': 'Ceuta y Melilla', 'x': round(marco_p_x, DECIMALES),
-         'y': round(marco_p_y, DECIMALES),
-         'ancho': round(ancho_marco_p, DECIMALES),
-         'alto': round(alto_marco_p, DECIMALES)},
+         'ancho': round(ancho_recuadros, DECIMALES),
+         'alto': round(alto_recuadros, DECIMALES)},
     ]
 
     mapa = {
