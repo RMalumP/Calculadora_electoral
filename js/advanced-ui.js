@@ -705,8 +705,10 @@ function advRenderSummary() {
 }
 
 function advRenderResults() {
-  select('#adv-results').innerHTML = advNationalCard() + advExtrasCard() + advDistrictsCard();
+  const terr = typeof advTerritorialCard === 'function' ? advTerritorialCard() : '';
+  select('#adv-results').innerHTML = advNationalCard() + terr + advExtrasCard() + advDistrictsCard();
   advAttachResultHandlers();
+  if (terr) advTerritorialAttach();
 }
 
 /**

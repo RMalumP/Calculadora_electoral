@@ -20,6 +20,7 @@ const ASSETS = [
   './js/advanced-compensation.js',
   './js/advanced-data.js',
   './js/advanced-popups.js',
+  './js/advanced-territorial.js',
   './js/advanced-ui.js',
   './js/algorithms.js',
   './js/autosave.js',
