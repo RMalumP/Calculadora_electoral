@@ -201,6 +201,10 @@ function advModeloLocal(datos) {
     subtipo: datos.tipo || '',
     pais: datos.pais || '',
     idEleccion: datos.id,
+    // Tal y como viene en la base («Provincia», «Isla»…). El nivel de abajo la
+    // traduce a los que entiende la calculadora y pierde el caso de las islas,
+    // que el mapa sí necesita para casar los cabildos por nombre.
+    circBase: datos.circBase || '',
     circunscripcionDefault: level,
     magnitud, magnitudLabel: ADV_MAGNITUD_LABEL[magnitud] || datos.magnitud || '',
     prorrateo, prorrateoLabel: ADV_PRORRATEO_LABEL[prorrateo] || datos.prorrateo || '',
@@ -680,6 +684,9 @@ function advParseTable(table) {
     subtipo: metaAt('tipoEleccion') || '',
     pais:    metaAt('pais') || 'España',
     idEleccion: metaAt('idEleccion') || '',
+    // Tal y como viene en la hoja («Provincia», «Isla»…): el nivel de arriba
+    // la traduce y pierde el caso de las islas, que el mapa sí necesita.
+    circBase: metaAt('circBase') || '',
     circunscripcionDefault: level,
     magnitud,
     magnitudLabel:  ADV_MAGNITUD_LABEL[magnitud] || '',

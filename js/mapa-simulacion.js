@@ -38,6 +38,19 @@ const MAPA_SIM = (() => {
     return p?.eleccion?.key ? String(p.eleccion.key) : null;
   }
 
+  /**
+   * La convocatoria de la avanzada reparte por islas.
+   *
+   * Lo dice su propia ficha, no la del mapa: la ventana emergente de la
+   * avanzada dibuja su simulación aunque el mapa tenga cargada otra elección,
+   * o ninguna.
+   */
+  function porIsla() {
+    const base = datosAvanzada()?.meta?.circBase;
+    if (base) return base === 'Isla';
+    return MAPA_DATOS.eleccionActual()?.circBase === 'Isla';
+  }
+
   /** La avanzada está calculada y sobre la misma convocatoria que el mapa. */
   function disponible() {
     const modelo = MAPA_DATOS.eleccionActual();
@@ -56,16 +69,19 @@ const MAPA_SIM = (() => {
 
   function piezasPorCodigo() {
     if (indicePiezas) return indicePiezas;
-    indicePiezas = new Map();
+    const indice = new Map();
     MAPA.piezas('provincias').forEach(p =>
-      indicePiezas.set(MAPA_DATOS.normalizar(p.codigo), p));
+      indice.set(MAPA_DATOS.normalizar(p.codigo), p));
     // Las islas se añaden sin pisar a las provincias: sus códigos («7-1»,
     // «38-4») no chocan, pero los de los cabildos sí, y ahí manda la provincia.
     MAPA.piezas('islas').forEach(p => {
       const k = MAPA_DATOS.normalizar(p.codigo);
-      if (!indicePiezas.has(k)) indicePiezas.set(k, p);
+      if (!indice.has(k)) indice.set(k, p);
     });
-    return indicePiezas;
+    // Sin geometría no hay piezas: no se guarda el índice vacío, porque el
+    // mapa puede cargarse después (la ventana de la avanzada lo hace).
+    if (indice.size) indicePiezas = indice;
+    return indice;
   }
 
   const normalizarNombre = n => String(n || '').trim().toLowerCase()
@@ -76,9 +92,10 @@ const MAPA_SIM = (() => {
   /** Islas por nombre, para las elecciones cuya circunscripción es la isla. */
   function islasPorNombre() {
     if (indiceNombres) return indiceNombres;
-    indiceNombres = new Map();
-    MAPA.piezas('islas').forEach(p => indiceNombres.set(normalizarNombre(p.nombre), p));
-    return indiceNombres;
+    const indice = new Map();
+    MAPA.piezas('islas').forEach(p => indice.set(normalizarNombre(p.nombre), p));
+    if (indice.size) indiceNombres = indice;
+    return indice;
   }
 
   /**
@@ -155,12 +172,11 @@ const MAPA_SIM = (() => {
    *
    * @returns {Map} códigoPieza → agregado
    */
-  function porNivel(nivel) {
-    if (!disponible()) return new Map();
+  function calcular(nivel) {
     if (cacheVersion === version && cacheNivel[nivel]) return cacheNivel[nivel];
     if (cacheVersion !== version) { cacheVersion = version; cacheNivel = {}; }
 
-    const porNombre = MAPA_DATOS.eleccionActual()?.circBase === 'Isla';
+    const porNombre = porIsla();
     const salida = new Map();
     resultado().districts.forEach(d => {
       const dianas = new Set();
@@ -184,6 +200,19 @@ const MAPA_SIM = (() => {
     return salida;
   }
 
+  /** Para los modos del mapa: sólo si la avanzada va de esta misma elección. */
+  function porNivel(nivel) {
+    return disponible() ? calcular(nivel) : new Map();
+  }
+
+  /**
+   * Para la ventana emergente de la avanzada: su reparto, sea la elección que
+   * sea. Allí el mapa es la salida de la avanzada y no hay nada que casar.
+   */
+  function desdeAvanzada(nivel) {
+    return resultado() ? calcular(nivel) : new Map();
+  }
+
   /** Avisa de que la avanzada ha vuelto a calcular. */
   function actualizar() {
     version += 1;
@@ -192,7 +221,10 @@ const MAPA_SIM = (() => {
     if (typeof mapaSimRefrescarUI === 'function') mapaSimRefrescarUI();
   }
 
-  return { disponible, otraEleccion, eleccionAvanzada, porNivel, actualizar, provinciaDe };
+  return {
+    disponible, otraEleccion, eleccionAvanzada, porIsla,
+    porNivel, desdeAvanzada, actualizar, provinciaDe,
+  };
 
 })();
 

@@ -678,9 +678,10 @@ function advRun() {
   advUpdateSummaries();
   advRefreshEditBar();
   advRefreshExceptions();
-  if (typeof advPopupRefresh === 'function') advPopupRefresh();
-  // El mapa puede estar enseñando esta misma simulación.
+  // Primero se invalida lo que el mapa tenga en caché: la ventana emergente
+  // del mapa se pinta desde ahí y tiene que ver ya el reparto nuevo.
   if (typeof mapaSimulacionActualizar === 'function') mapaSimulacionActualizar();
+  if (typeof advPopupRefresh === 'function') advPopupRefresh();
 }
 
 function advRenderSummary() {
@@ -788,6 +789,7 @@ function advNationalCard() {
     <div class="card-header"><span class="dot"></span>Recuento final · ${advEscape(_advConfig.circunscripcion === 'nacional' ? 'circunscripción estatal' : _advConfig.circunscripcion === 'ccaa' ? 'circunscripciones autonómicas' : 'circunscripciones provinciales')}
       <span class="adv-card-tools">
         <button type="button" class="adv-tool-btn" data-adv-popup="hemi">Representación visual</button>
+        <button type="button" class="adv-tool-btn" data-adv-popup="mapa" title="Ver esta simulación sobre el mapa de España">Mapa</button>
         <button type="button" class="adv-tool-btn" data-adv-popup="last">Último escaño</button>
         <button type="button" class="adv-tool-btn" data-adv-popup="coef">Coeficientes</button>
         <button type="button" class="adv-tool-btn" data-adv-export="csv" title="Descargar el recuento en CSV (Excel)">CSV</button>

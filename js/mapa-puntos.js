@@ -85,7 +85,7 @@ const MAPA_PUNTOS = (() => {
     if (typeof mapaRefrescar === 'function') mapaRefrescar();
   }
 
-  return { dibujar, activo, encender };
+  return { dibujar, activo, encender, rejilla };
 
 })();
 
