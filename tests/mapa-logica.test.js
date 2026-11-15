@@ -266,3 +266,44 @@ test('sin la misma convocatoria cargada no hay simulación', () => {
   assert.equal(sim.otraEleccion(), true);
   assert.equal(sim.porNivel('provincias').size, 0);
 });
+
+test('la ventana de la avanzada dibuja su reparto aunque el mapa vaya de otra cosa', () => {
+  // El mapa tiene cargado el Senado y la avanzada el Congreso: los modos del
+  // mapa callan, pero la ventana emergente de la avanzada sí pinta.
+  const ctx = contexto({
+    MAPA: { escapar: s => s, piezas: c => PIEZAS[c] || [], adornos: () => null, nivelActual: () => 'provincias' },
+    MAPA_DATOS: {
+      eleccionActual: () => ({ id: 'ES-Senado-2023-07-23', circBase: 'Provincia' }),
+      normalizar: c => (/^\d+$/.test(String(c)) ? String(parseInt(c, 10)) : String(c)),
+      colorPartido: () => '#000', porNivel: () => new Map(),
+    },
+    _advResult: { districts: [distrito('Madrid|Madrid', 'Madrid', ['28'], ['Madrid'], UNA)] },
+    _advParties: { eleccion: { key: 'ES-Congreso-2023-07-23' }, meta: { circBase: 'Provincia' } },
+  });
+  cargar(ctx, 'js/mapa-simulacion.js');
+  const sim = leer(ctx, 'MAPA_SIM');
+  assert.equal(sim.disponible(), false, 'los modos del mapa no se encienden');
+  assert.equal(sim.porNivel('provincias').size, 0);
+  const porPieza = sim.desdeAvanzada('provincias');
+  assert.deepEqual([...porPieza.keys()], ['28']);
+  assert.equal(porPieza.get('28').escanos.PP, 3);
+});
+
+test('la base de circunscripción la manda la avanzada, no el mapa', () => {
+  // El mapa no tiene nada cargado; la ficha de la avanzada dice que reparte
+  // por islas, así que los cabildos se casan por nombre igualmente.
+  const ctx = contexto({
+    MAPA: { escapar: s => s, piezas: c => PIEZAS[c] || [], adornos: () => null, nivelActual: () => 'provincias' },
+    MAPA_DATOS: {
+      eleccionActual: () => null,
+      normalizar: c => (/^\d+$/.test(String(c)) ? String(parseInt(c, 10)) : String(c)),
+      colorPartido: () => '#000', porNivel: () => new Map(),
+    },
+    _advResult: { districts: [distrito('Canarias|Tenerife', 'Tenerife', ['4'], ['Tenerife'], UNA)] },
+    _advParties: { eleccion: { key: 'ES-Cabildos-2023-05-28' }, meta: { circBase: 'Isla' } },
+  });
+  cargar(ctx, 'js/mapa-simulacion.js');
+  const sim = leer(ctx, 'MAPA_SIM');
+  assert.equal(sim.porIsla(), true);
+  assert.deepEqual([...sim.desdeAvanzada('islas').keys()], ['38-4']);
+});

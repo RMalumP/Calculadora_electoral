@@ -548,3 +548,70 @@
   .mapa-herramientas { gap: 4px; flex-wrap: wrap; }
   .mapa-herramientas button { padding: 4px 9px; }
 }
+
+/* ── El mapa dentro de la ventana de la calculadora avanzada ──────
+   Las piezas, el contorno y los puntos reutilizan las clases de arriba; aquí
+   sólo va la colocación y la barra de mandos de la ventana. */
+
+.mapa-popup-barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px 14px;
+  margin-bottom: 12px;
+}
+
+.mapa-popup-barra label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.mapa-popup-barra select { min-width: 150px; }
+
+.mapa-popup-check {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 6px !important;
+  padding-bottom: 7px;
+  cursor: pointer;
+}
+
+.mapa-popup-cuerpo {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(220px, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.mapa-popup-lienzo {
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  padding: 8px;
+  background: var(--surface);
+  min-width: 0;
+}
+
+.mapa-popup-leyenda { margin-top: 6px; }
+
+.mapa-popup-ficha { min-width: 0; }
+
+.mapa-popup-ficha-titulo {
+  margin: 0 0 8px;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.mapa-popup-ficha .adv-popup-table { margin-bottom: 0; }
+
+@media (max-width: 760px) {
+  .mapa-popup-cuerpo { grid-template-columns: minmax(0, 1fr); }
+  .mapa-popup-barra select { min-width: 120px; }
+}
+
+/* El mapa pide más ancho que las tablas de las otras ventanas. */
+.adv-popup-dialog:has(.mapa-popup-cuerpo) { max-width: 1180px; }
