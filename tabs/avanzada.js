@@ -83,6 +83,46 @@ registerTab('advanced', 'tab-content', String.raw`
                   <div class="adv-select-wrap"><select id="adv-formula"></select></div>
                 </div>
 
+                <!-- Sólo con la fórmula «Mayoritario (segunda vuelta)». -->
+                <div class="adv-fieldset" id="adv-sv-fs" style="display:none">
+                  <div class="adv-field">
+                    <label for="adv-sv-modo">Votos de la segunda vuelta</label>
+                    <div class="adv-select-wrap">
+                      <select id="adv-sv-modo">
+                        <option value="datos">Los de la hoja (si faltan, se simulan)</option>
+                        <option value="simulada">Simular siempre</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="adv-field">
+                    <label for="adv-sv-regla">Quién pasa a la segunda vuelta</label>
+                    <div class="adv-select-wrap"><select id="adv-sv-regla"></select></div>
+                  </div>
+                  <div class="adv-field">
+                    <label for="adv-sv-transfer">Votos de los eliminados</label>
+                    <div class="adv-select-wrap">
+                      <select id="adv-sv-transfer">
+                        <option value="proporcional">Se reparten como la primera vuelta</option>
+                        <option value="ninguna">Se pierden (abstención)</option>
+                      </select>
+                    </div>
+                  </div>
+                  <small>La simulación se hace en cada circunscripción y el ganador se lleva todos sus escaños.</small>
+                </div>
+
+                <div class="adv-fieldset adv-only" id="adv-coal-fs">
+                  <div class="adv-field">
+                    <label>Coaliciones</label>
+                    <small>Los partidos de una coalición suman votos, pasan juntos la barrera y se reparten después los escaños.</small>
+                  </div>
+                  <div id="adv-coal-list"></div>
+                  <button type="button" class="adv-mini-btn" id="adv-coal-add">+ Añadir coalición</button>
+                  <div class="adv-field" id="adv-coal-metodo-field" style="display:none">
+                    <label for="adv-coal-metodo">Reparto entre los miembros</label>
+                    <div class="adv-select-wrap"><select id="adv-coal-metodo"></select></div>
+                  </div>
+                </div>
+
                 <!-- Niveles superpuestos a la circunscripción base. Los
                      escaños de cada uno se ponen en la sección «Escaños». -->
                 <div class="adv-fieldset adv-only" id="adv-extra-fs">

@@ -1478,3 +1478,9 @@ body.adv-popup-open { overflow: hidden; }
 .adv-bx-row .adv-select-wrap select { width: 100%; }
 #adv-bx-wrap { margin: 4px 0 8px; }
 #adv-bx-wrap > .adv-mini-btn { margin: 2px 0 4px; }
+
+/* ── Coaliciones y segunda vuelta en la avanzada ── */
+.adv-coal-row { margin-bottom: 8px; }
+.adv-coal-members { width: 100%; margin-top: 4px; font-size: 0.8rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--text); }
+.adv-coal-name { width: 100%; padding: 4px 6px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--text); font: inherit; }
+#adv-results .coal-tabla { width: calc(100% - 28px); margin: 8px 14px; }

@@ -305,7 +305,7 @@ function advBuildFormulaOptions() {
   [{ key: 'pr', label: 'Sistemas proporcionales' }, { key: 'maj', label: 'Sistemas mayoritarios' }].forEach(g => {
     const grp = document.createElement('optgroup');
     grp.label = g.label;
-    FORMULAS.filter(f => f.group === g.key && f.id !== 'majority_round2').forEach(f => {
+    FORMULAS.filter(f => f.group === g.key).forEach(f => {
       const o = document.createElement('option');
       o.value = f.id; o.textContent = f.name;
       grp.appendChild(o);
@@ -348,6 +348,12 @@ function advSyncConfigToForm() {
   select('#adv-min-seats').value   = c.minPorCircunscripcion;
   select('#adv-reparto-base').value = c.repartoBase;
   select('#adv-prorrateo').value = c.prorrateo || 'hare';
+  const sv = c.segundaVuelta || {};
+  select('#adv-sv-modo').value = sv.modo || 'datos';
+  select('#adv-sv-regla').value = sv.regla || 'top2';
+  select('#adv-sv-transfer').value = sv.transfer || 'proporcional';
+  select('#adv-coal-metodo').value = c.coalMetodo || 'dhondt';
+  advCoalRender(c.coaliciones || []);
   select('#adv-blanco').checked = c.blancoEnDenominador;
 
   select('#adv-bono-on').checked  = !!c.bono?.activa;
@@ -397,6 +403,12 @@ function advReadForm() {
     minPorCircunscripcion: parseInt(select('#adv-min-seats').value) || 0,
     repartoBase: select('#adv-reparto-base').value,
     prorrateo:   select('#adv-prorrateo').value || 'hare',
+    segundaVuelta: {
+      modo: select('#adv-sv-modo').value, regla: select('#adv-sv-regla').value,
+      transfer: select('#adv-sv-transfer').value
+    },
+    coaliciones: advCoalRead(),
+    coalMetodo: select('#adv-coal-metodo').value || 'dhondt',
     bono: {
       activa:  select('#adv-bono-on').checked,
       modo:    select('#adv-bono-modo').value,
@@ -562,6 +574,8 @@ function advRefreshFormState() {
     r.dataset.disabled = String(!r.querySelector('.adv-bx-on').checked);
   });
   setDisplay(select('#adv-custom-seats'), select('#adv-seats-mode').value === 'custom');
+  setDisplay(select('#adv-sv-fs'), select('#adv-formula').value === 'majority_round2');
+  setDisplay(select('#adv-coal-metodo-field'), document.querySelectorAll('#adv-coal-list .adv-coal-row').length > 0);
 
   // Al agrupar en una sola circunscripción estatal, la barrera de comunidad
   // y la de circunscripción se vuelven equivalentes a la nacional.
@@ -721,9 +735,23 @@ function advRenderSummary() {
     (typeof indicesHtml === 'function' ? `<div class="adv-indices">${indicesHtml(_advResult.national)}</div>` : '');
 }
 
+/** Reparto interno de cada coalición y comparación juntos / separados. */
+function advCoalCard() {
+  const cs = _advResult?.coaliciones || [];
+  if (!cs.length) return '';
+  const sg = n => (n > 0 ? '+' : '') + n;
+  return `<div class="card"><div class="card-header"><span class="dot"></span>Coaliciones: reparto interno y «juntos o separados»</div>` +
+    cs.map(c => `<table class="coal-tabla">
+      <thead><tr><th>${advEscape(c.name)}</th><th>Votos</th><th>Escaños dentro</th><th>Escaños separados</th><th>Diferencia</th></tr></thead>
+      <tbody>${c.miembros.map(m => `<tr><td>${advEscape(m.siglas || m.name)}</td><td>${advNum(m.votes)}</td>
+        <td>${m.internos}</td><td>${m.separados}</td><td>${sg(m.internos - m.separados)}</td></tr>`).join('')}
+        <tr class="coal-total"><td>Total lista</td><td>${advNum(c.votes)}</td><td>${c.juntos}</td><td>${c.separados}</td><td>${sg(c.juntos - c.separados)}</td></tr>
+      </tbody></table>`).join('') + `</div>`;
+}
+
 function advRenderResults() {
   const terr = typeof advTerritorialCard === 'function' ? advTerritorialCard() : '';
-  select('#adv-results').innerHTML = advNationalCard() + terr + advExtrasCard() + advDistrictsCard();
+  select('#adv-results').innerHTML = advNationalCard() + advCoalCard() + terr + advExtrasCard() + advDistrictsCard();
   advAttachResultHandlers();
   if (terr) advTerritorialAttach();
 }
@@ -1334,6 +1362,69 @@ function advApplyBarrierPreset(id) {
   set(1, p.b1); set(2, p.b2);
   advBxRender([]);
   advOnConfigChange();
+}
+
+/* ── Coaliciones ── */
+
+/** Pinta las filas de coaliciones: nombre y miembros (selección múltiple). */
+function advCoalRender(lista) {
+  const box = select('#adv-coal-list');
+  if (!box) return;
+  const partidos = advAllParties();
+  box.innerHTML = lista.map((c, i) => `
+    <div class="adv-coal-row" data-coal="${i}" data-id="${advEscape(String(c.id != null ? c.id : i + 1))}">
+      <div class="adv-bx-main">
+        <input type="text" class="adv-coal-name" placeholder="Nombre de la coalición" value="${advEscape(c.name || '')}">
+        <span></span>
+        <button type="button" class="adv-mini-btn adv-coal-del" aria-label="Quitar la coalición" title="Quitar">✕</button>
+      </div>
+      <select class="adv-coal-members" multiple size="5" aria-label="Partidos de la coalición">${
+        partidos.map(p => `<option value="${advEscape(p.key)}"${(c.members || []).includes(p.key) ? ' selected' : ''}>${advEscape(p.siglas || p.name)} · ${advEscape(p.name)}</option>`).join('')}</select>
+    </div>`).join('');
+}
+
+function advCoalRead() {
+  return [...document.querySelectorAll('#adv-coal-list .adv-coal-row')].map((r, i) => ({
+    id: r.dataset.id || String(i + 1),
+    name: r.querySelector('.adv-coal-name').value.trim() || `Coalición ${i + 1}`,
+    members: [...r.querySelector('.adv-coal-members').selectedOptions].map(o => o.value)
+  }));
+}
+
+function advInitCoaliciones() {
+  const m = select('#adv-coal-metodo');
+  if (m && !m.options.length) {
+    COALICION_METODOS.forEach(x => {
+      const o = document.createElement('option');
+      o.value = x.id; o.textContent = x.name;
+      m.appendChild(o);
+    });
+  }
+  const sr = select('#adv-sv-regla');
+  if (sr && !sr.options.length) {
+    Object.values(SV_REGLAS).forEach(r => {
+      const o = document.createElement('option');
+      o.value = r.id; o.textContent = r.name;
+      sr.appendChild(o);
+    });
+  }
+  select('#adv-coal-add')?.addEventListener('click', () => {
+    const lista = advCoalRead();
+    const usados = new Set(lista.map(c => Number(c.id)).filter(Number.isFinite));
+    let id = 1; while (usados.has(id)) id++;
+    advCoalRender([...lista, { id: String(id), name: '', members: [] }]);
+    advRefreshFormState();
+  });
+  const list = select('#adv-coal-list');
+  list?.addEventListener('change', advOnConfigChange);
+  list?.addEventListener('input', e => { if (e.target.matches('.adv-coal-name')) advOnConfigChange(); });
+  list?.addEventListener('click', e => {
+    const del = e.target.closest('.adv-coal-del');
+    if (!del) return;
+    const idx = Number(del.closest('.adv-coal-row').dataset.coal);
+    advCoalRender(advCoalRead().filter((_, i) => i !== idx));
+    advOnConfigChange();
+  });
 }
 
 function advInitProrrateo() {
@@ -2097,10 +2188,11 @@ function advInit() {
   advInitSessionButtons();
   advInitBarriers();
   advInitProrrateo();
+  advInitCoaliciones();
 
   ['#adv-level', '#adv-formula', '#adv-b1-on', '#adv-b1-level', '#adv-b1-val', '#adv-b1-exen', '#adv-b2-exen',
    '#adv-b2-on', '#adv-b2-level', '#adv-b2-val', '#adv-blanco',
-   '#adv-seats-mode', '#adv-total-seats', '#adv-min-seats', '#adv-reparto-base', '#adv-prorrateo',
+   '#adv-seats-mode', '#adv-total-seats', '#adv-min-seats', '#adv-reparto-base', '#adv-prorrateo', '#adv-sv-modo', '#adv-sv-regla', '#adv-sv-transfer', '#adv-coal-metodo',
    '#adv-bono-on', '#adv-bono-modo', '#adv-bono-seats',
    '#adv-extra-ccaa', '#adv-extra-ccaa-seats',
    '#adv-extra-nacional', '#adv-extra-nacional-seats',

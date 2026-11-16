@@ -11,7 +11,7 @@ const vm = require('node:vm');
 const RAIZ = path.join(__dirname, '..');
 const ctx = vm.createContext({ window: {}, document: { querySelectorAll: () => [] }, console });
 ctx.window = ctx;
-['js/helpers.js', 'js/constants.js', 'js/algorithms.js', 'js/advanced-compensation.js', 'js/prorrateo.js',
+['js/helpers.js', 'js/constants.js', 'js/algorithms.js', 'js/segunda-vuelta.js', 'js/coaliciones.js', 'js/advanced-compensation.js', 'js/prorrateo.js',
  'js/advanced-calc.js', 'js/advanced-data.js', 'js/advanced-territorial.js'].forEach(f =>
   vm.runInContext(fs.readFileSync(path.join(RAIZ, f), 'utf8'), ctx, { filename: f }));
 
@@ -123,4 +123,68 @@ test('Malaponderación: reparto exacto da razón 1', () => {
   const m = ctx.prorrateoMalaponderacion([100, 200], [1, 2]);
   assert.equal(m.ratio, 1);
   assert.equal(m.loosemore, 0);
+});
+
+/* ── Segunda vuelta real y coaliciones en la avanzada ───────── */
+
+/** Elección sintética a dos vueltas: dos circunscripciones de 5 escaños cada una. */
+function presidencial(conSegunda) {
+  const circ = (codigo, nombre) => ({ codigo, nombre, codigoRegion: 'R', region: 'R', escanos: 5, minimo: 0, poblacion: 1000,
+    censoTotal: 1000, votantesTotal: 900, votosValidos: 900, votosCandidaturas: 900, votosBlanco: 0, votosNulos: 0 });
+  const res = [];
+  // Primera vuelta: A 40, B 35, C 25 (en las dos).
+  ['1', '2'].forEach(c => { res.push([c, 1, 'A', 'Ana', 400, 0], [c, 1, 'B', 'Beto', 350, 0], [c, 1, 'C', 'Cris', 250, 0]); });
+  // Segunda: en la 1 gana B (sin pasar A), en la 2 gana A.
+  if (conSegunda) {
+    res.push(['1', 2, 'A', 'Ana', 420, 0], ['1', 2, 'B', 'Beto', 480, 0]);
+    res.push(['2', 2, 'A', 'Ana', 500, 0], ['2', 2, 'B', 'Beto', 400, 0]);
+  }
+  return ctx.advModeloLocal({
+    id: 'T-2V', pais: 'X', clase: 'Presidenciales', tipo: 'Presidente', fecha: '2024-01-01', fecha2: conSegunda ? '2024-01-15' : null,
+    magnitud: 'Plurinominal', circBase: 'Provincia', prorrateo: 'Combinado', minimo: 0, formula: 'majority_round2', barreras: [],
+    circunscripciones: [circ('1', 'Uno'), circ('2', 'Dos')], resultados: res, partidos: {}
+  });
+}
+
+test('Segunda vuelta con datos de la hoja: gana en cada circunscripción quien más vota en la segunda', () => {
+  const data = presidencial(true);
+  const config = ctx.advDefaultConfig(data.meta);
+  assert.equal(config.formula, 'majority_round2');
+  const r = ctx.advCalculate(data, config, {}, {});
+  const porDist = r.districts.map(d => [d.name, d.results.find(p => p.seats > 0).siglas || d.results.find(p => p.seats > 0).name, d.segundaVuelta.fuente]);
+  assert.deepEqual(plano(porDist), [['Uno', 'B', 'datos'], ['Dos', 'A', 'datos']]);
+  assert.equal(r.summary.totalSeats, 10);
+});
+
+test('Segunda vuelta sin datos: se simula con transferencia proporcional y se avisa', () => {
+  const data = presidencial(false);
+  const r = ctx.advCalculate(data, ctx.advDefaultConfig(data.meta), {}, {});
+  // A 400 y B 350 pasan; C (250) reparte proporcional: A 400 + 133 = 533 > B 467.
+  assert.ok(r.districts.every(d => d.segundaVuelta.fuente === 'simulada'));
+  assert.equal(r.national.find(p => p.seats > 0).seats, 10);
+  assert.ok(r.warnings.some(w => /segunda vuelta/i.test(w)));
+});
+
+test('Segunda vuelta simulada con la regla de Francia: mayoría absoluta evita la segunda', () => {
+  const data = presidencial(false);
+  const config = { ...ctx.advDefaultConfig(data.meta), segundaVuelta: { modo: 'simulada', regla: 'francia', transfer: 'ninguna' } };
+  const r = ctx.advCalculate(data, config, {}, {});
+  // Nadie pasa del 50 % y el censo es 1000: A (400) y B (350) superan el 12,5 %; sin transferencias gana A.
+  assert.equal(plano(r.national[0]).siglas || plano(r.national[0]).name, 'A');
+});
+
+test('Coaliciones: la lista conjunta pasa la barrera y reparte entre sus miembros', () => {
+  const data = datos('ES-Congreso-2023-07-23');
+  const base = { ...ctx.advDefaultConfig(data.meta), circunscripcion: 'nacional' };
+  const claves = r => r.national.filter(p => p.seats > 0).map(p => p.key);
+  const sin = ctx.advCalculate(data, base, {}, {});
+  const k = plano(sin.national.filter(p => p.seats > 0).slice(0, 2).map(p => p.key));
+  const con = ctx.advCalculate(data, { ...base, coaliciones: [{ id: 'x', name: 'Frente', members: k }] }, {}, {});
+  assert.equal(con.summary.totalSeats, 350);
+  assert.equal(con.coaliciones.length, 1);
+  const c = con.coaliciones[0];
+  assert.equal(c.miembros.reduce((s, m) => s + m.internos, 0), c.juntos);
+  assert.ok(claves(con).includes('coal:x'));
+  assert.ok(!claves(con).includes(k[0]));
+  assert.equal(c.separados, sin.national.filter(p => k.includes(p.key)).reduce((s, p) => s + p.seats, 0));
 });
