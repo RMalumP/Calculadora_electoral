@@ -711,6 +711,23 @@ function advRun() {
   if (typeof advPopupRefresh === 'function') advPopupRefresh();
 }
 
+/** Línea con los votos de la segunda vuelta sumados (la tabla muestra los de la primera). */
+function advSegundaVueltaResumen() {
+  const ds = (_advResult?.districts || []).filter(d => d.segundaVuelta);
+  if (!ds.length) return '';
+  const suma = new Map();
+  ds.forEach(d => d.segundaVuelta.candidaturas.forEach(c => {
+    const t = suma.get(c.key) || { name: c.siglas || c.name, votes: 0 };
+    t.votes += c.votes; suma.set(c.key, t);
+  }));
+  const lista = [...suma.values()].sort((a, b) => b.votes - a.votes);
+  const total = lista.reduce((s, c) => s + c.votes, 0) || 1;
+  const datos = ds.every(d => d.segundaVuelta.fuente === 'datos');
+  return `<div class="adv-notice">${datos ? 'Segunda vuelta' : 'Segunda vuelta simulada'}: ` +
+    lista.map(c => `<strong>${advEscape(c.name)}</strong> ${advNum(Math.round(c.votes))} (${advPct(c.votes / total * 100)})`).join(' · ') +
+    `. La tabla muestra los votos de la primera vuelta.</div>`;
+}
+
 function advRenderSummary() {
   const s = _advResult.summary;
   const seatWord = typeof currentSeatName === 'string' ? currentSeatName : 'escaños';
@@ -732,7 +749,8 @@ function advRenderSummary() {
     items.map(([l, v, m]) =>
       `<div class="adv-summary-item"><small>${advEscape(l)}</small><div class="v${m ? ' muted' : ''}">${v}</div></div>`).join('') +
     `</div>` +
-    (typeof indicesHtml === 'function' ? `<div class="adv-indices">${indicesHtml(_advResult.national)}</div>` : '');
+    (typeof indicesHtml === 'function' ? `<div class="adv-indices">${indicesHtml(_advResult.national)}</div>` : '') +
+    advSegundaVueltaResumen();
 }
 
 /** Reparto interno de cada coalición y comparación juntos / separados. */

@@ -53,12 +53,15 @@ const MAPA_DATOS = (() => {
 
   /** Ámbitos con sus convocatorias, de la más reciente a la más antigua. */
   function ambitos() {
+    // El mapa sólo tiene la geometría de España: las elecciones de otros
+    // países (Brasil…) se ven en la calculadora avanzada, no aquí.
+    const deEspana = e => !e.pais || e.pais === 'España';
     return (indice?.ambitos || []).map(a => ({
       key: a.key,
       label: a.label || a.key,
-      elecciones: [...(a.elecciones || [])].sort((x, y) =>
+      elecciones: (a.elecciones || []).filter(deEspana).sort((x, y) =>
         String(y.fecha).localeCompare(String(x.fecha))),
-    }));
+    })).filter(a => a.elecciones.length);
   }
 
   function colorPartido(siglas) {
