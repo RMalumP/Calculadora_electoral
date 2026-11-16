@@ -335,10 +335,13 @@ function advSyncConfigToForm() {
   select('#adv-b1-on').checked  = c.barrera1.activa;
   select('#adv-b1-level').value = c.barrera1.nivel;
   select('#adv-b1-val').value   = c.barrera1.valor;
+  select('#adv-b1-exen').value  = c.barrera1.exencion || 0;
 
   select('#adv-b2-on').checked  = c.barrera2.activa;
   select('#adv-b2-level').value = c.barrera2.nivel;
   select('#adv-b2-val').value   = c.barrera2.valor;
+  select('#adv-b2-exen').value  = c.barrera2.exencion || 0;
+  advBxRender(c.barrerasExtra || []);
 
   select('#adv-seats-mode').value = c.seatsMode;
   select('#adv-total-seats').value = c.totalSeats;
@@ -377,13 +380,16 @@ function advReadForm() {
     barrera1: {
       activa: select('#adv-b1-on').checked,
       nivel:  select('#adv-b1-level').value,
-      valor:  parseFloat(select('#adv-b1-val').value) || 0
+      valor:  parseFloat(select('#adv-b1-val').value) || 0,
+      exencion: parseInt(select('#adv-b1-exen').value) || 0
     },
     barrera2: {
       activa: select('#adv-b2-on').checked,
       nivel:  select('#adv-b2-level').value,
-      valor:  parseFloat(select('#adv-b2-val').value) || 0
+      valor:  parseFloat(select('#adv-b2-val').value) || 0,
+      exencion: parseInt(select('#adv-b2-exen').value) || 0
     },
+    barrerasExtra: advBxRead(),
     blancoEnDenominador: select('#adv-blanco').checked,
     seatsMode:   select('#adv-seats-mode').value,
     totalSeats:  parseInt(select('#adv-total-seats').value) || 350,
@@ -428,6 +434,8 @@ function advUpdateSummaries() {
   const barreras = [];
   if (c.barrera1.activa) barreras.push(`${c.barrera1.valor}% ${ADV_BARRIER_LABEL[c.barrera1.nivel] || ''}`.trim());
   if (c.barrera2.activa) barreras.push(`${c.barrera2.valor}% ${ADV_BARRIER_LABEL[c.barrera2.nivel] || ''}`.trim());
+  (c.barrerasExtra || []).filter(b => b.activa).forEach(b =>
+    barreras.push(`${b.valor}% ${ADV_BARRIER_LABEL[b.nivel] || ''}`.trim()));
   updateText(select('#adv-sum-barreras'), barreras.length ? barreras.join(' + ') : 'Sin barrera');
 
   const nEdits = advCountEdits();
@@ -548,6 +556,9 @@ function advInitSections() {
 function advRefreshFormState() {
   select('#adv-b1-fs').dataset.disabled = String(!select('#adv-b1-on').checked);
   select('#adv-b2-fs').dataset.disabled = String(!select('#adv-b2-on').checked);
+  document.querySelectorAll('#adv-bx-list .adv-bx-row').forEach(r => {
+    r.dataset.disabled = String(!r.querySelector('.adv-bx-on').checked);
+  });
   setDisplay(select('#adv-custom-seats'), select('#adv-seats-mode').value === 'custom');
 
   // Al agrupar en una sola circunscripción estatal, la barrera de comunidad
@@ -1259,6 +1270,88 @@ function advLockedIds() {
 }
 
 /** ¿Tiene esta circunscripción algún aspecto bloqueado? */
+/* ── Barreras adicionales y ajustes rápidos ── */
+
+const ADV_BX_NIVELES = [['circunscripcion', 'Circunscripción'], ['ccaa', 'Comunidad'], ['nacional', 'Nacional']];
+
+/** Pinta las filas de barreras adicionales. */
+function advBxRender(lista) {
+  const box = select('#adv-bx-list');
+  if (!box) return;
+  box.innerHTML = lista.map((b, i) => `
+    <div class="adv-fieldset adv-bx-row" data-bx="${i}" data-disabled="${!b.activa}">
+      <label class="adv-check"><input type="checkbox" class="adv-bx-on"${b.activa ? ' checked' : ''}> Barrera adicional ${i + 3}</label>
+      <div class="adv-row">
+        <div class="adv-select-wrap"><select class="adv-bx-level" aria-label="Ámbito de la barrera">${
+          ADV_BX_NIVELES.map(([v, t]) => `<option value="${v}"${b.nivel === v ? ' selected' : ''}>${t}</option>`).join('')}</select></div>
+        <input type="number" class="adv-bx-val" aria-label="Valor de la barrera (%)" min="0" max="100" step="0.1" value="${parseFloat(b.valor) || 0}">
+        <button type="button" class="adv-mini-btn adv-bx-del" aria-label="Quitar la barrera" title="Quitar">✕</button>
+      </div>
+      <div class="adv-row">
+        <label class="adv-sublabel">…o ganar circunscripciones</label>
+        <input type="number" class="adv-bx-exen" min="0" max="500" step="1" value="${parseInt(b.exencion) || 0}">
+      </div>
+    </div>`).join('');
+}
+
+/** Lee las filas de barreras adicionales. */
+function advBxRead() {
+  return [...document.querySelectorAll('#adv-bx-list .adv-bx-row')].map(r => ({
+    activa: r.querySelector('.adv-bx-on').checked,
+    nivel: r.querySelector('.adv-bx-level').value,
+    valor: parseFloat(r.querySelector('.adv-bx-val').value) || 0,
+    exencion: parseInt(r.querySelector('.adv-bx-exen').value) || 0
+  }));
+}
+
+/** Ajustes rápidos: cada uno fija las barreras de un sistema conocido. */
+const ADV_BARRIER_PRESETS = {
+  ninguna:  { b1: null, b2: null },
+  '3circ':  { b1: { nivel: 'circunscripcion', valor: 3 }, b2: null },
+  '5nac':   { b1: { nivel: 'nacional', valor: 5 }, b2: null },
+  '4nac':   { b1: { nivel: 'nacional', valor: 4 }, b2: null },
+  '3nac':   { b1: { nivel: 'nacional', valor: 3.25 }, b2: null },
+  alemania: { b1: { nivel: 'nacional', valor: 5, exencion: 3 }, b2: null },
+  '2nac':   { b1: { nivel: 'nacional', valor: 2 }, b2: null },
+  '1nac':   { b1: { nivel: 'nacional', valor: 1 }, b2: null }
+};
+
+function advApplyBarrierPreset(id) {
+  const p = ADV_BARRIER_PRESETS[id];
+  if (!p) return;
+  const set = (n, b) => {
+    select(`#adv-b${n}-on`).checked = !!b;
+    if (b) {
+      select(`#adv-b${n}-level`).value = b.nivel;
+      select(`#adv-b${n}-val`).value = b.valor;
+    }
+    select(`#adv-b${n}-exen`).value = b?.exencion || 0;
+  };
+  set(1, p.b1); set(2, p.b2);
+  advBxRender([]);
+  advOnConfigChange();
+}
+
+function advInitBarriers() {
+  select('#adv-b-preset')?.addEventListener('change', e => {
+    advApplyBarrierPreset(e.target.value);
+    e.target.value = '';
+  });
+  select('#adv-bx-add')?.addEventListener('click', () => {
+    advBxRender([...advBxRead(), { activa: true, nivel: 'nacional', valor: 3, exencion: 0 }]);
+    advOnConfigChange();
+  });
+  const list = select('#adv-bx-list');
+  list?.addEventListener('change', advOnConfigChange);
+  list?.addEventListener('click', e => {
+    const del = e.target.closest('.adv-bx-del');
+    if (!del) return;
+    const row = del.closest('.adv-bx-row');
+    advBxRender(advBxRead().filter((_, i) => i !== Number(row.dataset.bx)));
+    advOnConfigChange();
+  });
+}
+
 function advAnyLock(districtId) {
   const l = _advLocks[districtId];
   return !!l && ADV_LOCK_ASPECTS.some(a => l[a.key]);
@@ -1270,7 +1363,8 @@ function advSnapshotConfig() {
   return {
     formula: c.formula,
     barrera1: { ...(c.barrera1 || {}) },
-    barrera2: { ...(c.barrera2 || {}) }
+    barrera2: { ...(c.barrera2 || {}) },
+    barrerasExtra: (c.barrerasExtra || []).map(b => ({ ...b }))
   };
 }
 
@@ -1987,8 +2081,9 @@ function advInit() {
   advInitExceptions();
   advInitMetaDialog();
   advInitSessionButtons();
+  advInitBarriers();
 
-  ['#adv-level', '#adv-formula', '#adv-b1-on', '#adv-b1-level', '#adv-b1-val',
+  ['#adv-level', '#adv-formula', '#adv-b1-on', '#adv-b1-level', '#adv-b1-val', '#adv-b1-exen', '#adv-b2-exen',
    '#adv-b2-on', '#adv-b2-level', '#adv-b2-val', '#adv-blanco',
    '#adv-seats-mode', '#adv-total-seats', '#adv-min-seats', '#adv-reparto-base',
    '#adv-bono-on', '#adv-bono-modo', '#adv-bono-seats',

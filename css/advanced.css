@@ -1469,3 +1469,9 @@ body.adv-popup-open { overflow: hidden; }
 @media (max-width: 520px) {
   .adv-cmp-grid { grid-template-columns: 1fr; }
 }
+
+/* ── Barreras: exención y barreras adicionales ── */
+.adv-sublabel { font-size: 0.75rem; color: var(--text-muted); align-self: center; flex: 2 !important; }
+.adv-bx-row .adv-bx-del { flex: 0 0 auto; padding: 0 8px; }
+#adv-bx-wrap { margin: 4px 0 8px; }
+#adv-bx-wrap > .adv-mini-btn { margin: 2px 0 4px; }

@@ -24,16 +24,22 @@ function advDefaultConfig(meta) {
     // La hoja trae la fórmula del sistema real; d'Hondt sólo es el recurso
     // para las elecciones que aún no la tengan anotada.
     formula: advFormulaSoportada(meta?.formulaDefault) || 'dhondt',
+    // `exencion`: nº de circunscripciones base que basta ganar para saltarse la
+    // barrera (0 = sin exención), como la cláusula alemana de los 3 mandatos directos.
     barrera1: {
       activa: (meta?.barrera1?.valor || 0) > 0,
       nivel:  meta?.barrera1?.nivel || 'circunscripcion',
-      valor:  meta?.barrera1?.valor || 0
+      valor:  meta?.barrera1?.valor || 0,
+      exencion: 0
     },
     barrera2: {
       activa: !!meta?.barrera2,
       nivel:  meta?.barrera2?.nivel || 'nacional',
-      valor:  meta?.barrera2?.valor || 0
+      valor:  meta?.barrera2?.valor || 0,
+      exencion: 0
     },
+    // Barreras adicionales que añade la persona usuaria: [{ activa, nivel, valor, exencion }].
+    barrerasExtra: [],
     blancoEnDenominador: true,
     seatsMode: 'sheet',      // 'sheet' | 'custom'
     totalSeats: meta?.escanosTotales || 350,
@@ -208,10 +214,10 @@ function advEffectiveConfig(config, locks, districtId, district) {
     formula: advLockHas(locks, districtId, 'formula') && snap ? snap.formula
            : formulaPropia || config.formula,
     barreras: advLockHas(locks, districtId, 'barrera') && snap
-      ? [snap.barrera1, snap.barrera2]
+      ? [snap.barrera1, snap.barrera2, ...(snap.barrerasExtra || [])]
       : barreraPropia != null
-      ? [{ activa: barreraPropia > 0, nivel: 'circunscripcion', valor: barreraPropia }, config.barrera2]
-      : [config.barrera1, config.barrera2]
+      ? [{ activa: barreraPropia > 0, nivel: 'circunscripcion', valor: barreraPropia }, config.barrera2, ...(config.barrerasExtra || [])]
+      : [config.barrera1, config.barrera2, ...(config.barrerasExtra || [])]
   };
 }
 
@@ -445,6 +451,16 @@ function advComputeEligibility(districts, config, locks) {
     d.partyVotes.forEach((v, k) => c.parties.set(k, (c.parties.get(k) || 0) + v));
   });
 
+  // Circunscripciones en que cada partido es el más votado (para la exención).
+  const wins = new Map();
+  districts.forEach(d => {
+    let best = -1, keys = [];
+    d.partyVotes.forEach((v, k) => {
+      if (v > best) { best = v; keys = [k]; } else if (v === best) keys.push(k);
+    });
+    if (best > 0 && keys.length === 1) wins.set(keys[0], (wins.get(keys[0]) || 0) + 1);
+  });
+
   const eligibility = new Map();
   const blockedBy   = new Map();
 
@@ -471,7 +487,8 @@ function advComputeEligibility(districts, config, locks) {
         } else {
           scopeVotes = votes; scopeValid = _advValidVotes(d, config); label = 'de circunscripción';
         }
-        if (scopeValid > 0 && scopeVotes < scopeValid * b.valor / 100) {
+        const exento = (parseInt(b.exencion) || 0) > 0 && (wins.get(key) || 0) >= parseInt(b.exencion);
+        if (!exento && scopeValid > 0 && scopeVotes < scopeValid * b.valor / 100) {
           passes = false; reason = `${b.valor}% ${label}`; break;
         }
       }

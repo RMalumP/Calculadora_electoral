@@ -68,3 +68,35 @@ test('Desglose territorial: la suma de las provincias es el voto nacional de cad
   assert.equal(terr.reduce((s, t) => s + (t.votes.get(pp.key) || 0), 0), pp.votes);
   assert.equal(ctx.advTerritorialData('ccaa', data.rows, config).length, 19);
 });
+
+test('Exención por circunscripciones ganadas: salta la barrera nacional', () => {
+  const data = datos('ES-Congreso-2023-07-23');
+  const base = { ...ctx.advDefaultConfig(data.meta), circunscripcion: 'provincia' };
+  const barrera = exencion => ({
+    ...base, barrera1: { activa: true, nivel: 'nacional', valor: 15, exencion }, barrera2: { activa: false, nivel: 'nacional', valor: 0 }
+  });
+  const sin = ctx.advCalculate(data, barrera(0), {}, {});
+  const con = ctx.advCalculate(data, barrera(1), {}, {});
+  const nombres = r => r.national.filter(p => p.seats > 0).map(p => p.siglas || p.name);
+  assert.ok(nombres(con).length > nombres(sin).length);
+  assert.ok(nombres(sin).length <= 2, 'con 15 % nacional pasan pocos partidos');
+});
+
+test('Barreras adicionales se aplican junto a las dos primeras', () => {
+  const data = datos('ES-Congreso-2023-07-23');
+  const base = ctx.advDefaultConfig(data.meta);
+  const dura = { ...base, barrerasExtra: [{ activa: true, nivel: 'nacional', valor: 20, exencion: 0 }] };
+  const r = ctx.advCalculate(data, dura, {}, {});
+  assert.ok(r.national.filter(p => p.seats > 0).length <= 2);
+});
+
+test('La compensación acepta Droop, Hagenbach-Bischoff e Imperiali', () => {
+  const data = datos('ES-Congreso-2023-07-23');
+  const base = ctx.advDefaultConfig(data.meta);
+  for (const formula of ['droop', 'hb', 'imperiali', 'saintlague_m']) {
+    const r = ctx.advCalculate(data, { ...base, comp: { ...ctx.advCompDefault(), modo: 'ampliacion', formula } }, {}, {});
+    assert.ok(r.summary.totalSeats >= 350, formula);
+  }
+  assert.equal(ctx.advCompFormulaFor('droop'), 'droop');
+  assert.equal(ctx.advCompFormulaFor('adams'), 'dhondt');
+});

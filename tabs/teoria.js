@@ -45,6 +45,8 @@ registerTab('theory', 'tab-content', String.raw`
               <div class="theory-group">Indicadores de proporcionalidad</div>
               <button class="theory-system-btn" data-system="ind-gallagher" onclick="showTheorySystem('ind-gallagher')">Gallagher y Loosemore-Hanby</button>
               <button class="theory-system-btn theory-btn-gap" data-system="ind-enp" onclick="showTheorySystem('ind-enp')">Nº efectivo de partidos</button>
+              <div class="theory-group">Barreras electorales</div>
+              <button class="theory-system-btn theory-btn-gap" data-system="barreras" onclick="showTheorySystem('barreras')">Barreras y umbral variable</button>
             </div>
           </div>
         </div>
@@ -227,6 +229,17 @@ registerTab('theory', 'tab-content', String.raw`
               <div class="theory-formula">N = 1 / Σ pᵢ²   (pᵢ = cuota de votos o de escaños)<br>Votos por escaño = votos del partido / escaños del partido</div>
               <h4 class="theory-h4">Ejemplo</h4>
               <p class="theory-p">Votos 50 / 30 / 20 %: N = 1 / (0,25 + 0,09 + 0,04) ≈ 2,63. Escaños 60 / 40 / 0 %: N = 1 / (0,36 + 0,16) ≈ 1,92. El partido C (20 % de los votos) es todo voto desperdiciado.</p>
+            </div>
+
+            <div id="theory-barreras" class="theory-content-section">
+              <h3 class="theory-title">Barreras electorales y umbral variable</h3>
+              <h4 class="theory-h4">Descripción</h4>
+              <p class="theory-p">La <b>barrera</b> (o umbral) es el porcentaje mínimo de votos que debe alcanzar una candidatura para entrar en el reparto. Puede medirse en la circunscripción (España, 3 %), en la comunidad o en todo el país (Alemania 5 %, Suecia 4 %, Dinamarca 2 %).</p>
+              <p class="theory-p">El <b>umbral variable</b> combina condiciones alternativas. Ejemplo alemán: un partido entra si supera el 5 % nacional <i>o</i> gana al menos 3 circunscripciones (<i>Grundmandatklausel</i>). En la Calculadora avanzada cada barrera tiene el campo «…o ganar circunscripciones» y puedes añadir tantas barreras adicionales como quieras: se aplican todas a la vez.</p>
+              <h4 class="theory-h4">Fórmula</h4>
+              <div class="theory-formula">Pasa si: (votos / válidos ≥ barrera) O (circunscripciones ganadas ≥ N)<br>Con varias barreras activas hay que pasarlas todas</div>
+              <h4 class="theory-h4">Ejemplo</h4>
+              <p class="theory-p">Con barrera nacional del 15 % y exención de 1 circunscripción, un partido regional con el 1 % nacional pero primero en una provincia entra en el reparto; sin la exención quedaría fuera.</p>
             </div>
 
           </div>
