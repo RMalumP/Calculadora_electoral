@@ -137,3 +137,14 @@ test('Compensación: los escaños fuera de las circunscripciones base van aparte
   assert.equal(r.circ.resto.a, 0);
   assert.equal(r.circ.resto.b, B.summary.totalSeats - 350);
 });
+
+test('Emparejamiento automático por la primera palabra de las siglas, sólo si es única', () => {
+  const A = calc(C19), B = calc(C23);
+  const r = ctx.cmpComparar(A, B);
+  const erc = r.partidos.find(f => f.a && /^ERC/.test(f.a.siglas));
+  assert.ok(erc.a && erc.b, 'ERC-SOBIRANISTES ↔ ERC');
+  assert.equal(erc.siglas, `${erc.a.siglas} → ${erc.b.siglas}`);
+  // Varias PODEMOS-* sueltas en 2019: no se adivina con cuál va ninguna.
+  const podemos = A.national.filter(p => /^PODEMOS/.test(p.siglas));
+  if (podemos.length > 1) podemos.forEach(p => assert.ok(!r.parejas.a.get(p.key).startsWith('p:')));
+});

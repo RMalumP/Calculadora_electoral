@@ -32,6 +32,26 @@ function cmpEmparejar(natA, natB, manual) {
   const a = new Map(), b = new Map();
   (natA || []).forEach(p => a.set(p.key, 'n:' + (cmpNormalizar(cmpEtiqueta(p)) || p.key)));
   (natB || []).forEach(p => b.set(p.key, 'n:' + (cmpNormalizar(cmpEtiqueta(p)) || p.key)));
+  // Segunda pasada: las que siguen sueltas se unen por la primera palabra de
+  // sus siglas («ERC» ↔ «ERC-SOBIRANISTES», «CCa» ↔ «CCa-PNC-NC») sólo si
+  // esa palabra es única entre las sueltas de cada lado.
+  const primera = p => cmpNormalizar(String(cmpEtiqueta(p)).split(/[^\p{L}\p{N}]+/u).filter(Boolean)[0] || '');
+  const idsA = new Set(a.values()), idsB = new Set(b.values());
+  const sueltasA = (natA || []).filter(p => !idsB.has(a.get(p.key)));
+  const sueltasB = (natB || []).filter(p => !idsA.has(b.get(p.key)));
+  const porPrimera = lista => {
+    const m = new Map();
+    lista.forEach(p => { const k = primera(p); if (k.length >= 2) m.set(k, m.has(k) ? null : p); });
+    return m;
+  };
+  const pa = porPrimera(sueltasA), pb = porPrimera(sueltasB);
+  pa.forEach((p, k) => {
+    const q = pb.get(k);
+    if (!p || !q) return;
+    const id = 'p:' + k;
+    a.set(p.key, id);
+    b.set(q.key, id);
+  });
   (manual || []).forEach(([ka, kb]) => {
     if (!a.has(ka) || !b.has(kb)) return;
     const id = 'm:' + ka + '|' + kb;

@@ -50,8 +50,12 @@ function advCmpCompute(side) {
   }
 }
 
-/** Carga una elección en un lado y deja su configuración por defecto. */
-async function advCmpLoad(side, election, yearKey) {
+/**
+ * Carga una elección en un lado. Sin `conservar`, deja su configuración por
+ * defecto; con ella (cambio de convocatoria dentro del mismo ámbito, o el
+ * atajo «A en otra convocatoria») mantiene las reglas de esa configuración.
+ */
+async function advCmpLoad(side, election, yearKey, conservar) {
   side.loading = true;
   side.error = null;
   advCmpRender();
@@ -60,7 +64,7 @@ async function advCmpLoad(side, election, yearKey) {
     if (!data.rows?.length) throw new Error('Esa elección no tiene datos por circunscripción.');
     side.election = election;
     side.data = data;
-    side.config = advDefaultConfig(data.meta);
+    side.config = conservar ? advCmpConservar(conservar, data) : advDefaultConfig(data.meta);
     side.config.yearKey = data.eleccion?.key || '';
     advCmpCompute(side);
   } catch (err) {
@@ -69,6 +73,24 @@ async function advCmpLoad(side, election, yearKey) {
   } finally {
     side.loading = false;
   }
+}
+
+/** Las reglas de `previa` aplicadas a otra convocatoria: se quitan las coaliciones de partidos que no estén. */
+function advCmpConservar(previa, data) {
+  const c = _advCmpClone(previa);
+  const hay = new Set((data.parties || []).map(p => p.key));
+  c.coaliciones = (c.coaliciones || []).map(co => ({ ...co, members: co.members.filter(k => hay.has(k)) }))
+    .filter(co => co.members.length >= 2);
+  if (c.seatsMode !== 'custom') c.totalSeats = data.meta?.escanosTotales || c.totalSeats;
+  return c;
+}
+
+/** Convocatoria vecina de `yearKey` en una lista (la anterior; si es la primera, la siguiente). */
+function advCmpVecina(elecciones, yearKey) {
+  const keys = (elecciones || []).map(e => e.key);
+  const i = keys.indexOf(yearKey);
+  if (keys.length < 2) return null;
+  return i > 0 ? keys[i - 1] : keys[1];
 }
 
 function advCmpSideFromMain() {
@@ -177,7 +199,7 @@ async function advCmpOnChange(ev) {
   const v = el.type === 'checkbox' ? el.checked : el.value;
 
   if (field === 'election') { await advCmpLoad(side, v); advCmpRender(); return; }
-  if (field === 'year')     { await advCmpLoad(side, side.election, v); advCmpRender(); return; }
+  if (field === 'year')     { await advCmpLoad(side, side.election, v, side.config); advCmpRender(); return; }
 
   const c = side.config;
   switch (field) {
@@ -213,6 +235,10 @@ function advCmpOnClick(ev) {
   if (tab) { _advCmp.tab = tab.dataset.cmpTab; advCmpRender(); select(`#cmp-tab-${_advCmp.tab}`)?.focus(); return; }
   if (ev.target.closest('[data-cmp-fold]')) { _advCmp.plegado = !_advCmp.plegado; advCmpRender(); select('[data-cmp-fold]')?.focus(); return; }
   if (ev.target.closest('button[data-ind-todos]')) { setTimeout(advCmpRender, 0); return; }
+  const otra = ev.target.closest('[data-cmp-otra]');
+  if (otra) { advCmpOtraConvocatoria(otra.dataset.cmpOtra); return; }
+  const par = ev.target.closest('[data-cmp-par]');
+  if (par) { advCmpParAccion(par); return; }
   const btn = ev.target.closest('[data-cmp-copy]');
   if (!btn) return;
   const [from, to] = btn.dataset.cmpCopy.split('>');
@@ -221,6 +247,92 @@ function advCmpOnClick(ev) {
   _advCmp[to] = { ...src, config: _advCmpClone(src.config), result: null };
   advCmpCompute(_advCmp[to]);
   advCmpRender();
+}
+
+/** Atajo: el otro lado con la configuración de este, en la convocatoria vecina. */
+async function advCmpOtraConvocatoria(letter) {
+  const from = letter === 'b' ? _advCmp.a : _advCmp.b;
+  if (!from?.data) return;
+  const destino = advCmpVecina(from.data.elecciones, from.config.yearKey);
+  if (!destino) return;
+  const side = { election: from.election, data: null, config: null, result: null, error: null, loading: true };
+  _advCmp[letter] = side;
+  await advCmpLoad(side, from.election, destino, from.config);
+  advCmpRender();
+}
+
+/* ── Emparejamiento de candidaturas entre convocatorias ────── */
+
+const ADV_CMP_PAREJAS_CLAVE = 'ce-cmp-parejas';
+
+function advCmpParejasTodas() {
+  try { return JSON.parse(localStorage.getItem(ADV_CMP_PAREJAS_CLAVE) || '{}') || {}; } catch (e) { return {}; }
+}
+
+/** Clave de la pareja de convocatorias A|B. */
+const advCmpParejaClave = () => `${_advCmp.a?.config?.yearKey || _advCmp.a?.election}|${_advCmp.b?.config?.yearKey || _advCmp.b?.election}`;
+
+/** Parejas forzadas a mano para las dos convocatorias que se comparan: [[claveA, claveB]]. */
+function advCmpParejasManual() {
+  if (_advCmp.parejas) return _advCmp.parejas[advCmpParejaClave()] || [];
+  _advCmp.parejas = advCmpParejasTodas();
+  return _advCmp.parejas[advCmpParejaClave()] || [];
+}
+
+function advCmpParejasGuardar(lista) {
+  const k = advCmpParejaClave();
+  _advCmp.parejas = _advCmp.parejas || advCmpParejasTodas();
+  if (lista.length) _advCmp.parejas[k] = lista; else delete _advCmp.parejas[k];
+  try { localStorage.setItem(ADV_CMP_PAREJAS_CLAVE, JSON.stringify(_advCmp.parejas)); } catch (e) { /* sin almacenamiento: dura la sesión */ }
+}
+
+function advCmpParAccion(btn) {
+  const lista = advCmpParejasManual().slice();
+  if (btn.dataset.cmpPar === 'add') {
+    const ka = select('#cmp-par-a')?.value, kb = select('#cmp-par-b')?.value;
+    if (!ka || !kb) return;
+    advCmpParejasGuardar([...lista.filter(([a, b]) => a !== ka && b !== kb), [ka, kb]]);
+  } else {
+    const i = parseInt(btn.dataset.cmpPar.slice(4));
+    lista.splice(i, 1);
+    advCmpParejasGuardar(lista);
+  }
+  advCmpRender();
+}
+
+/** Bloque para unir a mano candidaturas que se llaman distinto en A y en B. */
+function advCmpParejasHtml(cmp) {
+  const A = _advCmp.a.result.national, B = _advCmp.b.result.national;
+  const nom = (lista, k) => { const p = lista.find(x => x.key === k); return p ? (p.siglas || p.name) : k; };
+  const manual = advCmpParejasManual();
+  const relevantes = lista => lista.filter(p => p.seats > 0 || p.votePct >= 1)
+    .sort((x, y) => y.seats - x.seats || y.votes - x.votes);
+  const opts = (lista, sueltas) => {
+    const s = new Set(sueltas);
+    const rel = relevantes(lista);
+    return rel.filter(p => s.has(p.key)).concat(rel.filter(p => !s.has(p.key)))
+      .map(p => `<option value="${advEscape(p.key)}">${advEscape(p.siglas || p.name)}${s.has(p.key) ? ' · sin pareja' : ''}</option>`).join('');
+  };
+  const sueltas = cmp.sinPareja.a.length + cmp.sinPareja.b.length;
+  return `<details class="adv-cmp-parejas"${_advCmp.parejasAbierto ? ' open' : ''}>
+    <summary>Unir candidaturas entre A y B${sueltas ? ` <span class="adv-cmp-count">(${sueltas} con escaños sin pareja)</span>` : ''}</summary>
+    <p class="adv-terr-hint">Entre convocatorias la misma fuerza puede presentarse con otras siglas. Se emparejan solas cuando las siglas coinciden (sin tildes ni signos); aquí puedes unir las demás. Se guarda para estas dos convocatorias.</p>
+    ${manual.length ? `<ul class="adv-cmp-par-lista">${manual.map(([a, b], i) =>
+      `<li>${advEscape(nom(A, a))} ↔ ${advEscape(nom(B, b))} <button type="button" class="adv-mini-btn" data-cmp-par="del:${i}" aria-label="Quitar la pareja">Quitar</button></li>`).join('')}</ul>` : ''}
+    <div class="adv-cmp-tools">
+      <label>A <span class="adv-select-wrap"><select id="cmp-par-a">${opts(A, cmp.sinPareja.a)}</select></span></label>
+      <label>B <span class="adv-select-wrap"><select id="cmp-par-b">${opts(B, cmp.sinPareja.b)}</select></span></label>
+      <button type="button" class="adv-mini-btn" data-cmp-par="add">Unir</button>
+    </div>
+  </details>`;
+}
+
+/** ¿Las dos configuraciones usan las mismas reglas? (sin contar la convocatoria ni el total que trae cada una) */
+function advCmpMismasReglas(ca, cb) {
+  const ordenado = v => Array.isArray(v) ? v.map(ordenado)
+    : v && typeof v === 'object' ? Object.keys(v).sort().reduce((o, k) => (o[k] = ordenado(v[k]), o), {}) : v;
+  const limpia = c => { const x = _advCmpClone(c); delete x.yearKey; if (x.seatsMode !== 'custom') delete x.totalSeats; return JSON.stringify(ordenado(x)); };
+  return limpia(ca) === limpia(cb);
 }
 
 /* ── Pintado ───────────────────────────────────────────────── */
@@ -243,7 +355,9 @@ function advCmpSideHtml(letter) {
 
   return `<section class="adv-cmp-side adv-cmp-side-${letter}" aria-label="${title}">
     <h3><span class="adv-cmp-tag">${letter.toUpperCase()}</span>${title}
-      <button type="button" class="adv-mini-btn" data-cmp-copy="${other}>${letter}" title="Copiar la configuración de ${other.toUpperCase()} aquí">Copiar de ${other.toUpperCase()}</button></h3>
+      <span class="adv-cmp-acciones">
+        ${(_advCmp[other]?.data?.elecciones || []).length > 1 ? `<button type="button" class="adv-mini-btn" data-cmp-otra="${letter}" title="Las reglas de ${other.toUpperCase()} en la convocatoria anterior (o la siguiente) del mismo ámbito">${other.toUpperCase()} en otra convocatoria</button>` : ''}
+        <button type="button" class="adv-mini-btn" data-cmp-copy="${other}>${letter}" title="Copiar la configuración de ${other.toUpperCase()} aquí">Copiar de ${other.toUpperCase()}</button></span></h3>
     ${side.loading ? '<div class="adv-loading"><span class="adv-spinner"></span>Cargando datos…</div>' : ''}
     ${side.error ? `<div class="adv-notice error">${advEscape(side.error)}</div>` : ''}
     <div class="adv-cmp-grid">
@@ -283,7 +397,7 @@ function advCmpStackBar(side) {
 function advCmpEleccionNombre(side) {
   const e = ADV_ELECTIONS.find(x => x.key === side.election);
   const y = (side.data?.elecciones || []).find(x => x.key === side.config?.yearKey);
-  return [e?.label || side.election, y ? advElectionLabel(y) : ''].filter(Boolean).join(' · ');
+  return y ? advElectionLabel(y) : (e?.label || side.election);
 }
 
 function advCmpSummaryHtml(letter) {
@@ -323,9 +437,20 @@ function advCmpResumenHtml(cmp) {
         ${r.b.total !== r.a.total ? `<small>El parlamento pasa de ${r.a.total} a ${r.b.total}</small>` : ''}</div>
       ${lado('A', r.a)}${lado('B', r.b)}
     </div>
+    ${advCmpCausaHtml(r)}
     ${r.cambiaGanador || r.entran.length || r.salen.length ? `<p class="adv-cmp-lead">
       ${r.cambiaGanador ? '<span>Cambia la candidatura más votada en escaños.</span>' : ''}
       ${lista('Entran en B', r.entran)} ${lista('Se quedan fuera en B', r.salen)}</p>` : ''}`;
+}
+
+/** Una línea que dice de dónde sale la diferencia: de los votos, de las reglas o de las dos cosas. */
+function advCmpCausaHtml(r) {
+  const reglas = advCmpMismasReglas(_advCmp.a.config, _advCmp.b.config);
+  const txt = r.mismaEleccion
+    ? (reglas ? 'Mismos votos y mismas reglas: A y B son iguales.' : 'Mismos votos en los dos lados: toda la diferencia se debe a las reglas.')
+    : reglas ? `Mismas reglas en los dos lados: toda la diferencia se debe a los votos (${advEscape(advCmpEleccionNombre(_advCmp.a))} frente a ${advEscape(advCmpEleccionNombre(_advCmp.b))}).`
+      : 'Cambian los votos y las reglas a la vez: la diferencia mezcla los dos efectos. Para separarlos, usa «A en otra convocatoria» en B.';
+  return `<p class="adv-cmp-causa">${txt}</p>`;
 }
 
 /* ── Pestaña «Partidos» ── */
@@ -361,6 +486,7 @@ function advCmpPartidosHtml(cmp) {
             <div class="adv-bar-outer" title="B: ${r.escB}"><div class="adv-bar adv-cmp-bar-b" style="width:${(r.escB / max * 100).toFixed(1)}%;--bar-color:${color}"></div></div>
           </div></td></tr>`;
       }).join('')}</tbody></table></div>
+    ${cmp.resumen.mismaEleccion ? '' : advCmpParejasHtml(cmp)}
     <p class="adv-terr-hint">Barra llena: A. Barra rayada: B.${sinEscano > 0 ? ` ${sinEscano} candidatura${sinEscano === 1 ? '' : 's'} con más del 1 % de voto en alguno de los lados no sacan escaño en ninguno.` : ''}
       Cada lado se calcula con los votos de origen, sin ediciones manuales.</p>`;
 }
@@ -380,6 +506,9 @@ function advCmpCircHtml(cmp) {
   const soloUno = c.filas.filter(f => f.soloEn);
   const avisoSolo = soloUno.length
     ? `<div class="adv-notice">${soloUno.length} circunscripci${soloUno.length === 1 ? 'ón sólo existe' : 'ones sólo existen'} en uno de los lados: ${soloUno.map(f => advEscape(f.name)).join(', ')}.</div>` : '';
+  const distintoTam = c.filas.filter(f => !f.soloEn && f.escA !== f.escB).length;
+  const avisoTam = distintoTam
+    ? `<div class="adv-notice">En ${distintoTam} circunscripci${distintoTam === 1 ? 'ón' : 'ones'} A y B no reparten el mismo número de escaños${_advCmp.cmp?.resumen.mismaEleccion ? '' : ' (el reparto de escaños entre circunscripciones cambia de una convocatoria a otra)'}.</div>` : '';
   const resto = c.resto.a || c.resto.b
     ? `<tr class="adv-cmp-resto"><th scope="row">Compensación y niveles adicionales</th><td class="adv-num">${c.resto.a}</td><td class="adv-num">${c.resto.b}</td><td class="adv-num">${advCmpDif(c.resto.b - c.resto.a)}</td><td colspan="3"></td></tr>` : '';
   const ganador = g => g ? `${advCmpChip(g.siglas, advCmpColor(g.ref))} ${g.esc}` : '—';
@@ -395,7 +524,7 @@ function advCmpCircHtml(cmp) {
          <td class="adv-num">${f.escA}</td><td class="adv-num">${f.escB}</td><td class="adv-num">${f.mueven || '<span class="adv-cmp-eq">0</span>'}</td>
          <td>${ganador(f.ganadorA)}</td><td>${ganador(f.ganadorB)}</td><td class="adv-cmp-detalle">${detalle(f)}</td></tr>`).join('')}${resto}</tbody>`;
   const cambian = c.filas.filter(f => ref ? advCmpEscEn(f, partido).d !== 0 : (f.mueven > 0 || f.escA !== f.escB)).length;
-  return `${aviso}${avisoSolo}<div class="adv-cmp-tools">
+  return `${aviso}${avisoSolo}${avisoTam}<div class="adv-cmp-tools">
       <label>Partido <span class="adv-select-wrap"><select data-cmp-ui="circParty">
         <option value="">Todos</option>${conEsc.map(r => `<option value="${advEscape(r.id)}"${r.id === partido ? ' selected' : ''}>${advEscape(r.siglas)}</option>`).join('')}</select></span></label>
       <label class="adv-check"><input type="checkbox" data-cmp-ui="soloCambios"${_advCmp.soloCambios ? ' checked' : ''}> Sólo donde cambia algo</label>
@@ -453,9 +582,6 @@ function advCmpResultsHtml() {
   </div>`;
 }
 
-/** Parejas de candidaturas forzadas a mano (fase C). */
-function advCmpParejasManual() { return []; }
-
 const advCmpEscEn = (fila, id) => cmpEscanosEn(fila, id);
 
 function advCmpRender() {
@@ -465,6 +591,8 @@ function advCmpRender() {
   const foco = document.activeElement?.id || null;
   const focoUi = document.activeElement?.dataset?.cmpUi || null;
   const indAbierto = body.querySelector('.adv-cmp-panel details.ind-sel')?.open;
+  const parAbierto = body.querySelector('.adv-cmp-parejas');
+  if (parAbierto) _advCmp.parejasAbierto = parAbierto.open;
   body.innerHTML = `<div class="adv-cmp-introbar"><p class="adv-cmp-intro">Dos configuraciones independientes, calculadas a la vez sin tocar el panel principal.
       B parte de A con otra fórmula; cambia lo que quieras de cada lado.</p>
       <button type="button" class="adv-mini-btn" data-cmp-fold aria-expanded="${!_advCmp.plegado}">${_advCmp.plegado ? 'Mostrar las configuraciones' : 'Ocultar las configuraciones'}</button></div>
