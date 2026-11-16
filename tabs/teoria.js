@@ -53,6 +53,11 @@ registerTab('theory', 'tab-content', String.raw`
               <button class="theory-system-btn theory-btn-gap" data-system="coaliciones" onclick="showTheorySystem('coaliciones')">Coaliciones y listas conjuntas</button>
               <div class="theory-group">Prorrateo de escaños</div>
               <button class="theory-system-btn theory-btn-gap" data-system="prorrateo" onclick="showTheorySystem('prorrateo')">Prorrateo entre circunscripciones</button>
+              <div class="theory-group">Mixtos y preferenciales</div>
+              <button class="theory-system-btn" data-system="paralelo" onclick="showTheorySystem('paralelo')">Sistema paralelo</button>
+              <button class="theory-system-btn" data-system="preferencial" onclick="showTheorySystem('preferencial')">Listas abiertas y preferencial</button>
+              <button class="theory-system-btn" data-system="stv" onclick="showTheorySystem('stv')">STV (voto único transferible)</button>
+              <button class="theory-system-btn theory-btn-gap" data-system="av" onclick="showTheorySystem('av')">Voto alternativo, Borda, Condorcet</button>
             </div>
           </div>
         </div>
@@ -280,6 +285,47 @@ registerTab('theory', 'tab-content', String.raw`
               <div class="theory-formula">Hare: cuota = población total / escaños; cada una recibe ⌊pob / cuota⌋ y los restos mayores se llevan los que faltan<br>Divisor: se asigna cada escaño a la mayor prioridad = población / d(n)<br>d(n): D'Hondt n+1 · Webster n+½ · Adams n · Huntington-Hill √(n(n+1))</div>
               <h4 class="theory-h4">Ejemplo</h4>
               <p class="theory-p">Poblaciones 100, 30 y 10 con 1 escaño de partida cada una y 6 por repartir. Con Huntington-Hill los escaños añadidos son 5 / 1 / 0, de modo que el reparto final es 6 / 2 / 1.</p>
+            </div>
+
+            <div id="theory-paralelo" class="theory-content-section">
+              <h3 class="theory-title">Sistema paralelo (mixto sin compensación)</h3>
+              <h4 class="theory-h4">Descripción</h4>
+              <p class="theory-p">Una parte de los escaños se elige en distritos uninominales por mayoría y otra por listas proporcionales, <b>sin compensar</b> entre ambas. Por eso es mucho menos proporcional que el MMP. Lo usan Japón (289 + 176), Corea del Sur y Rusia en 2016.</p>
+              <h4 class="theory-h4">Fórmula</h4>
+              <div class="theory-formula">Total(partido) = distritos ganados + escaños de lista (reparto proporcional de la parte de lista)</div>
+              <h4 class="theory-h4">Ejemplo</h4>
+              <p class="theory-p">Votos de lista 50 / 30 / 20 %, distritos 7 / 1 / 0 y 10 escaños de lista con D'Hondt (5 / 3 / 2). Total: A 12, B 4, C 2 (18 escaños); A tiene el 67 % de los escaños con el 50 % de los votos.</p>
+            </div>
+
+            <div id="theory-preferencial" class="theory-content-section">
+              <h3 class="theory-title">Listas abiertas, desbloqueadas y voto preferencial</h3>
+              <h4 class="theory-h4">Descripción</h4>
+              <p class="theory-p">En las <b>listas cerradas</b> el votante sólo elige partido y el orden lo fija el partido. En las <b>abiertas</b> (Finlandia, Chile, Brasil) el votante elige candidato y salen los más votados de cada lista. En las <b>desbloqueadas</b> (Bélgica, Países Bajos, Austria) se respeta el orden de la lista salvo que un candidato supere un umbral de preferencias.</p>
+              <p class="theory-p">El reparto entre partidos sigue siendo proporcional (D'Hondt, Sainte-Laguë…): las preferencias sólo deciden <i>quién</i> ocupa los escaños de cada lista.</p>
+              <h4 class="theory-h4">Fórmula</h4>
+              <div class="theory-formula">1) Escaños(lista) = reparto proporcional por votos<br>2) Abierta: electos = los N con más preferencias<br>   Desbloqueada: sube quien supera umbral × votos de la lista; el resto, por orden</div>
+              <h4 class="theory-h4">Ejemplo</h4>
+              <p class="theory-p">Lista con 100 votos y 2 escaños; candidatos a (10 preferencias), b (5) y c (30). Cerrada: a y b. Abierta: c y a. Desbloqueada con umbral del 25 %: c supera el umbral (30 ≥ 25) y sube: c y a.</p>
+            </div>
+
+            <div id="theory-stv" class="theory-content-section">
+              <h3 class="theory-title">Voto único transferible (STV)</h3>
+              <h4 class="theory-h4">Descripción</h4>
+              <p class="theory-p">El votante ordena a los candidatos. Se fija la cuota de Droop; quien la alcanza resulta elegido y su excedente se transfiere a la siguiente preferencia de sus papeletas. Si nadie llega, se elimina al último y sus votos pasan al siguiente. Se repite hasta cubrir los escaños. Se usa en Irlanda, Malta, el Senado de Australia y en Escocia (local).</p>
+              <h4 class="theory-h4">Fórmula</h4>
+              <div class="theory-formula">Cuota = ⌊votos / (escaños + 1)⌋ + 1<br>Peso de transferencia = (votos del candidato − cuota) / votos del candidato</div>
+              <h4 class="theory-h4">Ejemplo</h4>
+              <p class="theory-p">2 escaños y 100 papeletas: cuota 34. A tiene 40: es elegido y sus 6 votos de excedente pasan a B. B tiene 30 + 6 = 36 ≥ 34: B también sale elegido.</p>
+            </div>
+
+            <div id="theory-av" class="theory-content-section">
+              <h3 class="theory-title">Voto alternativo, Borda y Condorcet</h3>
+              <h4 class="theory-h4">Descripción</h4>
+              <p class="theory-p"><b>Voto alternativo</b> (IRV, Australia, Cámara Baja): votantes ordenan candidatos; se elimina al último hasta que alguien supera el 50 %. <b>Borda</b>: puntos por posición. <b>Condorcet</b>: gana el que vence a todos en enfrentamientos por pares, si existe. Cada regla puede elegir a un ganador distinto con las mismas papeletas.</p>
+              <h4 class="theory-h4">Fórmula</h4>
+              <div class="theory-formula">AV: se elimina al último y se repiten los recuentos<br>Borda: n−1 puntos al primero, n−2 al segundo…<br>Condorcet: gana quien supera a cada rival en más papeletas</div>
+              <h4 class="theory-h4">Ejemplo</h4>
+              <p class="theory-p">A 40 (A>B>C), B 35 (B>C>A), C 25 (C>B>A). Mayoría simple: A. Voto alternativo: sale C y B suma 60, así que gana B. Borda: A 80, B 95, C 25… gana B. Condorcet: B vence a A (60–40) y a C (75–25): gana B.</p>
             </div>
 
           </div>
