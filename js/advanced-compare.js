@@ -155,6 +155,9 @@ async function advCmpOpen(opener) {
   overlay.classList.add('open');
   document.body.classList.add('adv-popup-open');
 
+  if (!_advCmp.a && await advCmpRestaurar(advCmpGuardadoLeer())) {
+    if (typeof autoToast === 'function') autoToast('Comparación recuperada');
+  }
   if (!_advCmp.a) {
     if (_advLoaded && _advParties && _advConfig) {
       _advCmp.a = advCmpSideFromMain();
@@ -235,6 +238,9 @@ function advCmpOnClick(ev) {
   if (tab) { _advCmp.tab = tab.dataset.cmpTab; advCmpRender(); select(`#cmp-tab-${_advCmp.tab}`)?.focus(); return; }
   if (ev.target.closest('[data-cmp-fold]')) { _advCmp.plegado = !_advCmp.plegado; advCmpRender(); select('[data-cmp-fold]')?.focus(); return; }
   if (ev.target.closest('button[data-ind-todos]')) { setTimeout(advCmpRender, 0); return; }
+  const exp = ev.target.closest('[data-cmp-exp]');
+  if (exp) { advCmpExportar(exp.dataset.cmpExp); return; }
+  if (ev.target.closest('[data-cmp-reset]')) { advCmpReiniciar(); return; }
   const otra = ev.target.closest('[data-cmp-otra]');
   if (otra) { advCmpOtraConvocatoria(otra.dataset.cmpOtra); return; }
   const par = ev.target.closest('[data-cmp-par]');
@@ -656,6 +662,13 @@ function advCmpResultsHtml() {
     <div class="adv-tabs adv-cmp-tabs" role="tablist" aria-label="Vistas de la comparación">${ADV_CMP_TABS.map(([id, label]) =>
       `<button type="button" role="tab" class="adv-tab${id === tab ? ' active' : ''}" id="cmp-tab-${id}" data-cmp-tab="${id}" aria-selected="${id === tab}" tabindex="${id === tab ? 0 : -1}">${label}</button>`).join('')}</div>
     <div class="adv-cmp-panel" role="tabpanel" aria-labelledby="cmp-tab-${tab}">${panel}</div>
+    <div class="adv-cmp-export">
+      <span>Exportar la comparación:</span>
+      <button type="button" class="adv-mini-btn" data-cmp-exp="csv">CSV por partido</button>
+      <button type="button" class="adv-mini-btn" data-cmp-exp="csv-circ">CSV por circunscripción</button>
+      <button type="button" class="adv-mini-btn" data-cmp-exp="png">Imagen PNG</button>
+      <button type="button" class="adv-mini-btn" data-cmp-exp="link">🔗 Copiar enlace</button>
+    </div>
   </div>`;
 }
 
@@ -672,18 +685,210 @@ function advCmpRender() {
   if (parAbierto) _advCmp.parejasAbierto = parAbierto.open;
   body.innerHTML = `<div class="adv-cmp-introbar"><p class="adv-cmp-intro">Dos configuraciones independientes, calculadas a la vez sin tocar el panel principal.
       B parte de A con otra fórmula; cambia lo que quieras de cada lado.</p>
-      <button type="button" class="adv-mini-btn" data-cmp-fold aria-expanded="${!_advCmp.plegado}">${_advCmp.plegado ? 'Mostrar las configuraciones' : 'Ocultar las configuraciones'}</button></div>
+      <span class="adv-cmp-acciones">
+        <button type="button" class="adv-mini-btn" data-cmp-reset title="A vuelve a ser la configuración del panel principal y B, A con otra fórmula">Empezar desde el panel</button>
+        <button type="button" class="adv-mini-btn" data-cmp-fold aria-expanded="${!_advCmp.plegado}">${_advCmp.plegado ? 'Mostrar las configuraciones' : 'Ocultar las configuraciones'}</button></span></div>
     <div class="adv-cmp-sides"${_advCmp.plegado ? ' hidden' : ''}>${advCmpSideHtml('a')}${advCmpSideHtml('b')}</div>
     ${advCmpResultsHtml()}`;
   if (indAbierto) body.querySelector('.adv-cmp-panel details.ind-sel')?.setAttribute('open', '');
+  advCmpGuardar();
   if (foco) select(`#${foco}`)?.focus();
   else if (focoUi) body.querySelector(`[data-cmp-ui="${focoUi}"]`)?.focus();
+}
+
+/* ── Guardar, compartir y exportar ─────────────────────────── */
+
+const ADV_CMP_SESION = 'ce-cmp-sesion';
+
+/** Lo que define una comparación: ámbito y configuración de cada lado, las parejas y la vista. */
+function advCmpEstado() {
+  if (!_advCmp.a?.config || !_advCmp.b?.config) return null;
+  return { v: 1, a: { e: _advCmp.a.election, c: _advCmp.a.config }, b: { e: _advCmp.b.election, c: _advCmp.b.config },
+           p: advCmpParejasManual(), t: _advCmp.tab };
+}
+
+function advCmpGuardar() {
+  const e = advCmpEstado();
+  if (!e) return;
+  try { localStorage.setItem(ADV_CMP_SESION, JSON.stringify(e)); } catch (err) { /* sin almacenamiento */ }
+}
+
+function advCmpGuardadoLeer() {
+  try { return JSON.parse(localStorage.getItem(ADV_CMP_SESION) || 'null'); } catch (e) { return null; }
+}
+
+/** Repone una comparación guardada o compartida. Devuelve true si los dos lados han cargado. */
+async function advCmpRestaurar(e) {
+  if (!e || !e.a?.e || !e.b?.e || !e.a.c || !e.b.c) return false;
+  const lado = async x => {
+    const side = { election: x.e, data: null, config: null, result: null, error: null, loading: true };
+    await advCmpLoad(side, x.e, x.c.yearKey || undefined);
+    if (!side.data) return null;
+    side.config = { ...advDefaultConfig(side.data.meta), ..._advCmpClone(x.c), yearKey: side.config.yearKey };
+    advCmpCompute(side);
+    return side;
+  };
+  const [a, b] = await Promise.all([lado(e.a), lado(e.b)]);
+  if (!a || !b) return false;
+  _advCmp.a = a; _advCmp.b = b;
+  if (ADV_CMP_TABS.some(t => t[0] === e.t)) _advCmp.tab = e.t;
+  if (Array.isArray(e.p) && e.p.length) advCmpParejasGuardar(e.p.filter(x => Array.isArray(x) && x.length === 2).map(x => x.map(String)));
+  return true;
+}
+
+function advCmpReiniciar() {
+  if (!(_advLoaded && _advParties && _advConfig)) return;
+  _advCmp.a = advCmpSideFromMain();
+  _advCmp.b = advCmpSideFromOther(_advCmp.a);
+  advCmpRender();
+}
+
+const _advCmpB64 = json => btoa(unescape(encodeURIComponent(json))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+function _advCmpDeB64(t) {
+  const b64 = t.replace(/-/g, '+').replace(/_/g, '/');
+  return decodeURIComponent(escape(atob(b64 + '='.repeat((4 - b64.length % 4) % 4))));
+}
+
+/** Comparación pedida en la URL (#avanzada&cmp=…), si la hay. */
+function advCmpLeerDeUrl() {
+  const m = /[&?]cmp=([^&]+)/.exec(location.hash);
+  if (!m || m[1].length > 40000) return null;
+  try { const o = JSON.parse(_advCmpDeB64(m[1])); return o && o.a && o.b ? o : null; } catch (e) { return null; }
+}
+
+function advCmpEnlace() {
+  const base = location.origin === 'null' ? location.href.split('#')[0] : location.origin + location.pathname;
+  return `${base}#avanzada&cmp=${_advCmpB64(JSON.stringify(advCmpEstado()))}`;
+}
+
+/** Abre el comparador con la comparación de la URL. Lo llama la avanzada al cargar y el cambio de hash. */
+async function advCmpAbrirDeUrl() {
+  const e = advCmpLeerDeUrl();
+  if (!e) return false;
+  _advCmp.a = null; _advCmp.b = null;
+  const ok = await advCmpRestaurar(e);
+  if (typeof autoToast === 'function') autoToast(ok ? 'Comparación del enlace cargada' : 'No se ha podido cargar la comparación del enlace');
+  if (ok) await advCmpOpen(null);
+  return ok;
+}
+
+async function advCmpCopiarEnlace() {
+  if (!advCmpEstado()) return;
+  const enlace = advCmpEnlace();
+  let copiado = false;
+  try { await navigator.clipboard.writeText(enlace); copiado = true; } catch (e) { /* sin permiso */ }
+  if (typeof autoToast === 'function') autoToast(copiado ? 'Enlace copiado: abre esta misma comparación' : 'No se ha podido copiar el enlace');
+  if (!copiado) window.prompt('Copia este enlace:', enlace);
+}
+
+const advCmpDescribir = side => [advCmpEleccionNombre(side),
+  FORMULAS.find(f => f.id === side.config.formula)?.name || side.config.formula,
+  ADV_CMP_LEVELS.find(l => l[0] === side.config.circunscripcion)?.[1] || '',
+  `${advNum(side.result.summary.totalSeats)} escaños`].filter(Boolean).join(' · ');
+
+function advCmpNombreArchivo(ext, sufijo = '') {
+  const limpio = t => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w.-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+  const y = side => side.config.yearKey || side.election;
+  const n = y(_advCmp.a) === y(_advCmp.b) ? limpio(y(_advCmp.a)) : `${limpio(y(_advCmp.a))}_vs_${limpio(y(_advCmp.b))}`;
+  return `comparacion_${n}${sufijo}.${ext}`;
+}
+
+function advCmpExportar(tipo) {
+  const cmp = _advCmp.cmp;
+  if (!cmp) return;
+  if (tipo === 'link') return advCmpCopiarEnlace();
+  if (tipo === 'png') return advCmpExportarPNG(cmp);
+  const cab = [['A', advCmpDescribir(_advCmp.a)], ['B', advCmpDescribir(_advCmp.b)], []];
+  let filas;
+  if (tipo === 'csv') {
+    filas = [...cab, ['Candidatura', 'Siglas A', 'Siglas B', 'Votos A', '% votos A', 'Votos B', '% votos B', 'Dif. % votos',
+      'Escaños A', 'Escaños B', 'B − A', '% escaños A', '% escaños B']];
+    cmp.partidos.forEach(r => filas.push([r.ref?.name || r.siglas, r.a?.siglas || '', r.b?.siglas || '',
+      r.a ? r.votosA : '', r.a ? advCsvNum(r.pctA) : '', r.b ? r.votosB : '', r.b ? advCsvNum(r.pctB) : '', advCsvNum(r.dPct),
+      r.escA, r.escB, r.dEsc, advCsvNum(r.pctEscA), advCsvNum(r.pctEscB)]));
+    filas.push([], ['Escaños que cambian de partido', cmp.resumen.mueven]);
+    cmp.indices.forEach(i => filas.push([i.name, advCsvNum(i.a), advCsvNum(i.b), advCsvNum(i.d)]));
+  } else {
+    const c = cmp.circ;
+    const ps = cmp.partidos.filter(r => r.escA > 0 || r.escB > 0);
+    filas = [...cab, [`Comparado por ${CMP_NIVEL_NOMBRE[c.nivel] || c.nivel}`], [],
+      ['Circunscripción', 'Comunidad', 'Escaños A', 'Escaños B', 'Cambian', 'Gana en A', 'Gana en B',
+       ...ps.flatMap(r => [`${r.siglas} A`, `${r.siglas} B`, `${r.siglas} B − A`])]];
+    c.filas.forEach(f => filas.push([f.name, c.nivel === 'provincia' ? f.ccaa : '', f.escA, f.escB, f.mueven,
+      f.ganadorA?.siglas || '', f.ganadorB?.siglas || '',
+      ...ps.flatMap(r => { const e = cmpEscanosEn(f, r.id); return [e.a, e.b, e.d]; })]));
+    if (c.resto.a || c.resto.b) filas.push(['Compensación y niveles adicionales', '', c.resto.a, c.resto.b]);
+  }
+  advExpDescargar(advCsvTexto(filas), advCmpNombreArchivo('csv', tipo === 'csv' ? '' : '_por-circunscripcion'), 'text/csv;charset=utf-8');
+}
+
+/** Imagen de la comparación: cabecera con A y B, resumen y una fila por candidatura con sus escaños y la diferencia. */
+function advCmpExportarPNG(cmp) {
+  const css = getComputedStyle(document.documentElement);
+  const v = (n, f) => css.getPropertyValue(n).trim() || f;
+  const col = { bg: v('--surface', '#fff'), text: v('--text', '#18181a'), muted: v('--text-muted', '#6e6860'),
+                line: v('--border', '#d6d0c8'), head: v('--header-bg', '#211c18'), headText: v('--header-text', '#ede7e0') };
+  const filas = cmp.partidos.filter(r => r.escA > 0 || r.escB > 0).slice(0, 24);
+  const W = 960, filaH = 30, cab = 118, pie = 64;
+  const H = cab + 30 + filas.length * filaH + pie;
+  const k = 2;
+  const canvas = document.createElement('canvas');
+  canvas.width = W * k; canvas.height = H * k;
+  const g = canvas.getContext('2d');
+  g.scale(k, k);
+  g.fillStyle = col.bg; g.fillRect(0, 0, W, H);
+  g.fillStyle = col.head; g.fillRect(0, 0, W, cab - 4);
+  g.fillStyle = col.headText; g.font = '700 22px "Libre Baskerville", Georgia, serif';
+  g.fillText(`Comparación · ${advNum(cmp.resumen.mueven)} escaños cambian de partido`, 24, 38);
+  g.font = '400 14px "Source Sans 3", Arial, sans-serif'; g.globalAlpha = 0.9;
+  g.fillText(`A: ${advCmpDescribir(_advCmp.a)}`, 24, 64);
+  g.fillText(`B: ${advCmpDescribir(_advCmp.b)}`, 24, 84);
+  const gal = cmp.indices.find(i => i.id === 'gallagher');
+  const coma = n => n.toFixed(2).replace('.', ',');
+  if (gal) g.fillText(`Gallagher A ${coma(gal.a)} · B ${coma(gal.b)}`, 24, 104);
+  g.globalAlpha = 1;
+
+  const x = { name: 24, a: 300, b: 360, d: 420, mid: 680 };
+  const media = 230;
+  let y = cab + 18;
+  g.font = '700 11px "Source Sans 3", Arial, sans-serif'; g.fillStyle = col.muted; g.textAlign = 'right';
+  g.fillText('ESC. A', x.a, y); g.fillText('ESC. B', x.b, y); g.fillText('B − A', x.d, y);
+  g.textAlign = 'left';
+  y += 8;
+  const maxD = Math.max(1, ...filas.map(r => Math.abs(r.dEsc)));
+  g.strokeStyle = col.line; g.beginPath(); g.moveTo(x.mid, y); g.lineTo(x.mid, y + filas.length * filaH); g.stroke();
+  filas.forEach(r => {
+    const cy = y + filaH / 2;
+    g.strokeStyle = col.line; g.beginPath(); g.moveTo(24, y); g.lineTo(W - 24, y); g.stroke();
+    g.fillStyle = advCmpColor(r.ref); g.fillRect(x.name, cy - 6, 12, 12);
+    g.fillStyle = col.text; g.font = '600 14px "Source Sans 3", Arial, sans-serif'; g.textBaseline = 'middle';
+    let nombre = r.siglas;
+    while (g.measureText(nombre).width > 240 && nombre.length > 4) nombre = nombre.slice(0, -2);
+    g.fillText(nombre === r.siglas ? nombre : nombre + '…', x.name + 20, cy);
+    g.textAlign = 'right'; g.font = '400 14px "Source Sans 3", Arial, sans-serif';
+    g.fillText(String(r.escA), x.a, cy); g.fillText(String(r.escB), x.b, cy);
+    g.font = '700 14px "Source Sans 3", Arial, sans-serif';
+    g.fillText(r.dEsc === 0 ? '=' : (r.dEsc > 0 ? '+' : '−') + Math.abs(r.dEsc), x.d, cy);
+    g.textAlign = 'left';
+    if (r.dEsc) {
+      const w = Math.max(2, Math.abs(r.dEsc) / maxD * media);
+      g.fillStyle = r.dEsc > 0 ? ADV_CMP_SUBE : ADV_CMP_BAJA;
+      g.fillRect(r.dEsc > 0 ? x.mid : x.mid - w, cy - 6, w, 12);
+    }
+    g.textBaseline = 'alphabetic';
+    y += filaH;
+  });
+  g.fillStyle = col.muted; g.font = '400 11px "Source Sans 3", Arial, sans-serif';
+  g.fillText('Azul: gana escaños en B. Naranja: pierde escaños en B. Cada lado con los votos de origen, sin ediciones manuales.', 24, H - 34);
+  g.fillText('Calculadora electoral', 24, H - 14);
+  canvas.toBlob(b => b && advExpDescargar(b, advCmpNombreArchivo('png'), 'image/png'), 'image/png');
 }
 
 /* ── Arranque ──────────────────────────────────────────────── */
 
 function advInitCompare() {
   select('#adv-compare-btn')?.addEventListener('click', e => advCmpOpen(e.currentTarget));
+  window.addEventListener('hashchange', () => { if (_advLoaded && advCmpLeerDeUrl()) advCmpAbrirDeUrl(); });
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && _advCmp.open) { e.stopPropagation(); advCmpClose(); }
   });

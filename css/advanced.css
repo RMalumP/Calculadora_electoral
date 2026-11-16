@@ -1503,6 +1503,9 @@ body.adv-popup-open { overflow: hidden; }
 .adv-cmp-ind .adv-cmp-desc { white-space: normal; color: var(--text-muted); font-size: 0.76rem; min-width: 260px; }
 .adv-cmp-panel .ind-sel { margin-top: 8px; }
 .adv-cmp-chart { margin: 4px 0 18px; }
+.adv-cmp-export { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--border-light); font-size: 0.78rem; color: var(--text-muted); }
+.adv-cmp-export .adv-mini-btn, .adv-cmp-introbar .adv-mini-btn { border-color: var(--accent); color: var(--accent); background: var(--surface); }
+.adv-cmp-introbar .adv-cmp-acciones { display: flex; flex-wrap: wrap; gap: 4px; }
 .adv-cmp-chart h4 { font-size: 0.82rem; font-weight: 700; color: var(--text); margin: 0 0 8px; }
 .adv-cmp-div { display: grid; gap: 4px; }
 .adv-cmp-div-row { display: grid; grid-template-columns: minmax(90px, 200px) minmax(0, 1fr); gap: 10px; align-items: center; font-size: 0.78rem; }
