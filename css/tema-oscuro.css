@@ -83,3 +83,9 @@
   :root:not([data-theme="light"]) tr.special-row { background: var(--row-alt); }
   :root:not([data-theme="light"]) .adv-notice.warn { background: #3a3016; border-color: #6b5a22; color: #e8d9a8; }
 }
+
+/* Comparador: el verde de «sube / más proporcional» se lee mal sobre fondo oscuro. */
+:root[data-theme="dark"] .adv-cmp-up, :root[data-theme="dark"] .adv-cmp-abs { color: #6fcf97; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .adv-cmp-up, :root:not([data-theme="light"]) .adv-cmp-abs { color: #6fcf97; }
+}

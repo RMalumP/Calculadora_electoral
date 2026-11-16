@@ -20,6 +20,7 @@ const ADV_MODULOS = [
   // Se registra en ADV_POPUPS, así que va después de advanced-popups.js.
   'js/mapa-popup.js',
   'js/advanced-territorial.js',
+  'js/comparar-calc.js',
   'js/advanced-compare.js',
   'js/advanced-exportar.js'
 ];

@@ -2246,6 +2246,8 @@ function advEnsureLoaded() {
     advLoadElection(false).then(async () => {
       // Un enlace con escenario manda sobre la sesión guardada en el navegador.
       if (typeof advAplicarEscenarioDeUrl === 'function' && await advAplicarEscenarioDeUrl()) return;
+      // Un enlace de comparación abre el comparador; el panel sigue con la sesión guardada.
+      if (typeof advCmpLeerDeUrl === 'function' && advCmpLeerDeUrl()) advCmpAbrirDeUrl();
       if (typeof autoRestoreAdvanced === 'function') autoRestoreAdvanced();
     });
   }
