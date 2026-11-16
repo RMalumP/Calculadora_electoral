@@ -1502,8 +1502,28 @@ body.adv-popup-open { overflow: hidden; }
 .adv-cmp-neutro { color: var(--text); font-weight: 700; }
 .adv-cmp-ind .adv-cmp-desc { white-space: normal; color: var(--text-muted); font-size: 0.76rem; min-width: 260px; }
 .adv-cmp-panel .ind-sel { margin-top: 8px; }
+.adv-cmp-chart { margin: 4px 0 18px; }
+.adv-cmp-chart h4 { font-size: 0.82rem; font-weight: 700; color: var(--text); margin: 0 0 8px; }
+.adv-cmp-div { display: grid; gap: 4px; }
+.adv-cmp-div-row { display: grid; grid-template-columns: minmax(90px, 200px) minmax(0, 1fr); gap: 10px; align-items: center; font-size: 0.78rem; }
+.adv-cmp-div-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.adv-cmp-div-bars { display: grid; gap: 2px; }
+.adv-cmp-div-track { position: relative; height: 18px; border-left: 0; background: linear-gradient(var(--border), var(--border)) 50% 0 / 1px 100% no-repeat; }
+.adv-cmp-div-bar { position: absolute; top: 3px; bottom: 3px; background: var(--c); border-radius: 2px; min-width: 2px; }
+.adv-cmp-div-b .adv-cmp-div-bar { background: repeating-linear-gradient(45deg, var(--c) 0 4px, transparent 4px 7px); border: 1px solid var(--c); box-sizing: border-box; }
+.adv-cmp-div-val { position: absolute; top: 50%; transform: translateY(-50%); font-size: 0.72rem; color: var(--text); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.adv-cmp-div-val b { color: var(--text-muted); font-weight: 700; }
+.adv-cmp-key { display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: var(--c); vertical-align: -1px; }
+.adv-cmp-hemis { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.adv-cmp-hemi { margin: 0; text-align: center; }
+.adv-cmp-hemi svg { width: 100%; max-width: 360px; height: auto; display: block; margin: 0 auto; }
+.adv-cmp-hemi figcaption { font-size: 0.76rem; color: var(--text-muted); }
+.adv-cmp-hemi figcaption b { color: var(--accent); }
+.adv-cmp-hemi-num { font: 700 20px 'Source Sans 3', sans-serif; fill: var(--text); }
+.adv-cmp-hemi-sub { font: 9px 'Source Sans 3', sans-serif; fill: var(--text-muted); }
 .adv-cmp-panel .adv-notice { margin-bottom: 8px; }
 @media (max-width: 700px) {
+  .adv-cmp-hemis { grid-template-columns: 1fr; }
   .adv-cmp-kpis { grid-template-columns: 1fr 1fr; }
   .adv-cmp-kpi-main { grid-column: 1 / -1; }
   .adv-cmp-introbar { flex-direction: column; }

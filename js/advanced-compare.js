@@ -558,9 +558,85 @@ function advCmpIndicesHtml(cmp) {
       <div class="ind-acciones"><button type="button" data-ind-todos="1">Todos</button><button type="button" data-ind-todos="0">Ninguno</button></div>${checks}</div></details>`;
 }
 
+/* ── Pestaña «Gráficos» ── */
+
+// Los mismos colores que el mapa para subir y bajar (mapa-compara.js): no son
+// de ningún partido y se distinguen bien sin ver bien el color.
+const ADV_CMP_SUBE = '#2b7a9e';
+const ADV_CMP_BAJA = '#c9702f';
+
+/** Hemiciclo en SVG: un arco por candidatura, en el orden de la tabla, con la línea de mayoría. */
+function advCmpHemiSvg(side, letter) {
+  const parties = side.result.national.filter(p => p.seats > 0).sort((x, y) => y.seats - x.seats);
+  const total = parties.reduce((s, p) => s + p.seats, 0);
+  if (!total) return '<p class="adv-empty">Sin escaños.</p>';
+  const R = 100, r = 58, cx = 110, cy = 108;
+  const punto = (rad, ang) => [cx - rad * Math.cos(ang), cy - rad * Math.sin(ang)];
+  let acc = 0;
+  const arcos = parties.map(p => {
+    const a0 = acc / total * Math.PI, a1 = (acc + p.seats) / total * Math.PI;
+    acc += p.seats;
+    const [x0, y0] = punto(R, a0), [x1, y1] = punto(R, a1), [x2, y2] = punto(r, a1), [x3, y3] = punto(r, a0);
+    const big = a1 - a0 > Math.PI ? 1 : 0;
+    const f = n => n.toFixed(2);
+    return `<path d="M${f(x0)} ${f(y0)} A${R} ${R} 0 ${big} 1 ${f(x1)} ${f(y1)} L${f(x2)} ${f(y2)} A${r} ${r} 0 ${big} 0 ${f(x3)} ${f(y3)} Z"
+      fill="${advPartyColor(p)}" stroke="var(--surface)" stroke-width="1.5"><title>${advEscape(p.siglas || p.name)}: ${p.seats} escaños</title></path>`;
+  }).join('');
+  const mayoria = Math.floor(total / 2) + 1;
+  const am = mayoria / total * Math.PI;
+  const [mx0, my0] = punto(r - 6, am), [mx1, my1] = punto(R + 6, am);
+  return `<figure class="adv-cmp-hemi"><svg viewBox="0 0 220 120" role="img" aria-label="Hemiciclo ${letter.toUpperCase()}: ${advEscape(parties.map(p => `${p.siglas || p.name} ${p.seats}`).join(', '))}">
+      ${arcos}<line x1="${mx0.toFixed(1)}" y1="${my0.toFixed(1)}" x2="${mx1.toFixed(1)}" y2="${my1.toFixed(1)}" stroke="var(--text)" stroke-width="1.5" stroke-dasharray="3 2"><title>Mayoría absoluta: ${mayoria}</title></line>
+      <text x="${cx}" y="${cy - 8}" text-anchor="middle" class="adv-cmp-hemi-num">${total}</text>
+      <text x="${cx}" y="${cy + 6}" text-anchor="middle" class="adv-cmp-hemi-sub">mayoría ${mayoria}</text></svg>
+    <figcaption><b>${letter.toUpperCase()}</b> ${advEscape(advCmpLadoCorto(side))}</figcaption></figure>`;
+}
+
+const advCmpLadoCorto = side => [
+  _advCmp.cmp?.resumen.mismaEleccion ? '' : advCmpEleccionNombre(side),
+  FORMULAS.find(f => f.id === side.config.formula)?.name || side.config.formula,
+  ADV_CMP_LEVELS.find(l => l[0] === side.config.circunscripcion)?.[1] || ''
+].filter(Boolean).join(' · ');
+
+/** Barras divergentes: una fila por candidatura, a la izquierda lo que baja y a la derecha lo que sube. */
+function advCmpDivergente(filas, { valor, max, etiqueta, fmt, lados }) {
+  // Hasta el 42 % de cada mitad: deja sitio para la cifra al final de la barra.
+  const pos = v => Math.min(42, Math.abs(v) / max * 42).toFixed(2);
+  return `<div class="adv-cmp-div" role="list">${filas.map(f => {
+    const color = advCmpColor(f.ref);
+    const barras = (lados || [null]).map(L => {
+      const v = valor(f, L);
+      const izq = v < 0;
+      return `<div class="adv-cmp-div-track${L === 'B' ? ' adv-cmp-div-b' : ''}" title="${advEscape(f.siglas)}${L ? ' · ' + L : ''}: ${fmt(v)}">
+        <span class="adv-cmp-div-bar" style="${izq ? `right:50%` : 'left:50%'};width:${pos(v)}%;--c:${izq ? ADV_CMP_BAJA : ADV_CMP_SUBE}"></span>
+        <span class="adv-cmp-div-val" style="${izq ? `right:calc(50% + ${pos(v)}% + 4px)` : `left:calc(50% + ${pos(v)}% + 4px)`}">${L ? `<b>${L}</b> ` : ''}${fmt(v)}</span></div>`;
+    }).join('');
+    return `<div class="adv-cmp-div-row" role="listitem"><span class="adv-cmp-div-label">${advCmpChip(etiqueta(f), color)}</span><div class="adv-cmp-div-bars">${barras}</div></div>`;
+  }).join('')}</div>`;
+}
+
+function advCmpGraficosHtml(cmp) {
+  const conEsc = cmp.partidos.filter(r => r.escA > 0 || r.escB > 0);
+  const cambian = conEsc.filter(r => r.dEsc !== 0).sort((x, y) => y.dEsc - x.dEsc);
+  const maxD = Math.max(1, ...cambian.map(r => Math.abs(r.dEsc)));
+  const sobre = conEsc.slice(0, 12);
+  const maxS = Math.max(0.5, ...sobre.flatMap(r => [r.pctEscA - r.pctA, r.pctEscB - r.pctB].map(Math.abs)));
+  const fmtEsc = v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v);
+  const fmtPts = v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(1).replace('.', ',');
+  return `<section class="adv-cmp-chart"><h4>Escaños de B menos escaños de A</h4>
+      ${cambian.length ? advCmpDivergente(cambian, { valor: f => f.dEsc, max: maxD, etiqueta: f => f.siglas, fmt: fmtEsc })
+        : '<p class="adv-empty">Ninguna candidatura cambia de escaños.</p>'}
+      <p class="adv-terr-hint"><span class="adv-cmp-key" style="--c:${ADV_CMP_SUBE}"></span> gana en B · <span class="adv-cmp-key" style="--c:${ADV_CMP_BAJA}"></span> pierde en B. Sólo las candidaturas que cambian.</p></section>
+    <section class="adv-cmp-chart"><h4>Hemiciclos</h4><div class="adv-cmp-hemis">${advCmpHemiSvg(_advCmp.a, 'a')}${advCmpHemiSvg(_advCmp.b, 'b')}</div>
+      <p class="adv-terr-hint">La línea discontinua marca la mayoría absoluta.</p></section>
+    <section class="adv-cmp-chart"><h4>Sobrerrepresentación: % escaños menos % votos</h4>
+      ${advCmpDivergente(sobre, { valor: (f, L) => f['pctEsc' + L] - f['pct' + L], max: maxS, etiqueta: f => f.siglas, fmt: fmtPts, lados: ['A', 'B'] })}
+      <p class="adv-terr-hint">A la derecha, la candidatura tiene más escaños de los que le darían sus votos; a la izquierda, menos. Es lo que resumen los índices de desproporcionalidad.${conEsc.length > sobre.length ? ` Las ${sobre.length} candidaturas con más escaños.` : ''}</p></section>`;
+}
+
 /* ── Todo junto ── */
 
-const ADV_CMP_TABS = [['partidos', 'Partidos'], ['circ', 'Circunscripciones'], ['indices', 'Índices']];
+const ADV_CMP_TABS = [['partidos', 'Partidos'], ['circ', 'Circunscripciones'], ['indices', 'Índices'], ['graficos', 'Gráficos']];
 
 function advCmpResultsHtml() {
   const A = _advCmp.a, B = _advCmp.b;
@@ -572,7 +648,8 @@ function advCmpResultsHtml() {
   cmp.resumen.mismaEleccion = A.election === B.election && A.config.yearKey === B.config.yearKey;
   _advCmp.cmp = cmp;
   const tab = _advCmp.tab;
-  const panel = tab === 'circ' ? advCmpCircHtml(cmp) : tab === 'indices' ? advCmpIndicesHtml(cmp) : advCmpPartidosHtml(cmp);
+  const panel = tab === 'circ' ? advCmpCircHtml(cmp) : tab === 'indices' ? advCmpIndicesHtml(cmp)
+    : tab === 'graficos' ? advCmpGraficosHtml(cmp) : advCmpPartidosHtml(cmp);
   return `<div class="adv-cmp-results">
     ${advCmpResumenHtml(cmp)}
     <div class="adv-cmp-stacks">${advCmpSummaryHtml('a')}${advCmpSummaryHtml('b')}</div>
