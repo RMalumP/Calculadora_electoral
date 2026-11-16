@@ -49,6 +49,8 @@ registerTab('theory', 'tab-content', String.raw`
               <button class="theory-system-btn theory-btn-gap" data-system="barreras" onclick="showTheorySystem('barreras')">Barreras y umbral variable</button>
               <div class="theory-group">Dos vueltas</div>
               <button class="theory-system-btn theory-btn-gap" data-system="dos-vueltas" onclick="showTheorySystem('dos-vueltas')">Segunda vuelta con transferencias</button>
+              <div class="theory-group">Coaliciones</div>
+              <button class="theory-system-btn theory-btn-gap" data-system="coaliciones" onclick="showTheorySystem('coaliciones')">Coaliciones y listas conjuntas</button>
             </div>
           </div>
         </div>
@@ -253,6 +255,17 @@ registerTab('theory', 'tab-content', String.raw`
               <div class="theory-formula">Votos finales(F) = Votos 1ª(F) + Σ eliminados [ votos(E) × %(E→F) ]<br>Abstención = votos(E) × (100 % − Σ %(E→F))</div>
               <h4 class="theory-h4">Ejemplo</h4>
               <p class="theory-p">Finalistas A (400) y B (350). El eliminado C (200 votos) da el 10 % a A y el 80 % a B; D (50) da todo a B. Resultado: A = 400 + 20 = 420; B = 350 + 160 + 50 = 560. Gana B por 140 votos aunque fuera segundo en la primera vuelta.</p>
+            </div>
+
+            <div id="theory-coaliciones" class="theory-content-section">
+              <h3 class="theory-title">Coaliciones y listas conjuntas</h3>
+              <h4 class="theory-h4">Descripción</h4>
+              <p class="theory-p">Cuando varios partidos concurren juntos se presentan como una sola lista: sus votos se suman, se aplica la barrera a la suma y los escaños se reparten después entre los miembros. Esto puede ayudar mucho a los pequeños si la barrera es alta, y casi nunca perjudica con D'Hondt (que premia las listas grandes).</p>
+              <p class="theory-p">En la Calculadora, numera los partidos con el botón «Agrupación» para unirlos. Debajo de los resultados verás cuántos escaños tendría cada miembro dentro de la lista (D'Hondt, Sainte-Laguë o Hare) y cuántos tendrían yendo por separado.</p>
+              <h4 class="theory-h4">Fórmula</h4>
+              <div class="theory-formula">Votos(lista) = Σ votos(miembros)<br>Escaños(miembro) = reparto proporcional de los escaños de la lista según los votos de cada miembro</div>
+              <h4 class="theory-h4">Ejemplo</h4>
+              <p class="theory-p">Barrera del 8 %. A y B tienen un 5,9 % cada uno: separados no entran. Juntos suman un 11,8 %, superan la barrera y logran un escaño que se asigna al miembro con más votos.</p>
             </div>
 
           </div>

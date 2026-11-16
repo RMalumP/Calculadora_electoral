@@ -91,7 +91,8 @@ function calculate() {
       votes:   totalGroupVotes,
       color:   memberParties[0]?.color || '#888888',
       isGroup: true,
-      groupNum
+      groupNum,
+      members: memberParties.map(m => ({ name: m.name, siglas: m.siglas, votes: m.votes, color: m.color }))
     });
   });
 
@@ -184,6 +185,14 @@ function calculate() {
   excludedBarrier2.forEach(p => allocated.push({ ...p, seats: 0, excludedBarrier: true }));
   noVotes2.forEach(p => allocated.push({ ...p, seats: 0, noVotes: true }));
   allocated.sort((a, b) => b.seats - a.seats || b.votes - a.votes);
+
+  // Datos para el análisis de coaliciones (se pinta en displayResults).
+  window.lastCoalicion = syntheticGroups.length ? {
+    individuales: remainingNormal.filter(p => !p.isGroup).map(p => ({ name: p.name, votes: p.votes })),
+    grupos: syntheticGroups.map(g => ({ name: g.name, members: g.members })),
+    otros: otrosAccumulatedVotes, blancos: blank,
+    escanos: seatsToAllocate, bono: bonus, formula, barrera: barrier
+  } : null;
 
   // ── PASO 7b: Escaños compensatorios (opcional) ──
   const compensation = _applyCompensation(allocated, totalValid, formula, barrier);
@@ -280,6 +289,7 @@ function displayResults(allocated, totalValid, totalSeats, formula, excludedBarr
   displayLastSeatInfo();
   _showCompensationNote();
   _showIndices(allocated, totalValid, totalSeats);
+  if (typeof coalicionUiRender === 'function') coalicionUiRender();
 
   if (allParties && allParties.length > 0) {
     buildBreakdownTable(allParties, allocated, baseSeats !== null ? baseSeats : totalSeats, formula);

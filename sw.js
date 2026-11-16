@@ -31,6 +31,8 @@ const ASSETS = [
   './js/calculator.js',
   './js/constants.js',
   './js/groupings.js',
+  './js/coaliciones.js',
+  './js/coaliciones-ui.js',
   './js/indices.js',
   './js/segunda-vuelta.js',
   './js/segunda-vuelta-ui.js',
