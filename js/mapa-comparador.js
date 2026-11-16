@@ -52,11 +52,29 @@ const MAPA_CMP = (() => {
     acc.mueven += fila.mueven;
     acc.nombres.push(fila.name);
     fila.partidos.forEach(p => {
-      const x = acc.porId.get(p.id) || { id: p.id, siglas: p.siglas, ref: p.ref, a: 0, b: 0 };
+      const x = acc.porId.get(p.id) || { id: p.id, siglas: p.siglas, ref: p.ref, a: 0, b: 0, va: 0, vb: 0 };
       x.a += p.escA;
       x.b += p.escB;
+      x.va += p.votosA || 0;
+      x.vb += p.votosB || 0;
       acc.porId.set(p.id, x);
     });
+  }
+
+  /**
+   * Los campos que esperan las capas comunes del mapa (puntos de escaños y
+   * cartograma: votos y escaños por siglas, escanosTotal, candidaturas), con
+   * los números del lado que se esté viendo; con la diferencia, los de B.
+   */
+  function campos(acc, lado) {
+    const v = lado === 'a' ? 'va' : 'vb';
+    acc.votos = {}; acc.escanos = {};
+    acc.porId.forEach(x => {
+      if (x[v]) acc.votos[x.siglas] = (acc.votos[x.siglas] || 0) + x[v];
+      if (x[lado]) acc.escanos[x.siglas] = (acc.escanos[x.siglas] || 0) + x[lado];
+    });
+    acc.escanosTotal = lado === 'a' ? acc.escA : acc.escB;
+    acc.candidaturas = Object.values(acc.votos).reduce((n, x) => n + x, 0);
   }
 
   /** Comparación agregada al nivel del mapa: códigoPieza → agregado. */
@@ -74,6 +92,7 @@ const MAPA_CMP = (() => {
         if (dianas.size > 1) acc.repetido = true;
       });
     });
+    salida.forEach(acc => campos(acc, mapaCmpVista === 'a' ? 'a' : 'b'));
     cacheNivel[nivel] = salida;
     return salida;
   }
@@ -234,9 +253,99 @@ MAPA_MODOS.push({
   },
 });
 
+/* ── Ver A, B o la diferencia ───────────────────────────────────── */
+
+const MAPA_CMP_VISTAS = [['a', 'A'], ['b', 'B'], ['dif', 'Diferencia']];
+
+/** Con la vista en A o en B, cada modo pinta ese lado en vez de la diferencia. */
+const mapaCmpLado = {
+  colores(porPieza, lado, partido) {
+    const salida = {};
+    if (partido) {
+      let tope = 0;
+      porPieza.forEach(a => { tope = Math.max(tope, a.porId.get(partido.siglas)?.[lado] || 0); });
+      const color = mapaCmpColor(partido.ref);
+      porPieza.forEach((agregado, codigo) => {
+        const n = agregado.porId.get(partido.siglas)?.[lado] || 0;
+        salida[codigo] = n ? mapaIntensidad(color, 0.25 + 0.75 * n / (tope || 1)) : MAPA_CMP_GRIS();
+      });
+      return salida;
+    }
+    porPieza.forEach((agregado, codigo) => {
+      const g = mapaCmpGanador(agregado, lado);
+      if (g) salida[codigo] = mapaCmpColor(g.ref);
+    });
+    return salida;
+  },
+  leyenda(porPieza, lado, partido) {
+    if (partido) {
+      let tope = 0;
+      porPieza.forEach(a => { tope = Math.max(tope, a.porId.get(partido.siglas)?.[lado] || 0); });
+      const color = mapaCmpColor(partido.ref);
+      return [{ siglas: partido.nombre, color },
+              { rampa: [mapaIntensidad(color, 0.25), color], desde: '1', hasta: String(tope || 1),
+                titulo: 'Escaños de ' + partido.nombre + ' en ' + lado.toUpperCase() },
+              { texto: 'Sin escaños', color: MAPA_CMP_GRIS() }];
+    }
+    const cuenta = new Map();
+    porPieza.forEach(agregado => {
+      const g = mapaCmpGanador(agregado, lado);
+      if (!g) return;
+      const fila = cuenta.get(g.id) || { siglas: g.siglas, color: mapaCmpColor(g.ref), n: 0 };
+      fila.n += 1;
+      cuenta.set(g.id, fila);
+    });
+    return [...cuenta.values()].sort((x, y) => y.n - x.n);
+  },
+};
+
+/** Lo que dice el globo de una pieza en cualquier vista: quién gana en A y en B. */
+function mapaCmpGlobo(agregado) {
+  const a = mapaCmpGanador(agregado, 'a'), b = mapaCmpGanador(agregado, 'b');
+  if (!a && !b) return 'Sin escaños en ninguno de los lados';
+  return 'A: ' + (a ? mapaPastilla(a.siglas, mapaCmpColor(a.ref)) + ' ' + a.a : '—') +
+    ' · B: ' + (b ? mapaPastilla(b.siglas, mapaCmpColor(b.ref)) + ' ' + b.b : '—') +
+    (agregado.mueven ? ' · <b>' + agregado.mueven + '</b> cambian' : '');
+}
+
+MAPA_MODOS.filter(m => m.necesitaComparador).forEach(m => {
+  const { colores, leyenda, resumen } = m;
+  const partidoDe = () => (m.necesitaPartido ? MAPA_CMP.partidoActual() : null);
+  m.colores = (porPieza, nivel) => mapaCmpVista === 'dif' ? colores.call(m, porPieza, nivel)
+    : mapaCmpLado.colores(porPieza, mapaCmpVista, partidoDe());
+  m.leyenda = (porPieza, nivel) => mapaCmpVista === 'dif' ? leyenda.call(m, porPieza, nivel)
+    : mapaCmpLado.leyenda(porPieza, mapaCmpVista, partidoDe());
+  m.resumen = agregado => {
+    const propio = mapaCmpVista === 'dif' ? resumen.call(m, agregado) : '';
+    const comun = mapaCmpGlobo(agregado);
+    return propio && m.id !== 'cmp-vuelco' ? propio + '<br>' + comun : comun;
+  };
+});
+
+/** Cambia lo que se ve (A, B o la diferencia) y repinta. */
+function mapaCmpVer_(vista) {
+  if (!MAPA_CMP_VISTAS.some(v => v[0] === vista) || vista === mapaCmpVista) return;
+  mapaCmpVista = vista;
+  MAPA_CMP.actualizar();
+  if (typeof mapaRefrescar === 'function') mapaRefrescar();
+}
+
+// Atajos: A, B y D con el mapa a la vista en un modo del comparador.
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  const barra = document.getElementById('mapa-cmp');
+  if (!barra || barra.hidden || !barra.offsetParent) return;
+  if (e.target.closest && e.target.closest('input:not([type=checkbox]):not([type=radio]), select, textarea, [contenteditable]')) return;
+  if (typeof _advCmp !== 'undefined' && _advCmp.open) return;
+  const k = e.key.toLowerCase();
+  const vista = k === 'a' ? 'a' : k === 'b' ? 'b' : k === 'd' ? 'dif' : null;
+  if (vista) { e.preventDefault(); mapaCmpVer_(vista); }
+});
+
 /* ── Números sobre el mapa ──────────────────────────────────────── */
 
 MAPA_ADORNOS.push((porPieza, nivel) => {
+  if (mapaCmpVista !== 'dif') return;
   if (mapaModoActual !== 'cmp-escanos' && mapaModoActual !== 'cmp-cambian') return;
   if (!MAPA_CMP.disponible()) return;
   const capa = MAPA.adornos();
@@ -349,6 +458,11 @@ function mapaCmpBarraHtml() {
   const motivo = MAPA_CMP.motivoNoPintable();
   return '<div class="mapa-cmp-cab">' +
       '<span class="mapa-cmp-titulo">Comparación</span>' +
+      '<span class="mapa-cmp-vistas" role="group" aria-label="Qué enseña el mapa (atajos: A, B y D)">' +
+        MAPA_CMP_VISTAS.map(([v, t]) => '<button type="button" data-mcmp-vista="' + v + '" aria-pressed="' + (v === mapaCmpVista) + '"' +
+          (v === mapaCmpVista ? ' class="activa"' : '') + ' title="' + (v === 'dif' ? 'La diferencia entre A y B (tecla D)' : 'El mapa de ' + t + ' (tecla ' + t + ')') + '">' +
+          (v === 'dif' ? t : 'Ver ' + t) + '</button>').join('') +
+      '</span>' +
       '<span class="mapa-cmp-resumen"><b>' + r.mueven + '</b> ' + (r.mueven === 1 ? 'escaño cambia' : 'escaños cambian') + ' de partido · gana en A ' + gan(r.a.ganador) + ' · en B ' + gan(r.b.ganador) + '</span>' +
       '<span class="mapa-cmp-botones">' +
         '<button type="button" class="adv-mini-btn" data-cmp-swap title="A pasa a ser B y B pasa a ser A">⇄ Intercambiar</button>' +
@@ -368,6 +482,8 @@ function mapaCmpBarraInit() {
   });
   barra.addEventListener('click', ev => {
     if (ev.target.closest('[data-mcmp-abrir]')) { mapaCmpAbrirComparador(); return; }
+    const v = ev.target.closest('[data-mcmp-vista]');
+    if (v) { mapaCmpVer_(v.dataset.mcmpVista); document.querySelector('[data-mcmp-vista="' + v.dataset.mcmpVista + '"]')?.focus(); return; }
     if (typeof advCmpOnClick === 'function') advCmpOnClick(ev);
   });
 }
