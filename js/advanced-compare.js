@@ -240,6 +240,13 @@ function advCmpOnClick(ev) {
   if (ev.target.closest('button[data-ind-todos]')) { setTimeout(advCmpRender, 0); return; }
   const exp = ev.target.closest('[data-cmp-exp]');
   if (exp) { advCmpExportar(exp.dataset.cmpExp); return; }
+  const mapa = ev.target.closest('[data-cmp-mapa]');
+  if (mapa && typeof mapaCmpVer === 'function') {
+    if (mapa.dataset.cmpMapa === 'cmp-escanos') mapaPartidoElegido = _advCmp.circParty;
+    advCmpClose();
+    mapaCmpVer(mapa.dataset.cmpMapa);
+    return;
+  }
   if (ev.target.closest('[data-cmp-reset]')) { advCmpReiniciar(); return; }
   const otra = ev.target.closest('[data-cmp-otra]');
   if (otra) { advCmpOtraConvocatoria(otra.dataset.cmpOtra); return; }
@@ -668,6 +675,7 @@ function advCmpResultsHtml() {
       <button type="button" class="adv-mini-btn" data-cmp-exp="csv-circ">CSV por circunscripción</button>
       <button type="button" class="adv-mini-btn" data-cmp-exp="png">Imagen PNG</button>
       <button type="button" class="adv-mini-btn" data-cmp-exp="link">🔗 Copiar enlace</button>
+      ${typeof MAPA_CMP !== 'undefined' && MAPA_CMP.disponible() ? `<button type="button" class="adv-mini-btn adv-cmp-mapa-btn" data-cmp-mapa="${tab === 'circ' && _advCmp.circParty ? 'cmp-escanos' : 'cmp-vuelco'}">🗺 Ver en el mapa</button>` : ''}
     </div>
   </div>`;
 }
@@ -692,6 +700,7 @@ function advCmpRender() {
     ${advCmpResultsHtml()}`;
   if (indAbierto) body.querySelector('.adv-cmp-panel details.ind-sel')?.setAttribute('open', '');
   advCmpGuardar();
+  if (typeof mapaCmpActualizar === 'function') mapaCmpActualizar();
   if (foco) select(`#${foco}`)?.focus();
   else if (focoUi) body.querySelector(`[data-cmp-ui="${focoUi}"]`)?.focus();
 }

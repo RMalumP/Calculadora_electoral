@@ -221,9 +221,19 @@ const MAPA_SIM = (() => {
     if (typeof mapaSimRefrescarUI === 'function') mapaSimRefrescarUI();
   }
 
+  /** Códigos de las piezas del nivel pedido que cubre una circunscripción (por sus códigos). */
+  function dianasDe(d, nivel) {
+    const dianas = new Set();
+    piezasDe(d, false).forEach(pieza => {
+      const diana = destino(pieza, nivel);
+      if (diana) dianas.add(diana);
+    });
+    return dianas;
+  }
+
   return {
     disponible, otraEleccion, eleccionAvanzada, porIsla,
-    porNivel, desdeAvanzada, actualizar, provinciaDe,
+    porNivel, desdeAvanzada, actualizar, provinciaDe, dianasDe,
   };
 
 })();

@@ -380,10 +380,12 @@ function mapaLlenarPartidos() {
   campo.hidden = !(modo && modo.necesitaPartido && modelo);
   if (campo.hidden || !modelo) return;
 
-  const lista = modelo.partidos.slice(0, 25);
+  // Un modo puede traer su propia lista (el comparador de la avanzada, cuyos
+  // partidos no son los de la elección cargada en el mapa): { siglas, texto }.
+  const lista = modo.partidos ? modo.partidos() : modelo.partidos.slice(0, 25);
   sel.innerHTML = lista.map(p =>
-    '<option value="' + MAPA.escapar(p.siglas) + '">' + MAPA.escapar(p.siglas) +
-    ' · ' + mapaPorcentaje(p.votos, modelo.totales.candidaturas) + '</option>').join('');
+    '<option value="' + MAPA.escapar(p.siglas) + '">' + MAPA.escapar(p.texto || (p.siglas +
+    ' · ' + mapaPorcentaje(p.votos, modelo.totales.candidaturas))) + '</option>').join('');
   if (!lista.some(p => p.siglas === mapaPartidoElegido)) {
     mapaPartidoElegido = lista.length ? lista[0].siglas : null;
   }
