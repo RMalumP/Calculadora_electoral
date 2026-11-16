@@ -773,6 +773,23 @@ function advCmpIntercambiar() {
   advCmpRender();
 }
 
+/**
+ * Crea una comparación sin pasar por la ventana (la pide el mapa): la guardada
+ * en el navegador si la hay; si no, A es la convocatoria pedida con sus reglas
+ * y B, la misma con otra fórmula.
+ */
+async function advCmpCrearDesde(election, yearKey) {
+  if (_advCmp.a && _advCmp.b) return true;
+  if (await advCmpRestaurar(advCmpGuardadoLeer())) { advCmpRender(); return true; }
+  const a = { election, data: null, config: null, result: null, error: null, loading: true };
+  await advCmpLoad(a, election, yearKey);
+  if (!a.result) return false;
+  _advCmp.a = a;
+  _advCmp.b = advCmpSideFromOther(a);
+  advCmpRender();
+  return true;
+}
+
 function advCmpReiniciar() {
   if (!(_advLoaded && _advParties && _advConfig)) return;
   _advCmp.a = advCmpSideFromMain();

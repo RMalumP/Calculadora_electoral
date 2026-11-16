@@ -143,9 +143,43 @@ const MAPA_CMP_MUEVE = '#7a4a8c';
 
 /* ── Modos ──────────────────────────────────────────────────────── */
 
+/**
+ * Con la elección del mapa se puede empezar una comparación: es de España y no
+ * reparte por islas. Los módulos de la avanzada se descargan al pedirla.
+ */
+function mapaCmpPuedeCrear(modelo) {
+  return typeof advCargarModulos === 'function' && /^ES-/.test(MAPA_UI.eleccion || '') &&
+    !!modelo && modelo.circBase !== 'Isla';
+}
+
 // Los modos siguen en la lista aunque un lado no se pueda pintar: si no, al
 // cambiar ese lado desde la barra el modo desaparecería con la barra dentro.
-const mapaCmpSirve = () => MAPA_CMP.hay();
+const mapaCmpSirve = modelo => MAPA_CMP.hay() || mapaCmpPuedeCrear(modelo);
+
+let _mapaCmpCreando = null;
+let _mapaCmpFallo = false;   // no se reintenta solo tras un fallo
+
+/** Prepara una comparación a partir de la elección que tiene el mapa. */
+function mapaCmpCrear() {
+  if (_mapaCmpCreando) return _mapaCmpCreando;
+  const ambito = 'local:' + (MAPA_UI.ambito || '');
+  const convocatoria = MAPA_UI.eleccion;
+  mapaEstado('Preparando la comparación…');
+  _mapaCmpCreando = advCargarModulos()
+    .then(() => {
+      const existe = ADV_ELECTIONS.some(e => e.key === ambito);
+      return advCmpCrearDesde(existe ? ambito : ADV_ELECTIONS[0].key, existe ? convocatoria : undefined);
+    })
+    .then(ok => {
+      _mapaCmpFallo = !ok;
+      mapaEstado(ok ? '' : 'No se ha podido preparar la comparación', !ok);
+      _mapaCmpBarraFirma = '';
+      mapaCmpActualizar();
+    })
+    .catch(err => { _mapaCmpFallo = true; mapaEstado(err.message || 'No se ha podido preparar la comparación', true); })
+    .finally(() => { _mapaCmpCreando = null; });
+  return _mapaCmpCreando;
+}
 
 MAPA_MODOS.push({
   id: 'cmp-vuelco',
@@ -437,7 +471,9 @@ function mapaCmpBarra(forzar) {
   });
   barra.hidden = !activo;
   if (!activo) { _mapaCmpBarraFirma = ''; return; }
-  const firma = MAPA_CMP.version() + '|' + (MAPA_CMP.hay() ? 1 : 0) + '|' + mapaCmpVista;
+  // Al elegir un modo del comparador sin comparación hecha, se prepara una.
+  if (!MAPA_CMP.hay() && !_mapaCmpCreando && !_mapaCmpFallo && mapaCmpPuedeCrear(MAPA_DATOS.eleccionActual())) mapaCmpCrear();
+  const firma = MAPA_CMP.version() + '|' + (MAPA_CMP.hay() ? 1 : 0) + '|' + (_mapaCmpCreando ? 1 : 0) + '|' + mapaCmpVista;
   if (!forzar && firma === _mapaCmpBarraFirma) return;
   _mapaCmpBarraFirma = firma;
 
@@ -449,8 +485,10 @@ function mapaCmpBarra(forzar) {
 function mapaCmpBarraHtml() {
   const esc = MAPA.escapar;
   if (!MAPA_CMP.hay() || typeof advCmpSideHtml !== 'function') {
-    return '<p class="mapa-panel-nota">Todavía no hay ninguna comparación. Ábrela en la calculadora avanzada con «⚖ Comparar».</p>' +
-      '<button type="button" class="mapa-boton" data-mcmp-abrir>Abrir el comparador</button>';
+    return _mapaCmpCreando
+      ? '<p class="mapa-panel-nota">Preparando la comparación: A es esta elección con sus reglas y B, la misma con otra fórmula…</p>'
+      : '<p class="mapa-panel-nota">No se ha podido preparar la comparación.</p>' +
+        '<button type="button" class="mapa-boton" data-mcmp-abrir>Abrir el comparador</button>';
   }
   const cmp = _advCmp.cmp;
   const r = cmp.resumen;
