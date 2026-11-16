@@ -695,16 +695,15 @@ function advRenderSummary() {
     ['Participación', s.participacion > 0 ? advPct(s.participacion) : '—', true],
     ...(_advResult.compensation
       ? [['Compensatorios', `+${advNum(_advResult.compensation.added)}`, false]] : []),
-    ['Desproporción (Gallagher)',
-     _advResult.compensation
-       ? `${s.gallagherBefore.toFixed(2)} → ${s.gallagher.toFixed(2)}`
-       : s.gallagher.toFixed(2), false]
+    ...(_advResult.compensation
+      ? [['Gallagher antes de compensar', s.gallagherBefore.toFixed(2), false]] : [])
   ];
   select('#adv-summary').innerHTML =
     `<div class="adv-summary">` +
     items.map(([l, v, m]) =>
       `<div class="adv-summary-item"><small>${advEscape(l)}</small><div class="v${m ? ' muted' : ''}">${v}</div></div>`).join('') +
-    `</div>`;
+    `</div>` +
+    (typeof indicesHtml === 'function' ? `<div class="adv-indices">${indicesHtml(_advResult.national)}</div>` : '');
 }
 
 function advRenderResults() {

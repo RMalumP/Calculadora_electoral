@@ -279,6 +279,7 @@ function displayResults(allocated, totalValid, totalSeats, formula, excludedBarr
   highlightInputTable(allocated, formula);
   displayLastSeatInfo();
   _showCompensationNote();
+  _showIndices(allocated, totalValid, totalSeats);
 
   if (allParties && allParties.length > 0) {
     buildBreakdownTable(allParties, allocated, baseSeats !== null ? baseSeats : totalSeats, formula);
@@ -295,6 +296,28 @@ function displayResults(allocated, totalValid, totalSeats, formula, excludedBarr
   updateHemicycleIfVisible();
 
   copyResultsToPactometer(allocated, totalSeats);
+}
+
+/** Indicadores de proporcionalidad bajo la tabla de resultados. */
+function _showIndices(allocated, totalValid, totalSeats) {
+  const table = document.getElementById('results-table');
+  if (!table || typeof indicesHtml !== 'function') return;
+  let box = document.getElementById('indices-calc');
+  if (!box) {
+    box = document.createElement('div');
+    box.id = 'indices-calc';
+    (document.getElementById('comp-note') || table).insertAdjacentElement('afterend', box);
+  }
+  const base = totalValid > 0 ? totalValid : allocated.reduce((s, p) => s + p.votes, 0);
+  const items = allocated.map(p => ({
+    name: p.name, siglas: p.siglas, votes: p.votes, seats: p.seats,
+    votePct: base > 0 ? p.votes / base * 100 : 0,
+    seatPct: totalSeats > 0 ? p.seats / totalSeats * 100 : 0
+  }));
+  // Los votos de quienes no entran en el reparto (barrera) también cuentan.
+  const resto = base - allocated.reduce((s, p) => s + p.votes, 0);
+  if (resto > 0) items.push({ name: 'Otros', votes: resto, seats: 0, votePct: resto / base * 100, seatPct: 0 });
+  box.innerHTML = indicesHtml(items);
 }
 
 /** Línea bajo la tabla con lo que ha añadido la compensación. */

@@ -42,6 +42,9 @@ registerTab('theory', 'tab-content', String.raw`
               <button class="theory-system-btn" data-system="mmp" onclick="showTheorySystem('mmp')">Modelo alemán / MMP</button>
               <button class="theory-system-btn theory-btn-gap" data-system="nordico" onclick="showTheorySystem('nordico')">Modelo nórdico</button>
 
+              <div class="theory-group">Indicadores de proporcionalidad</div>
+              <button class="theory-system-btn" data-system="ind-gallagher" onclick="showTheorySystem('ind-gallagher')">Gallagher y Loosemore-Hanby</button>
+              <button class="theory-system-btn theory-btn-gap" data-system="ind-enp" onclick="showTheorySystem('ind-enp')">Nº efectivo de partidos</button>
             </div>
           </div>
         </div>
@@ -202,6 +205,28 @@ registerTab('theory', 'tab-content', String.raw`
               <div class="theory-formula">Total T = escaños de distrito + bolsa de nivelación<br>Objetivo(partido) = reparto proporcional de T según los votos nacionales<br>Déficit(partido) = Objetivo − Directos<br>La bolsa se reparte entre los partidos con déficit &gt; 0 (mayor déficit primero)</div>
               <h4 class="theory-h4">Ejemplo</h4>
               <p class="theory-p">Total 10 escaños: 8 de distrito y 2 de nivelación. Votos: A 50 %, B 30 %, C 20 %. Directos: A 5, B 2, C 1. Objetivo sobre 10: A 5, B 3, C 2. Déficits: A 0, B 1, C 1, que suman justo los 2 escaños de la bolsa: B y C reciben uno cada uno y el resultado final (5, 3, 2) es exactamente proporcional.</p>
+            </div>
+
+            <div id="theory-ind-gallagher" class="theory-content-section">
+              <h3 class="theory-title">Índices de desproporcionalidad</h3>
+              <h4 class="theory-h4">Descripción</h4>
+              <p class="theory-p">Miden la distancia entre el porcentaje de votos y el de escaños de cada candidatura. Cuanto más cerca de 0, más proporcional es el resultado.</p>
+              <p class="theory-p"><b>Gallagher</b> (mínimos cuadrados) castiga las desviaciones grandes. <b>Loosemore-Hanby</b> es la suma de las desviaciones dividida entre dos: el porcentaje de escaños que están «donde no tocan». <b>Rae</b> es la desviación media por candidatura y <b>Sainte-Laguë</b> pondera cada desviación por el voto del partido, así que perjudica más a quien se queda sin representación siendo pequeño.</p>
+              <h4 class="theory-h4">Fórmula</h4>
+              <div class="theory-formula">Gallagher = √(½ Σ (%votos − %escaños)²)<br>Loosemore-Hanby = ½ Σ |%votos − %escaños|<br>Rae = Σ |%votos − %escaños| / n<br>Sainte-Laguë = Σ (%escaños − %votos)² / %votos</div>
+              <h4 class="theory-h4">Ejemplo</h4>
+              <p class="theory-p">Votos 50 / 30 / 20 % y escaños 60 / 40 / 0 %. Desviaciones: +10, +10, −20. Gallagher = √(½·600) ≈ 17,32; Loosemore-Hanby = ½·40 = 20; Rae = 40/3 ≈ 13,33; Sainte-Laguë = 2 + 3,33 + 20 ≈ 25,33.</p>
+            </div>
+
+            <div id="theory-ind-enp" class="theory-content-section">
+              <h3 class="theory-title">Número efectivo de partidos y voto desperdiciado</h3>
+              <h4 class="theory-h4">Descripción</h4>
+              <p class="theory-p">El <b>número efectivo de partidos</b> (Laakso-Taagepera) responde a «¿cuántos partidos del mismo tamaño darían esta fragmentación?». Se calcula con votos (sistema de partidos electoral) y con escaños (parlamentario). La diferencia entre ambos es un buen termómetro del efecto reductor del sistema.</p>
+              <p class="theory-p">El <b>voto desperdiciado</b> es el porcentaje de votos de candidaturas que no obtienen ningún escaño. Los <b>votos por escaño</b> muestran cuánto «cuesta» un escaño a cada partido.</p>
+              <h4 class="theory-h4">Fórmula</h4>
+              <div class="theory-formula">N = 1 / Σ pᵢ²   (pᵢ = cuota de votos o de escaños)<br>Votos por escaño = votos del partido / escaños del partido</div>
+              <h4 class="theory-h4">Ejemplo</h4>
+              <p class="theory-p">Votos 50 / 30 / 20 %: N = 1 / (0,25 + 0,09 + 0,04) ≈ 2,63. Escaños 60 / 40 / 0 %: N = 1 / (0,36 + 0,16) ≈ 1,92. El partido C (20 % de los votos) es todo voto desperdiciado.</p>
             </div>
 
           </div>

@@ -407,3 +407,18 @@ button:focus-visible, select:focus-visible, summary:focus-visible, a:focus-visib
     min-height: 32px;
   }
 }
+
+/* ── Indicadores de proporcionalidad ── */
+.indices-host { padding: 8px 14px 10px; border-top: 1px solid var(--border-light); font-size: 0.82rem; }
+.ind-valores { display: flex; flex-wrap: wrap; gap: 6px 22px; align-items: flex-start; }
+.ind-item small { display: block; color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; }
+.ind-item .v { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text); }
+.ind-detalle { display: block; max-width: 340px; color: var(--text-muted); font-size: 0.72rem; font-weight: 400; }
+.ind-vacio { color: var(--text-muted); font-style: italic; }
+.ind-sel { margin-top: 6px; }
+.ind-sel summary { cursor: pointer; color: var(--text-muted); font-size: 0.75rem; width: max-content; }
+.ind-lista { display: flex; flex-wrap: wrap; gap: 4px 14px; padding: 6px 0 2px; }
+.ind-opt { display: inline-flex; align-items: center; gap: 4px; font-size: 0.78rem; cursor: pointer; }
+.ind-acciones { flex-basis: 100%; display: flex; gap: 6px; }
+.ind-acciones button { font: inherit; font-size: 0.72rem; padding: 1px 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: var(--radius); cursor: pointer; }
+.adv-indices .indices-host { border-top: none; padding: 6px 4px; }
