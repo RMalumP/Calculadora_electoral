@@ -56,22 +56,25 @@
 .adv-notice + .adv-notice { margin-top: -6px; }
 
 /* ── Cinta de totales ───────────────────────────────────────── */
-.adv-summary {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0;
+/* Una sola tarjeta: cifras en rejilla (sin huérfanas a todo el ancho) y,
+   debajo, la barra de indicadores. Las líneas entre celdas son sombras para
+   que las celdas vacías de la última fila no se pinten. */
+.adv-resumen {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
   overflow: hidden;
 }
-.adv-summary-item {
-  flex: 1 1 120px;
-  padding: 9px 14px;
-  border-right: 1px solid var(--border-light);
+.adv-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+  overflow: hidden;
 }
-.adv-summary-item:last-child { border-right: none; }
+.adv-summary-item {
+  padding: 9px 14px;
+  box-shadow: 1px 0 0 var(--border-light), 0 1px 0 var(--border-light);
+}
 .adv-summary-item small {
   display: block;
   font-size: 0.62rem;
@@ -410,7 +413,7 @@
   .adv-ccaa-body { padding: 4px 8px 10px 12px; }
   .adv-district-head { row-gap: 3px; }
   .adv-district-seats { margin-left: 0; }
-  .adv-summary-item { flex-basis: 50%; }
+  .adv-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 /* ── PANEL DE CONFIGURACIÓN: PESTAÑAS A TODO EL ANCHO ────────
