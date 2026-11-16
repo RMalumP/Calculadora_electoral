@@ -1466,6 +1466,42 @@ body.adv-popup-open { overflow: hidden; }
 @media (max-width: 900px) {
   .adv-cmp-sides, .adv-cmp-stacks { grid-template-columns: 1fr; }
 }
+.adv-cmp-sides[hidden] { display: none; }
+.adv-cmp-introbar { display: flex; align-items: flex-start; gap: 12px; }
+.adv-cmp-introbar .adv-cmp-intro { flex: 1; }
+.adv-cmp-introbar .adv-mini-btn { flex: none; }
+.adv-cmp-kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 10px; }
+.adv-cmp-kpi { border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 8px 12px; background: var(--surface); min-width: 0; }
+.adv-cmp-kpi > small { display: block; font-size: 0.7rem; color: var(--text-muted); }
+.adv-cmp-kpi > div { font-size: 1.15rem; font-weight: 700; color: var(--text); margin: 2px 0; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.adv-cmp-kpi-main > div { color: var(--accent); font-size: 1.5rem; }
+.adv-cmp-abs { color: #1d7a3f; font-weight: 700; }
+.adv-cmp-lead span { margin-right: 12px; }
+.adv-cmp-chip { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; font-weight: 600; }
+.adv-cmp-chip .color-swatch { margin: 0; }
+.adv-cmp-tabs { padding: 0; margin: 14px 0 10px; }
+.adv-cmp-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-bottom: 8px; font-size: 0.8rem; color: var(--text-muted); }
+.adv-cmp-tools label { display: inline-flex; align-items: center; gap: 6px; }
+.adv-cmp-tools .adv-select-wrap { display: inline-block; min-width: 140px; }
+.adv-cmp-tools select { width: 100%; appearance: none; -webkit-appearance: none; cursor: pointer; background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 5px 24px 5px 8px; font: 0.8rem 'Source Sans 3', sans-serif; color: var(--text); }
+.adv-cmp-tools select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.adv-cmp-count { margin-left: auto; }
+.adv-cmp-circ-scroll { max-height: 460px; overflow-y: auto; }
+.adv-cmp-detalle { white-space: normal !important; }
+.adv-cmp-detalle .adv-cmp-chip { margin-right: 2px; }
+.adv-cmp-vuelco > th { box-shadow: inset 3px 0 0 var(--accent); }
+.adv-cmp-resto th, .adv-cmp-resto td { font-style: italic; color: var(--text-muted); }
+.adv-cmp-neutro { color: var(--text); font-weight: 700; }
+.adv-cmp-ind .adv-cmp-desc { white-space: normal; color: var(--text-muted); font-size: 0.76rem; min-width: 260px; }
+.adv-cmp-panel .ind-sel { margin-top: 8px; }
+.adv-cmp-panel .adv-notice { margin-bottom: 8px; }
+@media (max-width: 700px) {
+  .adv-cmp-kpis { grid-template-columns: 1fr 1fr; }
+  .adv-cmp-kpi-main { grid-column: 1 / -1; }
+  .adv-cmp-introbar { flex-direction: column; }
+}
+
 @media (max-width: 520px) {
   .adv-cmp-grid { grid-template-columns: 1fr; }
 }
