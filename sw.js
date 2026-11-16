@@ -1,7 +1,7 @@
 // Versión de la caché: súbela cuando cambie algo que deba reemplazarse sí o sí.
 // No hace falta tocar los ?v= de los scripts: el servidor de red va primero y la
 // caché se busca sin parámetros, así que una URL con o sin ?v= es el mismo archivo.
-const CACHE = 'calculadora-electoral-v9';
+const CACHE = 'calculadora-electoral-v10';
 const ASSETS = [
   './',
   './index.html',
@@ -18,6 +18,7 @@ const ASSETS = [
   './css/variables.css',
   './js/accesibilidad.js',
   './js/advanced-calc.js',
+  './js/prorrateo.js',
   './js/advanced-compare.js',
   './js/advanced-exportar.js',
   './js/carga-avanzada.js',
@@ -31,6 +32,14 @@ const ASSETS = [
   './js/calculator.js',
   './js/constants.js',
   './js/groupings.js',
+  './js/experimental.js',
+  './js/algorithms-mixtos.js',
+  './js/algorithms-preferencial.js',
+  './js/coaliciones.js',
+  './js/coaliciones-ui.js',
+  './js/indices.js',
+  './js/segunda-vuelta.js',
+  './js/segunda-vuelta-ui.js',
   './js/helpers.js',
   './js/hemicycle.js',
   './js/mapa.js',

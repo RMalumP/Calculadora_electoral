@@ -91,7 +91,8 @@ function calculate() {
       votes:   totalGroupVotes,
       color:   memberParties[0]?.color || '#888888',
       isGroup: true,
-      groupNum
+      groupNum,
+      members: memberParties.map(m => ({ name: m.name, siglas: m.siglas, votes: m.votes, color: m.color }))
     });
   });
 
@@ -184,6 +185,14 @@ function calculate() {
   excludedBarrier2.forEach(p => allocated.push({ ...p, seats: 0, excludedBarrier: true }));
   noVotes2.forEach(p => allocated.push({ ...p, seats: 0, noVotes: true }));
   allocated.sort((a, b) => b.seats - a.seats || b.votes - a.votes);
+
+  // Datos para el análisis de coaliciones (se pinta en displayResults).
+  window.lastCoalicion = syntheticGroups.length ? {
+    individuales: remainingNormal.filter(p => !p.isGroup).map(p => ({ name: p.name, votes: p.votes })),
+    grupos: syntheticGroups.map(g => ({ name: g.name, members: g.members })),
+    otros: otrosAccumulatedVotes, blancos: blank,
+    escanos: seatsToAllocate, bono: bonus, formula, barrera: barrier
+  } : null;
 
   // ── PASO 7b: Escaños compensatorios (opcional) ──
   const compensation = _applyCompensation(allocated, totalValid, formula, barrier);
@@ -279,6 +288,8 @@ function displayResults(allocated, totalValid, totalSeats, formula, excludedBarr
   highlightInputTable(allocated, formula);
   displayLastSeatInfo();
   _showCompensationNote();
+  _showIndices(allocated, totalValid, totalSeats);
+  if (typeof coalicionUiRender === 'function') coalicionUiRender();
 
   if (allParties && allParties.length > 0) {
     buildBreakdownTable(allParties, allocated, baseSeats !== null ? baseSeats : totalSeats, formula);
@@ -295,6 +306,28 @@ function displayResults(allocated, totalValid, totalSeats, formula, excludedBarr
   updateHemicycleIfVisible();
 
   copyResultsToPactometer(allocated, totalSeats);
+}
+
+/** Indicadores de proporcionalidad bajo la tabla de resultados. */
+function _showIndices(allocated, totalValid, totalSeats) {
+  const table = document.getElementById('results-table');
+  if (!table || typeof indicesHtml !== 'function') return;
+  let box = document.getElementById('indices-calc');
+  if (!box) {
+    box = document.createElement('div');
+    box.id = 'indices-calc';
+    (document.getElementById('comp-note') || table).insertAdjacentElement('afterend', box);
+  }
+  const base = totalValid > 0 ? totalValid : allocated.reduce((s, p) => s + p.votes, 0);
+  const items = allocated.map(p => ({
+    name: p.name, siglas: p.siglas, votes: p.votes, seats: p.seats,
+    votePct: base > 0 ? p.votes / base * 100 : 0,
+    seatPct: totalSeats > 0 ? p.seats / totalSeats * 100 : 0
+  }));
+  // Los votos de quienes no entran en el reparto (barrera) también cuentan.
+  const resto = base - allocated.reduce((s, p) => s + p.votes, 0);
+  if (resto > 0) items.push({ name: 'Otros', votes: resto, seats: 0, votePct: resto / base * 100, seatPct: 0 });
+  box.innerHTML = indicesHtml(items);
 }
 
 /** Línea bajo la tabla con lo que ha añadido la compensación. */
@@ -457,12 +490,18 @@ function prepareSecondRound() {
     .filter(p => p.name && p.votes > 0);
 
   parties.sort((a, b) => b.votes - a.votes);
-  const total = parties.slice(0, 2).reduce((s, p) => s + p.votes, 0);
+  // Quién pasa lo decide la regla elegida; con menos de dos finalistas se
+  // muestran igualmente los dos primeros para poder editar.
+  const ronda = typeof svPrimeraRonda === 'function'
+    ? svPrimeraRonda(parties, svUiRegla(), parseVoteValue(document.getElementById('census-total')?.value))
+    : null;
+  const finalistas = ronda && ronda.finalistas.length >= 2 ? ronda.finalistas : parties.slice(0, 2);
+  const total = finalistas.reduce((s, p) => s + p.votes, 0);
   const _siglasVis = typeof siglasVisible !== 'undefined' && siglasVisible;
   const _namesHid  = typeof namesHidden  !== 'undefined' && namesHidden;
 
   for (let i = 0; i < 2; i++) {
-    const p   = parties[i] || { name: '', siglas: '', color: PALETTE[i % PALETTE.length], votes: '' };
+    const p   = finalistas[i] || { name: '', siglas: '', color: PALETTE[i % PALETTE.length], votes: '' };
     const row = document.getElementById(`sr-row-${i + 1}`);
     const pct = total > 0 && p.votes ? (p.votes / total * 100).toFixed(2) : '—';
     if (row) {
@@ -477,6 +516,7 @@ function prepareSecondRound() {
         <td class="pct-cell">${pct === '—' ? '—' : pct + '%'}</td>`;
     }
   }
+  if (typeof svUiRender === 'function') svUiRender(ronda, finalistas);
 }
 
 function updateSecondRoundPercentages() {

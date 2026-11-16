@@ -407,3 +407,43 @@ button:focus-visible, select:focus-visible, summary:focus-visible, a:focus-visib
     min-height: 32px;
   }
 }
+
+/* ── Indicadores de proporcionalidad ── */
+.indices-host { padding: 8px 14px 10px; border-top: 1px solid var(--border-light); font-size: 0.82rem; }
+.ind-valores { display: flex; flex-wrap: wrap; gap: 6px 22px; align-items: flex-start; }
+.ind-item small { display: block; color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; }
+.ind-item .v { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text); }
+.ind-detalle { display: block; max-width: 340px; color: var(--text-muted); font-size: 0.72rem; font-weight: 400; }
+.ind-vacio { color: var(--text-muted); font-style: italic; }
+.ind-sel { margin-top: 6px; }
+.ind-sel summary { cursor: pointer; color: var(--text-muted); font-size: 0.75rem; width: max-content; }
+.ind-lista { display: flex; flex-wrap: wrap; gap: 4px 14px; padding: 6px 0 2px; }
+.ind-opt { display: inline-flex; align-items: center; gap: 4px; font-size: 0.78rem; cursor: pointer; }
+.ind-acciones { flex-basis: 100%; display: flex; gap: 6px; }
+.ind-acciones button { font: inherit; font-size: 0.72rem; padding: 1px 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: var(--radius); cursor: pointer; }
+.adv-indices .indices-host { border-top: none; padding: 6px 4px; }
+
+/* ── Segunda vuelta: reglas y simulador de transferencias ── */
+.sr-reglas { padding: 8px 14px; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; font-size: 0.82rem; }
+.sr-reglas small { flex-basis: 100%; color: var(--text-muted); }
+.sr-reglas select { padding: 4px 8px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--text); font: inherit; }
+.sr-aviso { margin: 0 14px 6px; padding: 6px 10px; font-size: 0.8rem; background: var(--accent-pale); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); }
+.sr-simulador { padding: 8px 14px 12px; border-top: 1px solid var(--border-light); font-size: 0.82rem; }
+.sr-sim-check { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+.sr-tabla-wrap { overflow-x: auto; margin-top: 8px; }
+.sr-tabla { width: 100%; border-collapse: collapse; }
+.sr-tabla th, .sr-tabla td { padding: 4px 6px; font-size: 0.78rem; text-align: left; }
+.sr-tabla th:not(:first-child), .sr-tabla td.sr-num { text-align: right; }
+.sr-tabla input { width: 72px; text-align: right; }
+.sr-tabla tr.sr-exceso input { border-color: var(--danger-text); }
+.sr-acciones { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.sr-resultado { margin-top: 8px; font-size: 0.85rem; }
+
+/* ── Agrupaciones: juntos o separados ── */
+#coalicion-box { padding: 8px 14px 12px; border-top: 1px solid var(--border-light); font-size: 0.82rem; }
+.coal-cab { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px; align-items: center; margin-bottom: 6px; }
+.coal-cab select { margin-left: 4px; padding: 2px 6px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--text); font: inherit; }
+.coal-tabla { width: 100%; margin: 6px 0; border-collapse: collapse; }
+.coal-tabla th, .coal-tabla td { padding: 3px 6px; font-size: 0.78rem; text-align: right; }
+.coal-tabla th:first-child, .coal-tabla td:first-child { text-align: left; }
+.coal-tabla tr.coal-total td { font-weight: 700; border-top: 1px solid var(--border); }

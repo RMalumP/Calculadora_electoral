@@ -42,6 +42,22 @@ registerTab('theory', 'tab-content', String.raw`
               <button class="theory-system-btn" data-system="mmp" onclick="showTheorySystem('mmp')">Modelo alemán / MMP</button>
               <button class="theory-system-btn theory-btn-gap" data-system="nordico" onclick="showTheorySystem('nordico')">Modelo nórdico</button>
 
+              <div class="theory-group">Indicadores de proporcionalidad</div>
+              <button class="theory-system-btn" data-system="ind-gallagher" onclick="showTheorySystem('ind-gallagher')">Gallagher y Loosemore-Hanby</button>
+              <button class="theory-system-btn theory-btn-gap" data-system="ind-enp" onclick="showTheorySystem('ind-enp')">Nº efectivo de partidos</button>
+              <div class="theory-group">Barreras electorales</div>
+              <button class="theory-system-btn theory-btn-gap" data-system="barreras" onclick="showTheorySystem('barreras')">Barreras y umbral variable</button>
+              <div class="theory-group">Dos vueltas</div>
+              <button class="theory-system-btn theory-btn-gap" data-system="dos-vueltas" onclick="showTheorySystem('dos-vueltas')">Segunda vuelta con transferencias</button>
+              <div class="theory-group">Coaliciones</div>
+              <button class="theory-system-btn theory-btn-gap" data-system="coaliciones" onclick="showTheorySystem('coaliciones')">Coaliciones y listas conjuntas</button>
+              <div class="theory-group">Prorrateo de escaños</div>
+              <button class="theory-system-btn theory-btn-gap" data-system="prorrateo" onclick="showTheorySystem('prorrateo')">Prorrateo entre circunscripciones</button>
+              <div class="theory-group">Mixtos y preferenciales</div>
+              <button class="theory-system-btn" data-system="paralelo" onclick="showTheorySystem('paralelo')">Sistema paralelo</button>
+              <button class="theory-system-btn" data-system="preferencial" onclick="showTheorySystem('preferencial')">Listas abiertas y preferencial</button>
+              <button class="theory-system-btn" data-system="stv" onclick="showTheorySystem('stv')">STV (voto único transferible)</button>
+              <button class="theory-system-btn theory-btn-gap" data-system="av" onclick="showTheorySystem('av')">Voto alternativo, Borda, Condorcet</button>
             </div>
           </div>
         </div>
@@ -202,6 +218,114 @@ registerTab('theory', 'tab-content', String.raw`
               <div class="theory-formula">Total T = escaños de distrito + bolsa de nivelación<br>Objetivo(partido) = reparto proporcional de T según los votos nacionales<br>Déficit(partido) = Objetivo − Directos<br>La bolsa se reparte entre los partidos con déficit &gt; 0 (mayor déficit primero)</div>
               <h4 class="theory-h4">Ejemplo</h4>
               <p class="theory-p">Total 10 escaños: 8 de distrito y 2 de nivelación. Votos: A 50 %, B 30 %, C 20 %. Directos: A 5, B 2, C 1. Objetivo sobre 10: A 5, B 3, C 2. Déficits: A 0, B 1, C 1, que suman justo los 2 escaños de la bolsa: B y C reciben uno cada uno y el resultado final (5, 3, 2) es exactamente proporcional.</p>
+            </div>
+
+            <div id="theory-ind-gallagher" class="theory-content-section">
+              <h3 class="theory-title">Índices de desproporcionalidad</h3>
+              <h4 class="theory-h4">Descripción</h4>
+              <p class="theory-p">Miden la distancia entre el porcentaje de votos y el de escaños de cada candidatura. Cuanto más cerca de 0, más proporcional es el resultado.</p>
+              <p class="theory-p"><b>Gallagher</b> (mínimos cuadrados) castiga las desviaciones grandes. <b>Loosemore-Hanby</b> es la suma de las desviaciones dividida entre dos: el porcentaje de escaños que están «donde no tocan». <b>Rae</b> es la desviación media por candidatura y <b>Sainte-Laguë</b> pondera cada desviación por el voto del partido, así que perjudica más a quien se queda sin representación siendo pequeño.</p>
+              <h4 class="theory-h4">Fórmula</h4>
+              <div class="theory-formula">Gallagher = √(½ Σ (%votos − %escaños)²)<br>Loosemore-Hanby = ½ Σ |%votos − %escaños|<br>Rae = Σ |%votos − %escaños| / n<br>Sainte-Laguë = Σ (%escaños − %votos)² / %votos</div>
+              <h4 class="theory-h4">Ejemplo</h4>
+              <p class="theory-p">Votos 50 / 30 / 20 % y escaños 60 / 40 / 0 %. Desviaciones: +10, +10, −20. Gallagher = √(½·600) ≈ 17,32; Loosemore-Hanby = ½·40 = 20; Rae = 40/3 ≈ 13,33; Sainte-Laguë = 2 + 3,33 + 20 ≈ 25,33.</p>
+            </div>
+
+            <div id="theory-ind-enp" class="theory-content-section">
+              <h3 class="theory-title">Número efectivo de partidos y voto desperdiciado</h3>
+              <h4 class="theory-h4">Descripción</h4>
+              <p class="theory-p">El <b>número efectivo de partidos</b> (Laakso-Taagepera) responde a «¿cuántos partidos del mismo tamaño darían esta fragmentación?». Se calcula con votos (sistema de partidos electoral) y con escaños (parlamentario). La diferencia entre ambos es un buen termómetro del efecto reductor del sistema.</p>
+              <p class="theory-p">El <b>voto desperdiciado</b> es el porcentaje de votos de candidaturas que no obtienen ningún escaño. Los <b>votos por escaño</b> muestran cuánto «cuesta» un escaño a cada partido.</p>
+              <h4 class="theory-h4">Fórmula</h4>
+              <div class="theory-formula">N = 1 / Σ pᵢ²   (pᵢ = cuota de votos o de escaños)<br>Votos por escaño = votos del partido / escaños del partido</div>
+              <h4 class="theory-h4">Ejemplo</h4>
+              <p class="theory-p">Votos 50 / 30 / 20 %: N = 1 / (0,25 + 0,09 + 0,04) ≈ 2,63. Escaños 60 / 40 / 0 %: N = 1 / (0,36 + 0,16) ≈ 1,92. El partido C (20 % de los votos) es todo voto desperdiciado.</p>
+            </div>
+
+            <div id="theory-barreras" class="theory-content-section">
+              <h3 class="theory-title">Barreras electorales y umbral variable</h3>
+              <h4 class="theory-h4">Descripción</h4>
+              <p class="theory-p">La <b>barrera</b> (o umbral) es el porcentaje mínimo de votos que debe alcanzar una candidatura para entrar en el reparto. Puede medirse en la circunscripción (España, 3 %), en la comunidad o en todo el país (Alemania 5 %, Suecia 4 %, Dinamarca 2 %).</p>
+              <p class="theory-p">El <b>umbral variable</b> combina condiciones alternativas. Ejemplo alemán: un partido entra si supera el 5 % nacional <i>o</i> gana al menos 3 circunscripciones (<i>Grundmandatklausel</i>). En la Calculadora avanzada cada barrera tiene el campo «…o ganar circunscripciones» y puedes añadir tantas barreras adicionales como quieras: se aplican todas a la vez.</p>
+              <h4 class="theory-h4">Fórmula</h4>
+              <div class="theory-formula">Pasa si: (votos / válidos ≥ barrera) O (circunscripciones ganadas ≥ N)<br>Con varias barreras activas hay que pasarlas todas</div>
+              <h4 class="theory-h4">Ejemplo</h4>
+              <p class="theory-p">Con barrera nacional del 15 % y exención de 1 circunscripción, un partido regional con el 1 % nacional pero primero en una provincia entra en el reparto; sin la exención quedaría fuera.</p>
+            </div>
+
+            <div id="theory-dos-vueltas" class="theory-content-section">
+              <h3 class="theory-title">Segunda vuelta y transferencia de votos</h3>
+              <h4 class="theory-h4">Descripción</h4>
+              <p class="theory-p">En los sistemas a dos vueltas, si nadie logra la mayoría absoluta en la primera, pasan a la segunda los candidatos mejor situados (los dos primeros, o los que superan un umbral: en Francia el 12,5 % del censo). En la segunda gana quien más votos obtiene.</p>
+              <p class="theory-p">El resultado depende de a dónde van los votos de los eliminados. En la Calculadora, al elegir «Mayoritario (segunda vuelta)» puedes marcar «Simular a mano qué votan los eliminados» y repartir en porcentaje los votos de cada candidato eliminado entre los finalistas; el resto se considera abstención o voto en blanco.</p>
+              <h4 class="theory-h4">Fórmula</h4>
+              <div class="theory-formula">Votos finales(F) = Votos 1ª(F) + Σ eliminados [ votos(E) × %(E→F) ]<br>Abstención = votos(E) × (100 % − Σ %(E→F))</div>
+              <h4 class="theory-h4">Ejemplo</h4>
+              <p class="theory-p">Finalistas A (400) y B (350). El eliminado C (200 votos) da el 10 % a A y el 80 % a B; D (50) da todo a B. Resultado: A = 400 + 20 = 420; B = 350 + 160 + 50 = 560. Gana B por 140 votos aunque fuera segundo en la primera vuelta.</p>
+            </div>
+
+            <div id="theory-coaliciones" class="theory-content-section">
+              <h3 class="theory-title">Coaliciones y listas conjuntas</h3>
+              <h4 class="theory-h4">Descripción</h4>
+              <p class="theory-p">Cuando varios partidos concurren juntos se presentan como una sola lista: sus votos se suman, se aplica la barrera a la suma y los escaños se reparten después entre los miembros. Esto puede ayudar mucho a los pequeños si la barrera es alta, y casi nunca perjudica con D'Hondt (que premia las listas grandes).</p>
+              <p class="theory-p">En la Calculadora, numera los partidos con el botón «Agrupación» para unirlos. Debajo de los resultados verás cuántos escaños tendría cada miembro dentro de la lista (D'Hondt, Sainte-Laguë o Hare) y cuántos tendrían yendo por separado.</p>
+              <h4 class="theory-h4">Fórmula</h4>
+              <div class="theory-formula">Votos(lista) = Σ votos(miembros)<br>Escaños(miembro) = reparto proporcional de los escaños de la lista según los votos de cada miembro</div>
+              <h4 class="theory-h4">Ejemplo</h4>
+              <p class="theory-p">Barrera del 8 %. A y B tienen un 5,9 % cada uno: separados no entran. Juntos suman un 11,8 %, superan la barrera y logran un escaño que se asigna al miembro con más votos.</p>
+            </div>
+
+            <div id="theory-prorrateo" class="theory-content-section">
+              <h3 class="theory-title">Prorrateo de escaños entre circunscripciones</h3>
+              <h4 class="theory-h4">Descripción</h4>
+              <p class="theory-p">Antes de contar votos hay que decidir cuántos escaños tiene cada circunscripción. El <b>prorrateo</b> reparte los escaños según la población o el censo. En España, 2 por provincia y el resto por cuota Hare (resto mayor). En EE. UU. se usa Huntington-Hill.</p>
+              <p class="theory-p">Los métodos de divisor (D'Hondt/Jefferson, Webster, Adams, Huntington-Hill) dan prioridad a unas circunscripciones u otras: D'Hondt favorece a las grandes, Adams a las pequeñas, Webster es neutro y Huntington-Hill es un punto intermedio. En la Calculadora avanzada, con «Total personalizado», eliges el método.</p>
+              <p class="theory-p">La <b>malaponderación</b> mide cuánto desigual es el voto: la relación entre los habitantes por escaño de la circunscripción más cara y de la más barata (1 = igualdad perfecta).</p>
+              <h4 class="theory-h4">Fórmula</h4>
+              <div class="theory-formula">Hare: cuota = población total / escaños; cada una recibe ⌊pob / cuota⌋ y los restos mayores se llevan los que faltan<br>Divisor: se asigna cada escaño a la mayor prioridad = población / d(n)<br>d(n): D'Hondt n+1 · Webster n+½ · Adams n · Huntington-Hill √(n(n+1))</div>
+              <h4 class="theory-h4">Ejemplo</h4>
+              <p class="theory-p">Poblaciones 100, 30 y 10 con 1 escaño de partida cada una y 6 por repartir. Con Huntington-Hill los escaños añadidos son 5 / 1 / 0, de modo que el reparto final es 6 / 2 / 1.</p>
+            </div>
+
+            <div id="theory-paralelo" class="theory-content-section">
+              <h3 class="theory-title">Sistema paralelo (mixto sin compensación)</h3>
+              <h4 class="theory-h4">Descripción</h4>
+              <p class="theory-p">Una parte de los escaños se elige en distritos uninominales por mayoría y otra por listas proporcionales, <b>sin compensar</b> entre ambas. Por eso es mucho menos proporcional que el MMP. Lo usan Japón (289 + 176), Corea del Sur y Rusia en 2016.</p>
+              <h4 class="theory-h4">Fórmula</h4>
+              <div class="theory-formula">Total(partido) = distritos ganados + escaños de lista (reparto proporcional de la parte de lista)</div>
+              <h4 class="theory-h4">Ejemplo</h4>
+              <p class="theory-p">Votos de lista 50 / 30 / 20 %, distritos 7 / 1 / 0 y 10 escaños de lista con D'Hondt (5 / 3 / 2). Total: A 12, B 4, C 2 (18 escaños); A tiene el 67 % de los escaños con el 50 % de los votos.</p>
+            </div>
+
+            <div id="theory-preferencial" class="theory-content-section">
+              <h3 class="theory-title">Listas abiertas, desbloqueadas y voto preferencial</h3>
+              <h4 class="theory-h4">Descripción</h4>
+              <p class="theory-p">En las <b>listas cerradas</b> el votante sólo elige partido y el orden lo fija el partido. En las <b>abiertas</b> (Finlandia, Chile, Brasil) el votante elige candidato y salen los más votados de cada lista. En las <b>desbloqueadas</b> (Bélgica, Países Bajos, Austria) se respeta el orden de la lista salvo que un candidato supere un umbral de preferencias.</p>
+              <p class="theory-p">El reparto entre partidos sigue siendo proporcional (D'Hondt, Sainte-Laguë…): las preferencias sólo deciden <i>quién</i> ocupa los escaños de cada lista.</p>
+              <h4 class="theory-h4">Fórmula</h4>
+              <div class="theory-formula">1) Escaños(lista) = reparto proporcional por votos<br>2) Abierta: electos = los N con más preferencias<br>   Desbloqueada: sube quien supera umbral × votos de la lista; el resto, por orden</div>
+              <h4 class="theory-h4">Ejemplo</h4>
+              <p class="theory-p">Lista con 100 votos y 2 escaños; candidatos a (10 preferencias), b (5) y c (30). Cerrada: a y b. Abierta: c y a. Desbloqueada con umbral del 25 %: c supera el umbral (30 ≥ 25) y sube: c y a.</p>
+            </div>
+
+            <div id="theory-stv" class="theory-content-section">
+              <h3 class="theory-title">Voto único transferible (STV)</h3>
+              <h4 class="theory-h4">Descripción</h4>
+              <p class="theory-p">El votante ordena a los candidatos. Se fija la cuota de Droop; quien la alcanza resulta elegido y su excedente se transfiere a la siguiente preferencia de sus papeletas. Si nadie llega, se elimina al último y sus votos pasan al siguiente. Se repite hasta cubrir los escaños. Se usa en Irlanda, Malta, el Senado de Australia y en Escocia (local).</p>
+              <h4 class="theory-h4">Fórmula</h4>
+              <div class="theory-formula">Cuota = ⌊votos / (escaños + 1)⌋ + 1<br>Peso de transferencia = (votos del candidato − cuota) / votos del candidato</div>
+              <h4 class="theory-h4">Ejemplo</h4>
+              <p class="theory-p">2 escaños y 100 papeletas: cuota 34. A tiene 40: es elegido y sus 6 votos de excedente pasan a B. B tiene 30 + 6 = 36 ≥ 34: B también sale elegido.</p>
+            </div>
+
+            <div id="theory-av" class="theory-content-section">
+              <h3 class="theory-title">Voto alternativo, Borda y Condorcet</h3>
+              <h4 class="theory-h4">Descripción</h4>
+              <p class="theory-p"><b>Voto alternativo</b> (IRV, Australia, Cámara Baja): votantes ordenan candidatos; se elimina al último hasta que alguien supera el 50 %. <b>Borda</b>: puntos por posición. <b>Condorcet</b>: gana el que vence a todos en enfrentamientos por pares, si existe. Cada regla puede elegir a un ganador distinto con las mismas papeletas.</p>
+              <h4 class="theory-h4">Fórmula</h4>
+              <div class="theory-formula">AV: se elimina al último y se repiten los recuentos<br>Borda: n−1 puntos al primero, n−2 al segundo…<br>Condorcet: gana quien supera a cada rival en más papeletas</div>
+              <h4 class="theory-h4">Ejemplo</h4>
+              <p class="theory-p">A 40 (A>B>C), B 35 (B>C>A), C 25 (C>B>A). Mayoría simple: A. Voto alternativo: sale C y B suma 60, así que gana B. Borda: A 80, B 135, C 85: gana B. Condorcet: B vence a A (60–40) y a C (75–25): gana B.</p>
             </div>
 
           </div>

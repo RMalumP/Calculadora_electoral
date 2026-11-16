@@ -99,7 +99,7 @@ function advExportarPNG() {
   g.font = '400 14px "Source Sans 3", Arial, sans-serif'; g.globalAlpha = 0.85;
   const formula = FORMULAS.find(f => f.id === r.config.formula)?.name || r.config.formula;
   g.fillText(`${select('#adv-subtitle')?.textContent.split(' · ').slice(0, 4).join(' · ') || ''}`, 24, 60);
-  g.fillText(`${formula} · ${advNum(r.summary.totalSeats)} escaños · Gallagher ${r.summary.gallagher.toFixed(2)}`, 24, 80);
+  g.fillText(`${formula} · ${advNum(r.summary.totalSeats)} escaños · Gallagher ${r.summary.gallagher.toFixed(2)}${typeof indicesCalcular === 'function' ? (() => { const v = indicesCalcular(r.national); return ` · Loosemore-Hanby ${v.loosemore.toFixed(2)} · N.º efectivo de partidos ${v.enpv.toFixed(2)} (votos), ${v.enps.toFixed(2)} (escaños)`; })() : ''}`, 24, 80);
   g.globalAlpha = 1;
 
   const x = { name: 24, votes: 470, pct: 560, bar: 620, seats: 900 };

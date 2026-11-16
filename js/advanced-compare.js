@@ -253,8 +253,8 @@ function advCmpSummaryHtml(letter) {
       <span>${advEscape(FORMULAS.find(f => f.id === c.formula)?.name || c.formula)}</span>
       <span>${advEscape(ADV_CMP_LEVELS.find(l => l[0] === c.circunscripcion)?.[1] || '')}</span>
       <span>${advNum(s.totalSeats)} escaños</span>
-      <span>Gallagher ${s.gallagher.toFixed(2)}</span>
-    </div>${advCmpStackBar(side)}`;
+    </div>${advCmpStackBar(side)}
+    ${typeof indicesHtml === 'function' ? `<div class="adv-indices">${indicesHtml(side.result.national)}</div>` : `<span>Gallagher ${s.gallagher.toFixed(2)}</span>`}`;
 }
 
 function advCmpResultsHtml() {

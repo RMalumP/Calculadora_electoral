@@ -17,7 +17,7 @@
  * directos pero no entran en el reparto proporcional.
  */
 
-const ADV_COMP_FORMULAS = ['dhondt', 'saintlague', 'hare'];
+const ADV_COMP_FORMULAS = ['dhondt', 'saintlague', 'saintlague_m', 'hare', 'droop', 'hb', 'imperiali'];
 
 function advCompDefault() {
   return { modo: 'ninguna', formula: 'dhondt', barrera: 0, bolsa: 0, tope: 0 };
@@ -36,9 +36,7 @@ function _advCompAllocate(votes, total, formula) {
 
 /** Fórmula de compensación que corresponde a una de reparto (la que se hereda). */
 function advCompFormulaFor(formula) {
-  if (['saintlague', 'saintlague_m'].includes(formula)) return 'saintlague';
-  if (['hare', 'imperiali', 'droop', 'hb'].includes(formula)) return 'hare';
-  return 'dhondt';
+  return ADV_COMP_FORMULAS.includes(formula) ? formula : 'dhondt';
 }
 
 /**

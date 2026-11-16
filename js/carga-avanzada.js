@@ -13,6 +13,7 @@
 const ADV_MODULOS = [
   'datos/generado/indice.js',
   'js/advanced-data.js',
+  'js/prorrateo.js',
   'js/advanced-calc.js',
   'js/advanced-ui.js',
   'js/advanced-popups.js',

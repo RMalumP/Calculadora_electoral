@@ -6,11 +6,10 @@
 
 /**
  * Fórmulas que la hoja puede declarar pero la calculadora avanzada todavía no
- * sabe repartir, y con qué se sustituyen mientras tanto. La segunda vuelta
- * necesita repartir con los votos de la segunda, que la hoja trae en columnas
- * propias; hasta que eso esté, se reparte con la primera y se avisa.
+ * sabe repartir, y con qué se sustituyen. Está vacío desde que la segunda
+ * vuelta se reparte de verdad (advSegundaVuelta, más abajo).
  */
-const ADV_FORMULA_SUSTITUTA = { majority_round2: 'majority' };
+const ADV_FORMULA_SUSTITUTA = {};
 
 /** Fórmula que se va a usar de verdad para una declarada en la hoja. */
 function advFormulaSoportada(id) {
@@ -24,27 +23,42 @@ function advDefaultConfig(meta) {
     // La hoja trae la fórmula del sistema real; d'Hondt sólo es el recurso
     // para las elecciones que aún no la tengan anotada.
     formula: advFormulaSoportada(meta?.formulaDefault) || 'dhondt',
+    // `exencion`: nº de circunscripciones base que basta ganar para saltarse la
+    // barrera (0 = sin exención), como la cláusula alemana de los 3 mandatos directos.
     barrera1: {
       activa: (meta?.barrera1?.valor || 0) > 0,
       nivel:  meta?.barrera1?.nivel || 'circunscripcion',
-      valor:  meta?.barrera1?.valor || 0
+      valor:  meta?.barrera1?.valor || 0,
+      exencion: 0
     },
     barrera2: {
       activa: !!meta?.barrera2,
       nivel:  meta?.barrera2?.nivel || 'nacional',
-      valor:  meta?.barrera2?.valor || 0
+      valor:  meta?.barrera2?.valor || 0,
+      exencion: 0
     },
+    // Barreras adicionales que añade la persona usuaria: [{ activa, nivel, valor, exencion }].
+    barrerasExtra: [],
     blancoEnDenominador: true,
     seatsMode: 'sheet',      // 'sheet' | 'custom'
     totalSeats: meta?.escanosTotales || 350,
     minPorCircunscripcion: meta?.minimoDefault != null ? meta.minimoDefault : 2,
     repartoBase: 'poblacion', // 'poblacion' | 'censo'
+    prorrateo: 'hare',        // método de prorrateo entre circunscripciones (prorrateo.js)
     // Añadidos que no trae la hoja: apagados mientras nadie los encienda.
     bono: { activa: false, escanos: 0, modo: 'incluido' }, // 'incluido' | 'extra'
     extras: {
       ccaa:     { activa: false, escanos: 0 },
       nacional: { activa: false, escanos: 0 }
     },
+    // Segunda vuelta (fórmula «majority_round2»): 'datos' usa los votos de la
+    // segunda vuelta de la hoja y, si una circunscripción no los tiene, simula
+    // la ronda; 'simulada' simula siempre. Véase datos/SEGUNDA_VUELTA.md.
+    segundaVuelta: { modo: 'datos', regla: 'top2', transfer: 'proporcional' },
+    // Coaliciones: [{ id, name, members: [claves de partido] }]. Votan juntas
+    // (suman votos y pasan juntas la barrera) y su reparto interno es nacional.
+    coaliciones: [],
+    coalMetodo: 'dhondt',
     // Escaños compensatorios sobre el recuento nacional (advanced-compensation.js).
     comp: advCompDefault()
   };
@@ -91,6 +105,8 @@ function advBuildDistricts(data, config) {
     votosValidos: 0, votosBlanco: 0, votosNulos: 0,
     numRows: 0, minAjuste: 0,
     partyVotes: new Map(), realSeats: new Map(),
+    // Votos de la segunda vuelta por candidatura y sus nombres (sólo si la hoja los trae).
+    partyVotes2: new Map(), round2Meta: new Map(),
     members: [],
     // Códigos de circunscripción de la base de datos que caen aquí. El mapa
     // los usa para casar cada circunscripción con su pieza.
@@ -118,6 +134,10 @@ function advBuildDistricts(data, config) {
     if (row.provCode) d.codigos.push(row.provCode);
     d.formulaPropia = propia(d.formulaPropia, row.formulaPropia);
     d.barreraPropia = propia(d.barreraPropia, row.barreraPropia);
+    (row.round2 || []).forEach(p => {
+      if (p.votes) d.partyVotes2.set(p.key, (d.partyVotes2.get(p.key) || 0) + p.votes);
+      d.round2Meta.set(p.key, { name: p.name, siglas: p.siglas });
+    });
     row.parties.forEach(p => {
       if (p.votes)     d.partyVotes.set(p.key, (d.partyVotes.get(p.key) || 0) + p.votes);
       if (p.realSeats) d.realSeats.set(p.key, (d.realSeats.get(p.key) || 0) + p.realSeats);
@@ -208,10 +228,10 @@ function advEffectiveConfig(config, locks, districtId, district) {
     formula: advLockHas(locks, districtId, 'formula') && snap ? snap.formula
            : formulaPropia || config.formula,
     barreras: advLockHas(locks, districtId, 'barrera') && snap
-      ? [snap.barrera1, snap.barrera2]
+      ? [snap.barrera1, snap.barrera2, ...(snap.barrerasExtra || [])]
       : barreraPropia != null
-      ? [{ activa: barreraPropia > 0, nivel: 'circunscripcion', valor: barreraPropia }, config.barrera2]
-      : [config.barrera1, config.barrera2]
+      ? [{ activa: barreraPropia > 0, nivel: 'circunscripcion', valor: barreraPropia }, config.barrera2, ...(config.barrerasExtra || [])]
+      : [config.barrera1, config.barrera2, ...(config.barrerasExtra || [])]
   };
 }
 
@@ -326,17 +346,11 @@ function advApportionSeats(districts, config, lockedSeats) {
   free.forEach(d => { d.seats = minOf(d); });
 
   if (remaining > 0 && basisSum > 0) {
-    // Resto mayor (cuota Hare) sobre población/censo, como la LOREG.
-    const quota = basisSum / remaining;
-    const exact = basis.map(b => b / quota);
-    const floors = exact.map(Math.floor);
-    let assigned = floors.reduce((a, b) => a + b, 0);
-    const order = exact
-      .map((e, i) => ({ i, rem: e - floors[i] }))
-      .sort((a, b) => b.rem - a.rem || basis[b.i] - basis[a.i]);
-    let k = 0;
-    while (assigned < remaining && order.length) { floors[order[k % order.length].i]++; assigned++; k++; }
-    free.forEach((d, i) => { d.seats += floors[i]; });
+    // Por defecto, resto mayor (cuota Hare) sobre población/censo, como la
+    // LOREG; también se puede prorratear por divisores (prorrateo.js).
+    const metodo = config.prorrateo || 'hare';
+    const extra = prorrateoRepartir(basis, remaining, metodo, free.map(d => d.seats));
+    free.forEach((d, i) => { d.seats += extra[i]; });
   } else if (remaining > 0) {
     for (let i = 0; i < remaining; i++) free[i % n].seats++;
   }
@@ -445,6 +459,16 @@ function advComputeEligibility(districts, config, locks) {
     d.partyVotes.forEach((v, k) => c.parties.set(k, (c.parties.get(k) || 0) + v));
   });
 
+  // Circunscripciones en que cada partido es el más votado (para la exención).
+  const wins = new Map();
+  districts.forEach(d => {
+    let best = -1, keys = [];
+    d.partyVotes.forEach((v, k) => {
+      if (v > best) { best = v; keys = [k]; } else if (v === best) keys.push(k);
+    });
+    if (best > 0 && keys.length === 1) wins.set(keys[0], (wins.get(keys[0]) || 0) + 1);
+  });
+
   const eligibility = new Map();
   const blockedBy   = new Map();
 
@@ -471,7 +495,8 @@ function advComputeEligibility(districts, config, locks) {
         } else {
           scopeVotes = votes; scopeValid = _advValidVotes(d, config); label = 'de circunscripción';
         }
-        if (scopeValid > 0 && scopeVotes < scopeValid * b.valor / 100) {
+        const exento = (parseInt(b.exencion) || 0) > 0 && (wins.get(key) || 0) >= parseInt(b.exencion);
+        if (!exento && scopeValid > 0 && scopeVotes < scopeValid * b.valor / 100) {
           passes = false; reason = `${b.valor}% ${label}`; break;
         }
       }
@@ -482,6 +507,82 @@ function advComputeEligibility(districts, config, locks) {
   });
 
   return { eligibility, blockedBy };
+}
+
+/* ── Coaliciones ───────────────────────────────────────────── */
+
+const advCoalKey = c => `coal:${c.id}`;
+
+/** Coaliciones con al menos dos miembros que existan en la elección. */
+function advCoalActivas(config, data) {
+  const conocidas = new Set(data.parties.map(p => p.key));
+  const usadas = new Set();
+  return (config.coaliciones || []).map((c, i) => {
+    const members = (c.members || []).filter(k => conocidas.has(k) && !usadas.has(k));
+    return { id: c.id != null ? c.id : String(i + 1), name: c.name || `Coalición ${i + 1}`, siglas: c.siglas || '', members };
+  }).filter(c => {
+    if (c.members.length < 2) return false;
+    c.members.forEach(k => usadas.add(k));
+    return true;
+  });
+}
+
+/**
+ * Funde en cada circunscripción los votos de los miembros de cada coalición en
+ * una sola candidatura. Devuelve los votos nacionales de cada miembro (antes
+ * de fundir) para el reparto interno.
+ */
+function advApplyCoalitions(districts, coals) {
+  const nacional = new Map();
+  districts.forEach(d => d.partyVotes.forEach((v, k) => nacional.set(k, (nacional.get(k) || 0) + v)));
+  coals.forEach(c => {
+    const key = advCoalKey(c);
+    districts.forEach(d => {
+      [d.partyVotes, d.partyVotes2, d.realSeats].forEach(m => {
+        let suma = 0, hay = false;
+        c.members.forEach(k => { if (m.has(k)) { suma += m.get(k); m.delete(k); hay = true; } });
+        if (hay && suma > 0) m.set(key, (m.get(key) || 0) + suma);
+      });
+      d.round2Meta.set(key, { name: c.name, siglas: c.siglas });
+    });
+  });
+  return nacional;
+}
+
+/* ── Segunda vuelta ────────────────────────────────────────── */
+
+/**
+ * Resuelve la segunda vuelta de una circunscripción. Devuelve las candidaturas
+ * con los votos de la ronda decisiva (el ganador se lleva todos los escaños):
+ *
+ *  - modo «datos»: si la hoja trae votos de segunda vuelta, se usan tal cual.
+ *  - si no (o con modo «simulada»): se aplica la regla de acceso a la primera
+ *    ronda (segunda-vuelta.js) y los votos de los eliminados se transfieren.
+ */
+function advSegundaVuelta(d, config, contenders, partyMeta) {
+  const cfg = { modo: 'datos', regla: 'top2', transfer: 'proporcional', ...(config.segundaVuelta || {}) };
+  const datos = [...d.partyVotes2.entries()].filter(([, v]) => v > 0);
+  const meta = k => partyMeta.get(k) || d.round2Meta.get(k) || {};
+
+  if (cfg.modo === 'datos' && datos.length) {
+    return {
+      fuente: 'datos',
+      contenders: datos.map(([k, v]) => ({ key: k, name: meta(k).name || k, siglas: meta(k).siglas || '', votes: v }))
+    };
+  }
+
+  const ronda = svPrimeraRonda(contenders, SV_REGLAS[cfg.regla] || SV_REGLAS.top2, d.censoTotal);
+  const sinDatos = cfg.modo === 'datos';
+  if (ronda.ganadorPrimera) {
+    return { fuente: 'simulada', sinDatos, primeraRonda: true, contenders: [ronda.ganadorPrimera] };
+  }
+  if (!ronda.finalistas.length) return { fuente: 'simulada', sinDatos, contenders: [] };
+  const reparto = cfg.transfer === 'ninguna' ? [] : svRepartoProporcional(ronda.finalistas, ronda.eliminados);
+  const fin = svTransferir(ronda.finalistas, ronda.eliminados, reparto);
+  return {
+    fuente: 'simulada', sinDatos,
+    contenders: ronda.finalistas.map((f, i) => ({ ...f, votes: fin.votos[i] }))
+  };
 }
 
 /* ── Asignación de escaños ─────────────────────────────────── */
@@ -504,7 +605,16 @@ function advAllocateDistrict(d, { config, edits, locks, partyMeta, eligibility, 
     .filter(([k, v]) => v > 0 && ok.has(k))
     .map(([k, v]) => ({ key: k, name: partyMeta.get(k)?.name || k, siglas: partyMeta.get(k)?.siglas || '', votes: v }));
 
-  const formula = advEffectiveConfig(config, locks, d.id, d).formula;
+  let formula = advEffectiveConfig(config, locks, d.id, d).formula;
+  let contendersAll = contenders;
+  d.segundaVuelta = null;
+  if (formula === 'majority_round2') {
+    const sv = advSegundaVuelta(d, config, contenders, partyMeta);
+    d.segundaVuelta = { fuente: sv.fuente, sinDatos: !!sv.sinDatos, primeraRonda: !!sv.primeraRonda,
+      candidaturas: sv.contenders.map(c => ({ key: c.key, name: c.name, siglas: c.siglas, votes: c.votes })) };
+    contendersAll = sv.contenders;
+    formula = 'majority';
+  }
   const bono = config.bono?.activa ? Math.max(0, parseInt(config.bono.escanos) || 0) : 0;
   const bonoExtra = bono > 0 && config.bono?.modo === 'extra';
   const aRepartir = bonoExtra ? d.seats : Math.max(0, d.seats - bono);
@@ -512,26 +622,26 @@ function advAllocateDistrict(d, { config, edits, locks, partyMeta, eligibility, 
   // El último escaño y los cocientes se guardan en la circunscripción para las
   // ventanas de análisis.
   const seatOut = {};
-  const allocated = aRepartir > 0 && contenders.length
-    ? allocateSeats(contenders, aRepartir, formula, seatOut)
-    : contenders.map(p => ({ ...p, seats: 0 }));
+  const allocated = aRepartir > 0 && contendersAll.length
+    ? allocateSeats(contendersAll, aRepartir, formula, seatOut)
+    : contendersAll.map(p => ({ ...p, seats: 0 }));
   d.lastSeat = aRepartir > 0 && seatOut.lastSeat ? { ...seatOut.lastSeat } : null;
   d.sorteo = aRepartir > 0 ? seatOut.sorteo : null;
   d.analysis = {
     formula,
     toAllocate: aRepartir,
     quota: seatOut.quota ?? null,
-    parties: contenders.map(c => ({
+    parties: contendersAll.map(c => ({
       key: c.key, name: c.name, siglas: c.siglas, votes: c.votes,
       seats: allocated.find(a => a.key === c.key)?.seats || 0
     }))
   };
-  if (bono > 0 && contenders.length) applyBonus(allocated, bono);
+  if (bono > 0 && contendersAll.length) applyBonus(allocated, bono);
 
-  d.formulaUsada = formula;
+  d.formulaUsada = d.segundaVuelta ? 'majority_round2' : formula;
   // Los que suma el bono por encima del tamaño de la circunscripción: en el
   // modo «incluido» salen de dentro, así que no agrandan nada.
-  d.bonoSeats = bonoExtra && contenders.length ? bono : 0;
+  d.bonoSeats = bonoExtra && contendersAll.length ? bono : 0;
 
   const seatsByKey = new Map(allocated.map(p => [p.key, p.seats]));
   const validVotes = _advValidVotes(d, config);
@@ -551,6 +661,15 @@ function advAllocateDistrict(d, { config, edits, locks, partyMeta, eligibility, 
       blockedReason: blocked.get(k) || null
     }))
     .sort((a, b) => b.seats - a.seats || b.votes - a.votes);
+  // Un ganador de segunda vuelta que no estaba en la primera (o cuyos votos
+  // de primera eran 0) también tiene que aparecer.
+  contendersAll.forEach(c => {
+    const s = seatsByKey.get(c.key) || 0;
+    if (s > 0 && !d.results.some(r => r.key === c.key)) {
+      d.results.unshift({ key: c.key, name: c.name, siglas: c.siglas, votes: 0, pct: 0, seats: s,
+        realSeats: d.realSeats.get(c.key) || 0, blockedReason: null });
+    }
+  });
   d.assignedSeats = d.results.reduce((s, p) => s + p.seats, 0);
 }
 
@@ -563,6 +682,11 @@ function advCalculate(data, config, edits, locks) {
   // Los votos se sustituyen antes de calcular nada, para que barreras y
   // porcentajes partan ya de los valores editados.
   advApplyVoteEdits(districts, edits);
+
+  // Las coaliciones se funden después de las ediciones y antes de las barreras:
+  // pasan la barrera con la suma de sus votos.
+  const coals = advCoalActivas(config, data);
+  const votosMiembros = coals.length ? advApplyCoalitions(districts, coals) : null;
 
   // Con el aspecto «escaños» bloqueado, la circunscripción conserva los que
   // tuviera: los puestos a mano si los hay, y si no los de la hoja.
@@ -580,6 +704,7 @@ function advCalculate(data, config, edits, locks) {
   const { eligibility, blockedBy } = advComputeEligibility(districts, config, locks);
 
   const partyMeta = new Map(data.parties.map(p => [p.key, p]));
+  coals.forEach(c => partyMeta.set(advCoalKey(c), { key: advCoalKey(c), name: c.name, siglas: c.siglas || c.name }));
 
   districts.forEach(d =>
     advAllocateDistrict(d, { config, edits, locks, partyMeta, eligibility, blockedBy }));
@@ -649,12 +774,11 @@ function advCalculate(data, config, edits, locks) {
   // ── Avisos sobre la calidad de los datos de origen ──
   const warnings = [];
   if (apport.warning) warnings.push(apport.warning);
-  if (ADV_FORMULA_SUSTITUTA[data.meta?.formulaDefault]) {
+  const sinDatos2 = districts.filter(d => d.segundaVuelta?.sinDatos && d.segundaVuelta.fuente === 'simulada');
+  if (sinDatos2.length) {
     warnings.push(
-      'La hoja declara un sistema mayoritario a dos vueltas. La calculadora avanzada ' +
-      'todavía reparte sólo con los votos de la primera: los de la segunda se leen y se ' +
-      'muestran en «Ver metadatos», pero no entran en el reparto.'
-    );
+      `Sin votos de segunda vuelta en ${sinDatos2.length === districts.length ? 'ninguna circunscripción' : sinDatos2.map(d => d.name || d.id).join('; ')}: ` +
+      'se ha simulado la segunda ronda con la regla de acceso y el reparto de votos elegidos.');
   }
   if (config.seatsMode === 'sheet') {
     const realTotal = data.rows.reduce((s, r) => s + r.parties.reduce((a, p) => a + p.realSeats, 0), 0);
@@ -689,12 +813,34 @@ function advCalculate(data, config, edits, locks) {
   }
   const disproportion = advGallagherIndex(national);
 
+  // Reparto interno de cada coalición y comparación «juntos o separados».
+  let coaliciones = [];
+  if (coals.length) {
+    const sep = advCalculate(data, { ...config, coaliciones: [] }, edits, locks);
+    const sepSeats = new Map(sep.national.map(p => [p.key, p.seats]));
+    coaliciones = coals.map(c => {
+      const row = national.find(p => p.key === advCoalKey(c));
+      const total = row ? row.seats : 0;
+      const miembros = c.members.map(k => ({
+        key: k, name: partyMeta.get(k)?.name || k, siglas: partyMeta.get(k)?.siglas || '',
+        votes: votosMiembros.get(k) || 0, separados: sepSeats.get(k) || 0
+      }));
+      const internos = coalicionRepartoInterno(miembros, total, config.coalMetodo);
+      miembros.forEach((m, i) => { m.internos = internos[i]; });
+      return { key: advCoalKey(c), name: c.name, votes: row ? row.votes : 0, juntos: total,
+        separados: miembros.reduce((s, m) => s + m.separados, 0), miembros };
+    });
+  }
+
   return {
-    districts, extras, national, warnings, config, compensation,
+    districts, extras, national, warnings, config, compensation, coaliciones,
     summary: {
       totalSeats, baseSeats, totalValid, totalBlanco, totalNulos, totalCenso, totalVotantes,
       participacion: totalCenso > 0 ? totalVotantes / totalCenso * 100 : 0,
       numDistricts: districts.length + extraDistricts.length,
+      malaponderacion: prorrateoMalaponderacion(
+        districts.map(d => (config.repartoBase === 'censo' ? d.censoTotal : d.poblacion) || 0),
+        districts.map(d => d.seats)),
       gallagher: disproportion,
       gallagherBefore
     }

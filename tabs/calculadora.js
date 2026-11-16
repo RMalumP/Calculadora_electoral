@@ -66,6 +66,12 @@ registerTab('calculator', 'tab-content active', String.raw`
       <div id="second-round-container" style="display:none">
         <div class="card">
           <div class="card-header"><span class="dot"></span>Segunda vuelta</div>
+          <div class="sr-reglas">
+            <label for="sr-regla">Quién pasa a la segunda vuelta</label>
+            <select id="sr-regla" onchange="svUiCambiaRegla()"></select>
+            <small id="sr-regla-desc"></small>
+          </div>
+          <div id="sr-aviso" class="sr-aviso" style="display:none"></div>
           <table>
             <thead>
               <tr>
@@ -80,6 +86,7 @@ registerTab('calculator', 'tab-content active', String.raw`
               <tr id="sr-row-2"></tr>
             </tbody>
           </table>
+          <div id="sr-simulador" class="sr-simulador"></div>
         </div>
       </div>
 

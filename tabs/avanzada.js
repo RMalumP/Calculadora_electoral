@@ -83,6 +83,46 @@ registerTab('advanced', 'tab-content', String.raw`
                   <div class="adv-select-wrap"><select id="adv-formula"></select></div>
                 </div>
 
+                <!-- Sólo con la fórmula «Mayoritario (segunda vuelta)». -->
+                <div class="adv-fieldset" id="adv-sv-fs" style="display:none">
+                  <div class="adv-field">
+                    <label for="adv-sv-modo">Votos de la segunda vuelta</label>
+                    <div class="adv-select-wrap">
+                      <select id="adv-sv-modo">
+                        <option value="datos">Los de la hoja (si faltan, se simulan)</option>
+                        <option value="simulada">Simular siempre</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="adv-field">
+                    <label for="adv-sv-regla">Quién pasa a la segunda vuelta</label>
+                    <div class="adv-select-wrap"><select id="adv-sv-regla"></select></div>
+                  </div>
+                  <div class="adv-field">
+                    <label for="adv-sv-transfer">Votos de los eliminados</label>
+                    <div class="adv-select-wrap">
+                      <select id="adv-sv-transfer">
+                        <option value="proporcional">Se reparten como la primera vuelta</option>
+                        <option value="ninguna">Se pierden (abstención)</option>
+                      </select>
+                    </div>
+                  </div>
+                  <small>La simulación se hace en cada circunscripción y el ganador se lleva todos sus escaños.</small>
+                </div>
+
+                <div class="adv-fieldset adv-only" id="adv-coal-fs">
+                  <div class="adv-field">
+                    <label>Coaliciones</label>
+                    <small>Los partidos de una coalición suman votos, pasan juntos la barrera y se reparten después los escaños.</small>
+                  </div>
+                  <div id="adv-coal-list"></div>
+                  <button type="button" class="adv-mini-btn" id="adv-coal-add">+ Añadir coalición</button>
+                  <div class="adv-field" id="adv-coal-metodo-field" style="display:none">
+                    <label for="adv-coal-metodo">Reparto entre los miembros</label>
+                    <div class="adv-select-wrap"><select id="adv-coal-metodo"></select></div>
+                  </div>
+                </div>
+
                 <!-- Niveles superpuestos a la circunscripción base. Los
                      escaños de cada uno se ponen en la sección «Escaños». -->
                 <div class="adv-fieldset adv-only" id="adv-extra-fs">
@@ -112,6 +152,22 @@ registerTab('advanced', 'tab-content', String.raw`
                 </button>
               </header>
               <div class="adv-cfg-content">
+                <div class="adv-field" id="adv-b-preset-field">
+                  <label for="adv-b-preset">Ajuste rápido</label>
+                  <div class="adv-select-wrap">
+                    <select id="adv-b-preset" aria-label="Aplicar un ajuste rápido de barreras">
+                      <option value="">Elegir un sistema de barreras…</option>
+                      <option value="ninguna">Sin barrera</option>
+                      <option value="3circ">3 % en la circunscripción (España)</option>
+                      <option value="5nac">5 % nacional</option>
+                      <option value="4nac">4 % nacional (Suecia, Noruega)</option>
+                      <option value="3nac">3 % nacional (Israel, 3,25 %)</option>
+                      <option value="alemania">5 % nacional o 3 circunscripciones ganadas (Alemania)</option>
+                      <option value="2nac">2 % nacional (Dinamarca)</option>
+                      <option value="1nac">1 % nacional (Países Bajos: cuota natural)</option>
+                    </select>
+                  </div>
+                </div>
                 <div class="adv-fieldset" id="adv-b1-fs">
                   <label class="adv-check"><input type="checkbox" id="adv-b1-on"> Barrera electoral</label>
                   <div class="adv-row">
@@ -123,6 +179,10 @@ registerTab('advanced', 'tab-content', String.raw`
                       </select>
                     </div>
                     <input type="number" id="adv-b1-val" aria-label="Valor de la barrera (%)" min="0" max="100" step="0.1" value="3">
+                  </div>
+                  <div class="adv-row adv-bx-sub adv-only" title="Si el partido es el más votado en tantas circunscripciones, se salta esta barrera (0 = no hay exención)">
+                    <label for="adv-b1-exen" class="adv-sublabel">…o ganar circunscripciones</label>
+                    <input type="number" id="adv-b1-exen" min="0" max="500" step="1" value="0">
                   </div>
                   <small id="adv-b1-hint" style="display:none"></small>
                 </div>
@@ -139,7 +199,17 @@ registerTab('advanced', 'tab-content', String.raw`
                     </div>
                     <input type="number" id="adv-b2-val" min="0" max="100" step="0.1" value="3">
                   </div>
+                  <div class="adv-row adv-bx-sub" title="Si el partido es el más votado en tantas circunscripciones, se salta esta barrera (0 = no hay exención)">
+                    <label for="adv-b2-exen" class="adv-sublabel">…o ganar circunscripciones</label>
+                    <input type="number" id="adv-b2-exen" min="0" max="500" step="1" value="0">
+                  </div>
                   <small id="adv-b2-hint" style="display:none"></small>
+                </div>
+
+                <div class="adv-only" id="adv-bx-wrap">
+                  <div id="adv-bx-list"></div>
+                  <button type="button" class="adv-mini-btn" id="adv-bx-add">+ Añadir barrera</button>
+                  <small>Todas las barreras activas se aplican a la vez. La exención cuenta las circunscripciones base en que el partido es el primero.</small>
                 </div>
 
                 <label class="adv-check adv-only"><input type="checkbox" id="adv-blanco" checked> Contar votos en blanco en la barrera</label>
@@ -187,7 +257,13 @@ registerTab('advanced', 'tab-content', String.raw`
                         <option value="censo">Censo electoral</option>
                       </select>
                     </div>
-                    <small>Mínimo fijo por circunscripción y resto por cuota Hare, como la LOREG.</small>
+                    <small>Mínimo fijo por circunscripción y resto por el método elegido (Hare es el de la LOREG).</small>
+                  </div>
+                  <div class="adv-field adv-only">
+                    <label for="adv-prorrateo">Método de prorrateo</label>
+                    <div class="adv-select-wrap">
+                      <select id="adv-prorrateo"></select>
+                    </div>
                   </div>
                 </div>
 
@@ -253,7 +329,11 @@ registerTab('advanced', 'tab-content', String.raw`
                     <select id="adv-comp-formula">
                       <option value="dhondt">D'Hondt</option>
                       <option value="saintlague">Sainte-Laguë</option>
+                      <option value="saintlague_m">Sainte-Laguë modificada</option>
                       <option value="hare">Hare (restos mayores)</option>
+                      <option value="droop">Droop</option>
+                      <option value="hb">Hagenbach-Bischoff</option>
+                      <option value="imperiali">Imperiali</option>
                     </select>
                   </div>
                 </div>
