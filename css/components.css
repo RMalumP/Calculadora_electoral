@@ -422,3 +422,19 @@ button:focus-visible, select:focus-visible, summary:focus-visible, a:focus-visib
 .ind-acciones { flex-basis: 100%; display: flex; gap: 6px; }
 .ind-acciones button { font: inherit; font-size: 0.72rem; padding: 1px 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: var(--radius); cursor: pointer; }
 .adv-indices .indices-host { border-top: none; padding: 6px 4px; }
+
+/* ── Segunda vuelta: reglas y simulador de transferencias ── */
+.sr-reglas { padding: 8px 14px; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; font-size: 0.82rem; }
+.sr-reglas small { flex-basis: 100%; color: var(--text-muted); }
+.sr-reglas select { padding: 4px 8px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--text); font: inherit; }
+.sr-aviso { margin: 0 14px 6px; padding: 6px 10px; font-size: 0.8rem; background: var(--accent-pale); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); }
+.sr-simulador { padding: 8px 14px 12px; border-top: 1px solid var(--border-light); font-size: 0.82rem; }
+.sr-sim-check { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+.sr-tabla-wrap { overflow-x: auto; margin-top: 8px; }
+.sr-tabla { width: 100%; border-collapse: collapse; }
+.sr-tabla th, .sr-tabla td { padding: 4px 6px; font-size: 0.78rem; text-align: left; }
+.sr-tabla th:not(:first-child), .sr-tabla td.sr-num { text-align: right; }
+.sr-tabla input { width: 72px; text-align: right; }
+.sr-tabla tr.sr-exceso input { border-color: var(--danger-text); }
+.sr-acciones { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.sr-resultado { margin-top: 8px; font-size: 0.85rem; }

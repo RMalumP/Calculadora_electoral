@@ -47,6 +47,8 @@ registerTab('theory', 'tab-content', String.raw`
               <button class="theory-system-btn theory-btn-gap" data-system="ind-enp" onclick="showTheorySystem('ind-enp')">Nº efectivo de partidos</button>
               <div class="theory-group">Barreras electorales</div>
               <button class="theory-system-btn theory-btn-gap" data-system="barreras" onclick="showTheorySystem('barreras')">Barreras y umbral variable</button>
+              <div class="theory-group">Dos vueltas</div>
+              <button class="theory-system-btn theory-btn-gap" data-system="dos-vueltas" onclick="showTheorySystem('dos-vueltas')">Segunda vuelta con transferencias</button>
             </div>
           </div>
         </div>
@@ -240,6 +242,17 @@ registerTab('theory', 'tab-content', String.raw`
               <div class="theory-formula">Pasa si: (votos / válidos ≥ barrera) O (circunscripciones ganadas ≥ N)<br>Con varias barreras activas hay que pasarlas todas</div>
               <h4 class="theory-h4">Ejemplo</h4>
               <p class="theory-p">Con barrera nacional del 15 % y exención de 1 circunscripción, un partido regional con el 1 % nacional pero primero en una provincia entra en el reparto; sin la exención quedaría fuera.</p>
+            </div>
+
+            <div id="theory-dos-vueltas" class="theory-content-section">
+              <h3 class="theory-title">Segunda vuelta y transferencia de votos</h3>
+              <h4 class="theory-h4">Descripción</h4>
+              <p class="theory-p">En los sistemas a dos vueltas, si nadie logra la mayoría absoluta en la primera, pasan a la segunda los candidatos mejor situados (los dos primeros, o los que superan un umbral: en Francia el 12,5 % del censo). En la segunda gana quien más votos obtiene.</p>
+              <p class="theory-p">El resultado depende de a dónde van los votos de los eliminados. En la Calculadora, al elegir «Mayoritario (segunda vuelta)» puedes marcar «Simular a mano qué votan los eliminados» y repartir en porcentaje los votos de cada candidato eliminado entre los finalistas; el resto se considera abstención o voto en blanco.</p>
+              <h4 class="theory-h4">Fórmula</h4>
+              <div class="theory-formula">Votos finales(F) = Votos 1ª(F) + Σ eliminados [ votos(E) × %(E→F) ]<br>Abstención = votos(E) × (100 % − Σ %(E→F))</div>
+              <h4 class="theory-h4">Ejemplo</h4>
+              <p class="theory-p">Finalistas A (400) y B (350). El eliminado C (200 votos) da el 10 % a A y el 80 % a B; D (50) da todo a B. Resultado: A = 400 + 20 = 420; B = 350 + 160 + 50 = 560. Gana B por 140 votos aunque fuera segundo en la primera vuelta.</p>
             </div>
 
           </div>

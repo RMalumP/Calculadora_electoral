@@ -32,6 +32,8 @@ const ASSETS = [
   './js/constants.js',
   './js/groupings.js',
   './js/indices.js',
+  './js/segunda-vuelta.js',
+  './js/segunda-vuelta-ui.js',
   './js/helpers.js',
   './js/hemicycle.js',
   './js/mapa.js',

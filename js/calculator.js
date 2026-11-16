@@ -480,12 +480,18 @@ function prepareSecondRound() {
     .filter(p => p.name && p.votes > 0);
 
   parties.sort((a, b) => b.votes - a.votes);
-  const total = parties.slice(0, 2).reduce((s, p) => s + p.votes, 0);
+  // Quién pasa lo decide la regla elegida; con menos de dos finalistas se
+  // muestran igualmente los dos primeros para poder editar.
+  const ronda = typeof svPrimeraRonda === 'function'
+    ? svPrimeraRonda(parties, svUiRegla(), parseVoteValue(document.getElementById('census-total')?.value))
+    : null;
+  const finalistas = ronda && ronda.finalistas.length >= 2 ? ronda.finalistas : parties.slice(0, 2);
+  const total = finalistas.reduce((s, p) => s + p.votes, 0);
   const _siglasVis = typeof siglasVisible !== 'undefined' && siglasVisible;
   const _namesHid  = typeof namesHidden  !== 'undefined' && namesHidden;
 
   for (let i = 0; i < 2; i++) {
-    const p   = parties[i] || { name: '', siglas: '', color: PALETTE[i % PALETTE.length], votes: '' };
+    const p   = finalistas[i] || { name: '', siglas: '', color: PALETTE[i % PALETTE.length], votes: '' };
     const row = document.getElementById(`sr-row-${i + 1}`);
     const pct = total > 0 && p.votes ? (p.votes / total * 100).toFixed(2) : '—';
     if (row) {
@@ -500,6 +506,7 @@ function prepareSecondRound() {
         <td class="pct-cell">${pct === '—' ? '—' : pct + '%'}</td>`;
     }
   }
+  if (typeof svUiRender === 'function') svUiRender(ronda, finalistas);
 }
 
 function updateSecondRoundPercentages() {
