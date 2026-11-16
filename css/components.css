@@ -477,3 +477,19 @@ details.ind-detalle > div { padding-top: 2px; }
 .coal-tabla th, .coal-tabla td { padding: 3px 6px; font-size: 0.78rem; text-align: right; }
 .coal-tabla th:first-child, .coal-tabla td:first-child { text-align: left; }
 .coal-tabla tr.coal-total td { font-weight: 700; border-top: 1px solid var(--border); }
+
+/* ── Menús desplegables (js/menus.js) ── */
+.menu-dd { position: relative; display: inline-flex; }
+.menu-dd-list {
+  position: fixed; z-index: 450; display: flex; flex-direction: column; min-width: 190px; padding: 4px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  box-shadow: var(--shadow-md); text-transform: none; letter-spacing: normal;
+}
+.menu-dd-list[hidden] { display: none; }
+.menu-dd-list > button {
+  font-family: 'Source Sans 3', sans-serif; font-size: 0.85rem; font-weight: 400; text-align: left;
+  padding: 8px 12px; min-height: 36px; border: none; border-radius: var(--radius);
+  background: none; color: var(--text); cursor: pointer; white-space: nowrap;
+}
+.menu-dd-list > button:hover, .menu-dd-list > button:focus-visible { background: var(--accent-pale); color: var(--accent); outline: none; }
+.menu-dd-btn[aria-expanded="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }

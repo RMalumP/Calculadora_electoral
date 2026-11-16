@@ -849,14 +849,26 @@ function advNationalCard() {
     : '';
 
   return `<div class="card">
-    <div class="card-header"><span class="dot"></span>Recuento final · ${advEscape(_advConfig.circunscripcion === 'nacional' ? 'circunscripción estatal' : _advConfig.circunscripcion === 'ccaa' ? 'circunscripciones autonómicas' : 'circunscripciones provinciales')}
+    <div class="card-header"><span class="dot"></span><span class="adv-card-title">Recuento final · ${advEscape(_advConfig.circunscripcion === 'nacional' ? 'circunscripción estatal' : _advConfig.circunscripcion === 'ccaa' ? 'circunscripciones autonómicas' : 'circunscripciones provinciales')}</span>
       <span class="adv-card-tools">
-        <button type="button" class="adv-tool-btn" data-adv-popup="hemi">Representación visual</button>
-        <button type="button" class="adv-tool-btn" data-adv-popup="mapa" title="Ver esta simulación sobre el mapa de España">Mapa</button>
-        <button type="button" class="adv-tool-btn" data-adv-popup="last">Último escaño</button>
-        <button type="button" class="adv-tool-btn" data-adv-popup="coef">Coeficientes</button>
-        <button type="button" class="adv-tool-btn" data-adv-export="csv" title="Descargar el recuento en CSV (Excel)">CSV</button>
-        <button type="button" class="adv-tool-btn" data-adv-export="png" title="Descargar el recuento como imagen">Imagen</button>
+        <span class="menu-dd">
+          <button type="button" class="adv-tool-btn menu-dd-btn" aria-haspopup="true" aria-expanded="false"
+                  title="Representación visual, mapa, último escaño y coeficientes">Ver ▾</button>
+          <span class="menu-dd-list" role="menu" hidden>
+            <button type="button" role="menuitem" data-adv-popup="hemi">Representación visual</button>
+            <button type="button" role="menuitem" data-adv-popup="mapa">Mapa de esta simulación</button>
+            <button type="button" role="menuitem" data-adv-popup="last">Último escaño</button>
+            <button type="button" role="menuitem" data-adv-popup="coef">Coeficientes</button>
+          </span>
+        </span>
+        <span class="menu-dd">
+          <button type="button" class="adv-tool-btn menu-dd-btn" aria-haspopup="true" aria-expanded="false"
+                  title="Descargar el recuento">Exportar ▾</button>
+          <span class="menu-dd-list" role="menu" hidden>
+            <button type="button" role="menuitem" data-adv-export="csv">CSV (Excel)</button>
+            <button type="button" role="menuitem" data-adv-export="png">Imagen</button>
+          </span>
+        </span>
       </span>
       <span class="formula-tag">${advEscape(FORMULAS.find(f => f.id === _advConfig.formula)?.name || _advConfig.formula)}</span>
     </div>
