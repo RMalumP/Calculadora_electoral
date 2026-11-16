@@ -783,6 +783,7 @@ async function advCmpCrearDesde(election, yearKey) {
   if (await advCmpRestaurar(advCmpGuardadoLeer())) { advCmpRender(); return true; }
   const a = { election, data: null, config: null, result: null, error: null, loading: true };
   await advCmpLoad(a, election, yearKey);
+  if (_advCmp.a && _advCmp.b) return true;   // mientras cargaba llegó otra (un enlace)
   if (!a.result) return false;
   _advCmp.a = a;
   _advCmp.b = advCmpSideFromOther(a);

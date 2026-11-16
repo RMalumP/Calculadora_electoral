@@ -185,6 +185,7 @@ MAPA_MODOS.push({
   id: 'cmp-vuelco',
   label: 'Comparador A/B · dónde cambia el ganador',
   necesitaComparador: true,
+  panelPropio: true,
   sirve: mapaCmpSirve,
   datos: nivel => MAPA_CMP.porNivel(nivel),
   colores(porPieza) {
@@ -223,6 +224,7 @@ MAPA_MODOS.push({
   id: 'cmp-escanos',
   label: 'Comparador A/B · escaños de un partido (B − A)',
   necesitaComparador: true,
+  panelPropio: true,
   necesitaPartido: true,
   partidos: () => MAPA_CMP.partidos(),
   sirve: mapaCmpSirve,
@@ -264,6 +266,7 @@ MAPA_MODOS.push({
   id: 'cmp-cambian',
   label: 'Comparador A/B · escaños que cambian de partido',
   necesitaComparador: true,
+  panelPropio: true,
   sirve: mapaCmpSirve,
   datos: nivel => MAPA_CMP.porNivel(nivel),
   colores(porPieza) {
@@ -408,16 +411,23 @@ MAPA_ADORNOS.push((porPieza, nivel) => {
 
 /* ── Panel ──────────────────────────────────────────────────────── */
 
+/** Tabla de una pieza: escaños de A y de B (con su % de voto debajo) y la diferencia. */
 function mapaCmpTabla(agregado) {
   const lista = [...agregado.porId.values()].filter(x => x.a || x.b)
     .sort((x, y) => Math.max(y.a, y.b) - Math.max(x.a, x.b));
   if (!lista.length) return '<p class="mapa-panel-vacio">Ningún lado da escaños aquí.</p>';
-  return '<table class="mapa-tabla"><thead><tr><th>Candidatura</th><th class="num">A</th><th class="num">B</th><th class="num">B − A</th></tr></thead><tbody>' +
+  const tot = { a: 0, b: 0 };
+  agregado.porId.forEach(x => { tot.a += x.va || 0; tot.b += x.vb || 0; });
+  const pct = (v, t) => t ? (v / t * 100).toFixed(1).replace('.', ',') + ' %' : '—';
+  const celda = (esc, v, t) => '<td class="num"><b>' + esc + '</b><small class="mapa-cmp-pct">' + pct(v, t) + '</small></td>';
+  return '<table class="mapa-tabla mapa-cmp-tabla"><thead><tr><th>Candidatura</th><th class="num">A</th><th class="num">B</th><th class="num">B − A</th></tr></thead><tbody>' +
     lista.map(x => {
       const d = x.b - x.a;
-      return '<tr><td>' + mapaPastilla(x.siglas, mapaCmpColor(x.ref)) + '</td><td class="num">' + x.a + '</td><td class="num">' + x.b +
-        '</td><td class="num ' + (d === 0 ? '' : (d > 0 ? 'sube' : 'baja')) + '">' + (d > 0 ? '+' : '') + d + '</td></tr>';
-    }).join('') + '</tbody></table>';
+      return '<tr><td>' + mapaPastilla(x.siglas, mapaCmpColor(x.ref)) + '</td>' + celda(x.a, x.va, tot.a) + celda(x.b, x.vb, tot.b) +
+        '<td class="num ' + (d === 0 ? '' : (d > 0 ? 'sube' : 'baja')) + '">' + (d > 0 ? '+' : '') + d + '</td></tr>';
+    }).join('') + '<tr class="mapa-cmp-total"><td>Escaños</td><td class="num">' + agregado.escA + '</td><td class="num">' + agregado.escB +
+      '</td><td class="num">' + (agregado.mueven ? agregado.mueven + ' cambian' : '') + '</td></tr></tbody></table>' +
+    '<p class="mapa-panel-nota">Debajo de cada cifra, el % de voto de la candidatura en ese lado.</p>';
 }
 
 MAPA_PANEL_EXTRAS.push((pieza, nivel) => {
@@ -428,10 +438,13 @@ MAPA_PANEL_EXTRAS.push((pieza, nivel) => {
   }
   const esc = MAPA.escapar;
   let html = '<p class="mapa-panel-nota"><b>A</b>: ' + esc(MAPA_CMP.describir('a')) + '<br><b>B</b>: ' + esc(MAPA_CMP.describir('b')) + '</p>';
-  const nivelCmp = _advCmp.cmp.circ.nivel;
-  if (nivelCmp !== 'provincia') {
-    html += '<p class="mapa-panel-nota">Los dos lados se comparan por ' + esc(CMP_NIVEL_NOMBRE[nivelCmp] || nivelCmp) +
-            ': cada pieza enseña el resultado de toda su circunscripción.</p>';
+  const circ = _advCmp.cmp.circ;
+  if (circ.nivel !== 'provincia') {
+    const adj = { provincia: 'provincial', ccaa: 'autonómica', nacional: 'estatal' };
+    html += '<p class="mapa-cmp-aviso">' + (circ.subido
+      ? 'A reparte con circunscripción ' + (adj[circ.nivelA] || circ.nivelA) + ' y B con ' + (adj[circ.nivelB] || circ.nivelB) + ': se comparan sumando por ' + esc(CMP_NIVEL_NOMBRE[circ.nivel] || circ.nivel) + '.'
+      : 'Los dos lados reparten por ' + esc(CMP_NIVEL_NOMBRE[circ.nivel] || circ.nivel) + '.') +
+      ' Cada pieza enseña el resultado de toda su circunscripción.</p>';
   }
   const agregado = pieza ? MAPA_CMP.porNivel(nivel).get(pieza.codigo) : MAPA_CMP.porNivel('nacional').get('ES');
   if (agregado) {
@@ -568,4 +581,47 @@ function mapaCmpVer(modoId) {
     if (intentos > 0) setTimeout(() => aplicar(intentos - 1), 300);
   };
   aplicar(40);
+}
+
+/* ── Enlace e imagen del mapa ───────────────────────────────────── */
+
+/** Lo que el enlace del mapa añade en los modos del comparador: la comparación y la vista. */
+function mapaCmpVistaEnlace() {
+  const modo = mapaModo(mapaModoActual);
+  if (!modo || !modo.necesitaComparador || typeof advCmpEstado !== 'function') return {};
+  const estado = advCmpEstado();
+  return estado ? { x: estado, xv: mapaCmpVista } : {};
+}
+
+/** Repone la comparación de un enlace del mapa (descarga los módulos de la avanzada si hace falta). */
+function mapaCmpAplicarEnlace(v) {
+  if (!v || !v.x || typeof advCargarModulos !== 'function') return Promise.resolve();
+  mapaEstado('Cargando la comparación del enlace…');
+  // Si el mapa ya estaba preparando otra comparación, se espera a que acabe: si
+  // no, al terminar pisaría la del enlace.
+  return Promise.resolve(_mapaCmpCreando).catch(() => null).then(() => advCargarModulos())
+    .then(() => { _advCmp.a = null; _advCmp.b = null; return advCmpRestaurar(v.x); })
+    .then(ok => {
+      if (MAPA_CMP_VISTAS.some(x => x[0] === v.xv)) mapaCmpVista = v.xv;
+      if (ok) advCmpRender();
+      mapaEstado(ok ? '' : 'No se ha podido cargar la comparación del enlace', !ok);
+      if (v.m && MAPA_MODOS.some(m => m.id === v.m)) mapaModoActual = v.m;
+      // El partido del enlace es de la comparación: al cargar la elección del
+      // mapa se habría cambiado por uno de su lista.
+      if (v.p) mapaPartidoElegido = v.p;
+      mapaLlenarModos();
+      mapaLlenarPartidos();
+    })
+    .catch(() => mapaEstado('No se ha podido cargar la comparación del enlace', true));
+}
+
+/** Las dos líneas de cabecera del PNG en los modos del comparador. */
+function mapaCmpTitulosExportar(nivelTxt) {
+  const modo = mapaModo(mapaModoActual);
+  if (!modo || !modo.necesitaComparador || !MAPA_CMP.hay()) return null;
+  const vista = { a: 'mapa de A', b: 'mapa de B', dif: 'diferencia' }[mapaCmpVista];
+  const partido = modo.necesitaPartido ? MAPA_CMP.partidoActual() : null;
+  return ['A: ' + MAPA_CMP.describir('a'),
+          'B: ' + MAPA_CMP.describir('b') + '  ·  ' + modo.label.replace('Comparador A/B · ', '') +
+            (partido ? ' (' + partido.nombre + ')' : '') + ' · ' + vista + ' · ' + nivelTxt];
 }

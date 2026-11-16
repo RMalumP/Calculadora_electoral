@@ -348,7 +348,13 @@ function mapaPintarPanel() {
   if (titulo) titulo.textContent = pieza ? pieza.nombre : (modelo ? 'Total' : 'Detalle');
 
   let html = '';
-  if (pieza) {
+  // Un modo con panel propio (el comparador) no enseña los resultados de la
+  // elección cargada en el mapa, que ahí no pintan nada: lo pone todo él.
+  const modoActual = mapaModo(mapaModoActual);
+  if (modoActual && modoActual.panelPropio) {
+    if (titulo) titulo.textContent = pieza ? pieza.nombre : 'A frente a B';
+    if (pieza) html += mapaFicha(pieza, nivel);
+  } else if (pieza) {
     html += mapaFicha(pieza, nivel);
     if (modelo) {
       html += mapaTablaResultados(MAPA_DATOS.porNivel(nivel).get(pieza.codigo));

@@ -24,6 +24,8 @@ function mapaVistaActual() {
     c: mapaComparaCon || '',
     pt: MAPA_PUNTOS.activo() ? 1 : 0,
     ct: MAPA_CARTOGRAMA.activo() ? 1 : 0,
+    // En los modos del comparador, la comparación entera (A, B, parejas) y la vista.
+    ...(typeof mapaCmpVistaEnlace === 'function' ? mapaCmpVistaEnlace() : {}),
   };
 }
 
@@ -70,12 +72,14 @@ function mapaAplicarVista(v) {
     mapaLlenarPartidos();
     mapaLlenarUmbral();
     return mapaLlenarComparar();
-  }).then(() => mapaRefrescar());
+  }).then(() => (v.x && typeof mapaCmpAplicarEnlace === 'function') ? mapaCmpAplicarEnlace(v) : null)
+    .then(() => mapaRefrescar());
 }
 
 /* ── Enlace ─────────────────────────────────────────────────────── */
 
-const MAPA_ENLACE_MAX = 4000;
+// Con una comparación dentro (dos configuraciones completas) el enlace crece.
+const MAPA_ENLACE_MAX = 40000;
 
 function mapaVistaAToken(v) {
   const json = JSON.stringify(v);
@@ -229,11 +233,13 @@ function mapaDescargarPNG() {
   img.onload = () => {
     g.drawImage(img, MAPA_EXP_MARGEN, MAPA_EXP_CABECERA, ancho * escala, alto * escala);
 
-    const texto1 = mapaTituloEleccion();
-    const texto2 = (mapaModo(mapaModoActual)?.label || '') + ' · ' +
-                   (MAPA.TITULOS ? MAPA.TITULOS[MAPA.nivelActual()] : MAPA.nivelActual());
+    const nivelTxt = MAPA.TITULOS ? MAPA.TITULOS[MAPA.nivelActual()] : MAPA.nivelActual();
+    // En el comparador el título dice qué son A y B, no la elección del mapa.
+    const cmp = typeof mapaCmpTitulosExportar === 'function' ? mapaCmpTitulosExportar(nivelTxt) : null;
+    const texto1 = cmp ? cmp[0] : mapaTituloEleccion();
+    const texto2 = cmp ? cmp[1] : (mapaModo(mapaModoActual)?.label || '') + ' · ' + nivelTxt;
     g.fillStyle = mapaExpColor('--text', '#18181a');
-    g.font = '700 26px Georgia, serif';
+    g.font = cmp ? '700 17px Georgia, serif' : '700 26px Georgia, serif';
     g.fillText(texto1, MAPA_EXP_MARGEN, 36);
     g.fillStyle = mapaExpColor('--text-muted', '#6e6860');
     g.font = '400 15px Arial, sans-serif';
