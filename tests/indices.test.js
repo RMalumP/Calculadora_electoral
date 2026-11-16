@@ -55,3 +55,25 @@ test('El HTML recoge los indicadores elegidos', () => {
   assert.match(html, /data-ind-id="gallagher"/);
   assert.doesNotMatch(html, /class="ind-item"[^>]*><small>Gallagher/);
 });
+
+test('Plegado: barra con resumen y sin valores; desplegado: con valores', () => {
+  const plegado = ctx.indicesInterior(CASO, ['gallagher', 'loosemore', 'rae'], { plegado: true });
+  assert.match(plegado, /class="ind-valores" hidden/);
+  assert.match(plegado, /aria-expanded="false"/);
+  assert.match(plegado, /\+1 más/);
+  assert.match(plegado, /Elegir <span class="ind-cuenta">3\/8<\/span>/);
+  const abierto = ctx.indicesInterior(CASO, ['gallagher'], { plegado: false });
+  assert.doesNotMatch(abierto, /class="ind-valores" hidden/);
+});
+
+test('El selector solo se abre si se pide y «Ninguno» deja un aviso', () => {
+  assert.match(ctx.indicesInterior(CASO, []), /class="ind-panel" hidden/);
+  assert.doesNotMatch(ctx.indicesInterior(CASO, [], { eligiendo: true }), /class="ind-panel" hidden/);
+  assert.match(ctx.indicesInterior(CASO, []), /Ningún indicador elegido/);
+  assert.equal(ctx.indicesResumen(CASO, []), 'ninguno elegido');
+});
+
+test('Votos por escaño por candidatura va en un desplegable', () => {
+  const html = ctx.indicesInterior(CASO, ['vps']);
+  assert.match(html, /<details class="ind-detalle"><summary>Por candidatura<\/summary>/);
+});

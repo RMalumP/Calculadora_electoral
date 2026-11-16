@@ -408,12 +408,42 @@ button:focus-visible, select:focus-visible, summary:focus-visible, a:focus-visib
   }
 }
 
-/* ── Indicadores de proporcionalidad ── */
+/* ── Indicadores de proporcionalidad ──
+   Barra de una línea (nombre que pliega, resumen y botón «Elegir»), el
+   selector debajo cuando se abre y los valores cuando no está plegado. */
 .indices-host { padding: 8px 14px 10px; border-top: 1px solid var(--border-light); font-size: 0.82rem; }
-.ind-valores { display: flex; flex-wrap: wrap; gap: 6px 22px; align-items: flex-start; }
+.ind-barra { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+.ind-plegar {
+  display: inline-flex; align-items: center; gap: 6px; padding: 4px 0; border: none; background: none;
+  font: inherit; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--text); cursor: pointer;
+}
+.ind-caret { display: inline-block; transition: transform 0.15s; color: var(--accent); }
+.ind-plegar[aria-expanded="true"] .ind-caret { transform: rotate(90deg); }
+.ind-resumen { flex: 1; min-width: 0; color: var(--text-muted); font-size: 0.78rem; font-variant-numeric: tabular-nums; }
+.indices-host:not(.plegado) .ind-resumen { visibility: hidden; }
+.ind-elegir {
+  font: inherit; font-size: 0.74rem; padding: 4px 10px; min-height: 30px; border: 1px solid var(--border);
+  border-radius: var(--radius); background: var(--surface); color: var(--text); cursor: pointer;
+}
+.ind-elegir[aria-expanded="true"] { border-color: var(--accent); color: var(--accent); }
+.ind-cuenta { color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.ind-panel { margin: 8px 0 4px; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
+.ind-panel[hidden] { display: none; }
+.ind-panel .ind-lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px 16px; padding-top: 8px; }
+.ind-panel .ind-opt { align-items: flex-start; gap: 8px; }
+.ind-panel .ind-opt input { margin-top: 3px; }
+.ind-panel .ind-opt b { display: block; font-weight: 600; font-size: 0.8rem; }
+.ind-panel .ind-opt small { display: block; color: var(--text-muted); font-size: 0.7rem; line-height: 1.3; }
+.ind-panel .ind-acciones { align-items: center; flex-wrap: wrap; }
+.ind-panel .ind-acciones small { color: var(--text-muted); font-size: 0.7rem; font-style: italic; }
+.ind-valores { display: flex; flex-wrap: wrap; gap: 6px 22px; align-items: flex-start; padding-top: 6px; }
+.ind-valores[hidden] { display: none; }
 .ind-item small { display: block; color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; }
 .ind-item .v { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text); }
 .ind-detalle { display: block; max-width: 340px; color: var(--text-muted); font-size: 0.72rem; font-weight: 400; }
+details.ind-detalle summary { cursor: pointer; width: max-content; }
+details.ind-detalle > div { padding-top: 2px; }
 .ind-vacio { color: var(--text-muted); font-style: italic; }
 .ind-sel { margin-top: 6px; }
 .ind-sel summary { cursor: pointer; color: var(--text-muted); font-size: 0.75rem; width: max-content; }
@@ -421,7 +451,7 @@ button:focus-visible, select:focus-visible, summary:focus-visible, a:focus-visib
 .ind-opt { display: inline-flex; align-items: center; gap: 4px; font-size: 0.78rem; cursor: pointer; }
 .ind-acciones { flex-basis: 100%; display: flex; gap: 6px; }
 .ind-acciones button { font: inherit; font-size: 0.72rem; padding: 1px 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: var(--radius); cursor: pointer; }
-.adv-indices .indices-host { border-top: none; padding: 6px 4px; }
+.adv-indices .indices-host { border-top: 1px solid var(--border-light); padding: 6px 14px 8px; }
 
 /* ── Segunda vuelta: reglas y simulador de transferencias ── */
 .sr-reglas { padding: 8px 14px; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; font-size: 0.82rem; }
@@ -447,3 +477,19 @@ button:focus-visible, select:focus-visible, summary:focus-visible, a:focus-visib
 .coal-tabla th, .coal-tabla td { padding: 3px 6px; font-size: 0.78rem; text-align: right; }
 .coal-tabla th:first-child, .coal-tabla td:first-child { text-align: left; }
 .coal-tabla tr.coal-total td { font-weight: 700; border-top: 1px solid var(--border); }
+
+/* ── Menús desplegables (js/menus.js) ── */
+.menu-dd { position: relative; display: inline-flex; }
+.menu-dd-list {
+  position: fixed; z-index: 450; display: flex; flex-direction: column; min-width: 190px; padding: 4px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  box-shadow: var(--shadow-md); text-transform: none; letter-spacing: normal;
+}
+.menu-dd-list[hidden] { display: none; }
+.menu-dd-list > button {
+  font-family: 'Source Sans 3', sans-serif; font-size: 0.85rem; font-weight: 400; text-align: left;
+  padding: 8px 12px; min-height: 36px; border: none; border-radius: var(--radius);
+  background: none; color: var(--text); cursor: pointer; white-space: nowrap;
+}
+.menu-dd-list > button:hover, .menu-dd-list > button:focus-visible { background: var(--accent-pale); color: var(--accent); outline: none; }
+.menu-dd-btn[aria-expanded="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }

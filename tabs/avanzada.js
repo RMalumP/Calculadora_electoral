@@ -30,10 +30,11 @@ registerTab('advanced', 'tab-content', String.raw`
 
       <!-- ══ CONFIGURACIÓN (a todo el ancho): pestañas en modo avanzado,
            una sola tarjeta con lo básico en modo sencillo ══ -->
-      <aside class="adv-config">
+      <aside class="adv-config" id="adv-config" aria-label="Configuración">
         <div class="param-card">
           <div class="param-card-header">
             Configuración
+            <button type="button" class="adv-cfg-cerrar" id="adv-cfg-cerrar" aria-label="Cerrar la configuración">✕</button>
           </div>
           <div class="param-body adv-cfg-body">
             <div class="adv-tabs" id="adv-tabs" role="tablist" aria-label="Secciones de la configuración"></div>
@@ -110,7 +111,7 @@ registerTab('advanced', 'tab-content', String.raw`
                   <small>La simulación se hace en cada circunscripción y el ganador se lleva todos sus escaños.</small>
                 </div>
 
-                <div class="adv-fieldset adv-only" id="adv-coal-fs">
+                <div class="adv-fieldset adv-only" id="adv-coal-fs" data-mas>
                   <div class="adv-field">
                     <label>Coaliciones</label>
                     <small>Los partidos de una coalición suman votos, pasan juntos la barrera y se reparten después los escaños.</small>
@@ -125,7 +126,7 @@ registerTab('advanced', 'tab-content', String.raw`
 
                 <!-- Niveles superpuestos a la circunscripción base. Los
                      escaños de cada uno se ponen en la sección «Escaños». -->
-                <div class="adv-fieldset adv-only" id="adv-extra-fs">
+                <div class="adv-fieldset adv-only" id="adv-extra-fs" data-mas>
                   <label class="adv-check" id="adv-extra-ccaa-row">
                     <input type="checkbox" id="adv-extra-ccaa"> Añadir circunscripción autonómica
                   </label>
@@ -134,7 +135,7 @@ registerTab('advanced', 'tab-content', String.raw`
                   </label>
                   <small id="adv-extra-hint"></small>
                 </div>
-                <div class="adv-exc adv-only" data-exc-section="reparto">
+                <div class="adv-exc adv-only" data-mas data-exc-section="reparto">
                   <button type="button" class="adv-exc-btn">
                     <span class="adv-exc-check" aria-hidden="true"></span>
                     <span class="adv-exc-label">Excepciones: <b class="adv-exc-count">ninguna</b></span>
@@ -187,7 +188,7 @@ registerTab('advanced', 'tab-content', String.raw`
                   <small id="adv-b1-hint" style="display:none"></small>
                 </div>
 
-                <div class="adv-fieldset adv-only" id="adv-b2-fs">
+                <div class="adv-fieldset adv-only" id="adv-b2-fs" data-mas>
                   <label class="adv-check"><input type="checkbox" id="adv-b2-on"> Segunda barrera</label>
                   <div class="adv-row">
                     <div class="adv-select-wrap">
@@ -206,14 +207,14 @@ registerTab('advanced', 'tab-content', String.raw`
                   <small id="adv-b2-hint" style="display:none"></small>
                 </div>
 
-                <div class="adv-only" id="adv-bx-wrap">
+                <div class="adv-only" id="adv-bx-wrap" data-mas>
                   <div id="adv-bx-list"></div>
                   <button type="button" class="adv-mini-btn" id="adv-bx-add">+ Añadir barrera</button>
                   <small>Todas las barreras activas se aplican a la vez. La exención cuenta las circunscripciones base en que el partido es el primero.</small>
                 </div>
 
-                <label class="adv-check adv-only"><input type="checkbox" id="adv-blanco" checked> Contar votos en blanco en la barrera</label>
-                <div class="adv-exc adv-only" data-exc-section="barreras">
+                <label class="adv-check adv-only" data-mas><input type="checkbox" id="adv-blanco" checked> Contar votos en blanco en la barrera</label>
+                <div class="adv-exc adv-only" data-mas data-exc-section="barreras">
                   <button type="button" class="adv-exc-btn">
                     <span class="adv-exc-check" aria-hidden="true"></span>
                     <span class="adv-exc-label">Excepciones: <b class="adv-exc-count">ninguna</b></span>
@@ -280,7 +281,7 @@ registerTab('advanced', 'tab-content', String.raw`
                   <small>Se reparten en una única circunscripción de todo el país y se suman a los de la base.</small>
                 </div>
 
-                <div class="adv-fieldset adv-only" id="adv-bono-fs">
+                <div class="adv-fieldset adv-only" id="adv-bono-fs" data-mas>
                   <label class="adv-check"><input type="checkbox" id="adv-bono-on"> Bono de mayoría</label>
                   <div class="adv-row">
                     <div class="adv-select-wrap">
@@ -294,7 +295,7 @@ registerTab('advanced', 'tab-content', String.raw`
                   <small id="adv-bono-hint" style="display:none"></small>
                 </div>
 
-                <div class="adv-exc adv-only" data-exc-section="escanos">
+                <div class="adv-exc adv-only" data-mas data-exc-section="escanos">
                   <button type="button" class="adv-exc-btn">
                     <span class="adv-exc-check" aria-hidden="true"></span>
                     <span class="adv-exc-label">Excepciones: <b class="adv-exc-count">ninguna</b></span>
@@ -368,7 +369,7 @@ registerTab('advanced', 'tab-content', String.raw`
                 </button>
                 <small>Cambia los votos de cada candidatura y los escaños de cada circunscripción. Los cambios son sólo de esta sesión y se pueden deshacer.</small>
                 <button type="button" class="adv-mini-btn" id="adv-edit-reset" hidden>Restaurar originales</button>
-                <div class="adv-exc adv-only" data-exc-section="datos">
+                <div class="adv-exc adv-only" data-mas data-exc-section="datos">
                   <button type="button" class="adv-exc-btn">
                     <span class="adv-exc-check" aria-hidden="true"></span>
                     <span class="adv-exc-label">Excepciones: <b class="adv-exc-count">ninguna</b></span>
@@ -390,7 +391,16 @@ registerTab('advanced', 'tab-content', String.raw`
       </aside>
 
       <!-- ══ RESULTADOS ══ -->
+      <!-- Por debajo de 1100 px la configuración es un panel lateral que se
+           abre desde esta barra; los resultados quedan siempre delante. -->
+      <div class="adv-cfg-velo" id="adv-cfg-velo" hidden></div>
+
       <main class="adv-main">
+
+        <div class="adv-cfg-barra">
+          <span class="adv-cfg-barra-txt" id="adv-cfg-barra-txt">—</span>
+          <button type="button" class="adv-cfg-abrir" id="adv-cfg-abrir" aria-controls="adv-config" aria-expanded="false">⚙ Configurar</button>
+        </div>
 
         <div class="adv-editbar" id="adv-editbar" hidden>
           <span class="adv-edit-icon">✎</span>
