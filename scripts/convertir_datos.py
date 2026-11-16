@@ -97,6 +97,11 @@ def generar(t, destino):
     escribir_js(os.path.join(tmp, 'indice.js'), 'window.CE_DATOS_INDICE', indice)
     escribir_csv(t, os.path.join(tmp, 'csv'))
 
+    # La geometría del mapa la genera otro script (generar_mapa.py) en
+    # generado/mapa: se conserva, o la acción de los datos la borraría.
+    mapa = os.path.join(destino, 'mapa')
+    if os.path.isdir(mapa):
+        shutil.move(mapa, os.path.join(tmp, 'mapa'))
     shutil.rmtree(destino, ignore_errors=True)
     os.replace(tmp, destino)
     return inf, indice

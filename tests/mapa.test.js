@@ -133,7 +133,9 @@ test('los códigos de provincia son los de la base de datos', () => {
   const filas = csv.split('\n').slice(1).filter(Boolean);
   const enDatos = new Set();
   for (const fila of filas) {
-    const codigo = fila.split(',')[1];
+    const [eleccion, codigo] = fila.split(',');
+    // El mapa es de España: las elecciones de otros países usan sus propios códigos.
+    if (!/^"?ES-/.test(eleccion)) continue;
     // Las circunscripciones insulares del Senado («35-1») van aparte: aún no
     // tienen pieza propia en el mapa.
     if (/^\d+$/.test(codigo)) enDatos.add(dosDigitos(codigo));
