@@ -1560,3 +1560,36 @@ body.adv-popup-open { overflow: hidden; }
 .adv-coal-members { width: 100%; margin-top: 4px; font-size: 0.8rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--text); }
 .adv-coal-name { width: 100%; padding: 4px 6px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--text); font: inherit; }
 #adv-results .coal-tabla { width: calc(100% - 28px); margin: 8px 14px; }
+
+/* ── «Más opciones» de cada pestaña (advInitMas) ── */
+.adv-mas {
+  grid-column: 1 / -1;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.adv-mas-toggle {
+  display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; width: 100%;
+  padding: 10px 12px; min-height: 40px; border: none; background: none; cursor: pointer;
+  font: inherit; text-align: left; color: var(--text);
+}
+.adv-mas-caret { color: var(--accent); transition: transform 0.15s; display: inline-block; }
+.adv-mas-toggle[aria-expanded="true"] .adv-mas-caret { transform: rotate(90deg); }
+.adv-mas-name { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; }
+.adv-mas-sum { flex: 1; min-width: 0; font-size: 0.76rem; font-style: italic; color: var(--text-muted); }
+.adv-mas.con-activo .adv-mas-sum { color: var(--accent); font-style: normal; font-weight: 600; }
+.adv-mas-body {
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px;
+  padding: 4px 12px 12px; border-top: 1px solid var(--border-light);
+}
+.adv-mas-body[hidden] { display: none; }
+.adv-mas-body > * { margin: 0; }
+
+/* Punto en la pestaña cuando algo de su «Más opciones» está activo. */
+.adv-tab.con-activo::after {
+  content: ''; display: inline-block; width: 6px; height: 6px; margin-left: 6px;
+  border-radius: 50%; background: var(--accent); vertical-align: middle;
+}
+@media (min-width: 1100px) {
+  .adv-workspace[data-mode="advanced"] .adv-tab.active.con-activo::after { background: #fff; }
+}

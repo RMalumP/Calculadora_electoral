@@ -531,8 +531,94 @@ function advSelectTab(name) {
   advStoreSet(ADV_TAB_KEY, name);
 }
 
+/* ── «Más opciones» dentro de cada pestaña ──
+   Lo que solo existe en el modo avanzado (coaliciones, circunscripciones
+   añadidas, segunda barrera, bono, excepciones…) se agrupa en un bloque
+   plegable al final de su pestaña. La cabecera dice qué hay activo dentro,
+   así que plegarlo no esconde nada que esté cambiando el resultado. */
+
+const ADV_MAS_KEY = 'adv-mas-abierto';
+
+function advMasAbiertos() {
+  try { return new Set(JSON.parse(advStoreGet(ADV_MAS_KEY) || '[]')); } catch (e) { return new Set(); }
+}
+
+/** Mete los bloques marcados con data-mas de cada sección en su grupo plegable. */
+function advInitMas() {
+  const abiertos = advMasAbiertos();
+  selectAll('.adv-cfg').forEach(section => {
+    const bloques = [...section.querySelectorAll('.adv-cfg-content > [data-mas]')];
+    if (!bloques.length || section.querySelector('.adv-mas')) return;
+    const nombre = section.dataset.section;
+    const abierto = abiertos.has(nombre);
+    const grupo = document.createElement('div');
+    grupo.className = 'adv-mas adv-only';
+    grupo.dataset.mas = nombre;
+    grupo.innerHTML =
+      `<button type="button" class="adv-mas-toggle" aria-expanded="${abierto}" aria-controls="adv-mas-${nombre}">` +
+        `<span class="adv-mas-caret" aria-hidden="true">▸</span>` +
+        `<span class="adv-mas-name">Más opciones</span>` +
+        `<span class="adv-mas-sum"></span>` +
+      `</button>` +
+      `<div class="adv-mas-body" id="adv-mas-${nombre}"${abierto ? '' : ' hidden'}></div>`;
+    bloques[0].before(grupo);
+    const body = grupo.querySelector('.adv-mas-body');
+    bloques.forEach(b => body.appendChild(b));
+    grupo.querySelector('.adv-mas-toggle').addEventListener('click', e => {
+      const btn = e.currentTarget;
+      const abrir = body.hidden;
+      body.hidden = !abrir;
+      btn.setAttribute('aria-expanded', String(abrir));
+      const set = advMasAbiertos();
+      abrir ? set.add(nombre) : set.delete(nombre);
+      advStoreSet(ADV_MAS_KEY, JSON.stringify([...set]));
+    });
+  });
+  // Cualquier cambio dentro de la configuración puede cambiar lo activo.
+  select('.adv-config')?.addEventListener('change', () => advMasResumir());
+  select('.adv-config')?.addEventListener('click', () => setTimeout(advMasResumir, 0));
+  advMasResumir();
+}
+
+/** Lo que está activo en el grupo «Más opciones» de una sección. */
+function advMasActivos(nombre) {
+  const on = id => !!select(`#${id}`)?.checked;
+  const exc = () => {
+    const t = select(`.adv-exc[data-exc-section="${nombre}"] .adv-exc-count`)?.textContent.trim();
+    return t && t !== 'ninguna' ? [`excepciones: ${t}`] : [];
+  };
+  const n = (q, uno, varios) => {
+    const k = document.querySelectorAll(q).length;
+    return k ? [`${k} ${k === 1 ? uno : varios}`] : [];
+  };
+  if (nombre === 'reparto') return [
+    ...n('#adv-coal-list .adv-coal-row', 'coalición', 'coaliciones'),
+    ...(on('adv-extra-ccaa') ? ['circ. autonómica'] : []),
+    ...(on('adv-extra-nacional') ? ['circ. estatal'] : []),
+    ...exc()];
+  if (nombre === 'barreras') return [
+    ...(on('adv-b2-on') ? ['segunda barrera'] : []),
+    ...n('#adv-bx-list .adv-bx-on:checked', 'barrera más', 'barreras más'),
+    ...(select('#adv-blanco') && !on('adv-blanco') ? ['sin blancos en la barrera'] : []),
+    ...exc()];
+  if (nombre === 'escanos') return [...(on('adv-bono-on') ? ['bono de mayoría'] : []), ...exc()];
+  return exc();
+}
+
+/** Repinta el resumen de cada grupo y marca las pestañas con algo activo dentro. */
+function advMasResumir() {
+  selectAll('.adv-mas').forEach(grupo => {
+    const activos = advMasActivos(grupo.dataset.mas);
+    const sum = grupo.querySelector('.adv-mas-sum');
+    updateText(sum, activos.length ? activos.join(' · ') : 'nada activo');
+    grupo.classList.toggle('con-activo', activos.length > 0);
+    select(`#adv-tabs .adv-tab[data-section="${grupo.dataset.mas}"]`)?.classList.toggle('con-activo', activos.length > 0);
+  });
+}
+
 /** Conecta el modo sencillo/avanzado y las pestañas de configuración. */
 function advInitSections() {
+  advInitMas();
   const tabs = select('#adv-tabs');
   if (tabs) {
     tabs.innerHTML = '';
@@ -705,6 +791,7 @@ function advRun() {
   advUpdateSummaries();
   advRefreshEditBar();
   advRefreshExceptions();
+  advMasResumir();
   // Primero se invalida lo que el mapa tenga en caché: la ventana emergente
   // del mapa se pinta desde ahí y tiene que ver ya el reparto nuevo.
   if (typeof mapaSimulacionActualizar === 'function') mapaSimulacionActualizar();
