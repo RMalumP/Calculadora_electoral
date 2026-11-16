@@ -30,10 +30,11 @@ registerTab('advanced', 'tab-content', String.raw`
 
       <!-- ══ CONFIGURACIÓN (a todo el ancho): pestañas en modo avanzado,
            una sola tarjeta con lo básico en modo sencillo ══ -->
-      <aside class="adv-config">
+      <aside class="adv-config" id="adv-config" aria-label="Configuración">
         <div class="param-card">
           <div class="param-card-header">
             Configuración
+            <button type="button" class="adv-cfg-cerrar" id="adv-cfg-cerrar" aria-label="Cerrar la configuración">✕</button>
           </div>
           <div class="param-body adv-cfg-body">
             <div class="adv-tabs" id="adv-tabs" role="tablist" aria-label="Secciones de la configuración"></div>
@@ -390,7 +391,16 @@ registerTab('advanced', 'tab-content', String.raw`
       </aside>
 
       <!-- ══ RESULTADOS ══ -->
+      <!-- Por debajo de 1100 px la configuración es un panel lateral que se
+           abre desde esta barra; los resultados quedan siempre delante. -->
+      <div class="adv-cfg-velo" id="adv-cfg-velo" hidden></div>
+
       <main class="adv-main">
+
+        <div class="adv-cfg-barra">
+          <span class="adv-cfg-barra-txt" id="adv-cfg-barra-txt">—</span>
+          <button type="button" class="adv-cfg-abrir" id="adv-cfg-abrir" aria-controls="adv-config" aria-expanded="false">⚙ Configurar</button>
+        </div>
 
         <div class="adv-editbar" id="adv-editbar" hidden>
           <span class="adv-edit-icon">✎</span>

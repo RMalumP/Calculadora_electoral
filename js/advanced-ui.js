@@ -614,11 +614,52 @@ function advMasResumir() {
     grupo.classList.toggle('con-activo', activos.length > 0);
     select(`#adv-tabs .adv-tab[data-section="${grupo.dataset.mas}"]`)?.classList.toggle('con-activo', activos.length > 0);
   });
+  const n = advGetMode() === 'advanced'
+    ? ['reparto', 'barreras', 'escanos', 'datos'].reduce((s, k) => s + advMasActivos(k).length, 0) : 0;
+  advCajonResumen(n ? `+${n} opci${n === 1 ? 'ón' : 'ones'} más` : '');
+}
+
+/* ── Configuración como panel lateral en pantallas estrechas ── */
+
+const ADV_CAJON_MQ = '(max-width: 1099px)';
+
+function advCajonAbrir(abrir) {
+  const ws = select('.adv-workspace');
+  if (!ws) return;
+  const estrecha = window.matchMedia?.(ADV_CAJON_MQ).matches;
+  const on = !!abrir && estrecha;
+  ws.classList.toggle('cfg-abierta', on);
+  select('#adv-cfg-velo').hidden = !on;
+  select('#adv-cfg-abrir')?.setAttribute('aria-expanded', String(on));
+  // Que la página no se desplace por detrás mientras el panel está abierto.
+  document.documentElement.classList.toggle('adv-cajon-abierto', on);
+  if (on) select('#adv-cfg-cerrar')?.focus({ preventScroll: true });
+  else if (abrir === false && estrecha) select('#adv-cfg-abrir')?.focus({ preventScroll: true });
+}
+
+function advInitCajon() {
+  select('#adv-cfg-abrir')?.addEventListener('click', () => advCajonAbrir(true));
+  select('#adv-cfg-cerrar')?.addEventListener('click', () => advCajonAbrir(false));
+  select('#adv-cfg-velo')?.addEventListener('click', () => advCajonAbrir(false));
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && select('.adv-workspace')?.classList.contains('cfg-abierta')
+        && !document.querySelector('.adv-popup-overlay.open, .menu-dd-list:not([hidden])')) advCajonAbrir(false);
+  });
+  window.matchMedia?.(ADV_CAJON_MQ).addEventListener?.('change', () => advCajonAbrir(false));
+}
+
+/** Línea de la barra: reparto, barreras y lo activo en «Más opciones». */
+function advCajonResumen(extra) {
+  const txt = ['#adv-sum-reparto', '#adv-sum-barreras', '#adv-sum-escanos']
+    .map(id => select(id)?.textContent.trim()).filter(t => t && t !== '—');
+  if (extra) txt.push(extra);
+  updateText(select('#adv-cfg-barra-txt'), txt.join(' · ') || '—');
 }
 
 /** Conecta el modo sencillo/avanzado y las pestañas de configuración. */
 function advInitSections() {
   advInitMas();
+  advInitCajon();
   const tabs = select('#adv-tabs');
   if (tabs) {
     tabs.innerHTML = '';

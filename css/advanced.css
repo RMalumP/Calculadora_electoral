@@ -1593,3 +1593,70 @@ body.adv-popup-open { overflow: hidden; }
 @media (min-width: 1100px) {
   .adv-workspace[data-mode="advanced"] .adv-tab.active.con-activo::after { background: #fff; }
 }
+
+/* ── Configuración como panel lateral por debajo de 1100 px ──
+   Los resultados van primero; una barra fija arriba resume la configuración
+   y la abre. Por encima de 1100 px nada de esto se ve: el panel es la
+   columna derecha de siempre. */
+.adv-cfg-barra, .adv-cfg-cerrar { display: none; }
+
+/* La regla de móvil de otros-drag-responsive.css convierte .param-body en
+   una rejilla de dos columnas; aquí la configuración es siempre una columna. */
+.adv-config .param-body.adv-cfg-body { display: flex; flex-direction: column; }
+
+@media (max-width: 1099px) {
+  .adv-cfg-barra {
+    display: flex; align-items: center; gap: 10px;
+    position: sticky; top: 0; z-index: 30;
+    margin: 0 0 12px; padding: 8px 10px 8px 14px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); box-shadow: var(--shadow);
+  }
+  .adv-cfg-barra-txt {
+    flex: 1; min-width: 0; font-size: 0.8rem; font-style: italic; color: var(--accent);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .adv-cfg-abrir {
+    flex-shrink: 0; min-height: 36px; padding: 6px 14px; border: 1px solid var(--accent);
+    border-radius: var(--radius); background: var(--accent); color: #fff;
+    font: inherit; font-size: 0.8rem; font-weight: 600; cursor: pointer;
+  }
+
+  .adv-workspace .adv-config {
+    position: fixed; top: 0; right: 0; bottom: 0; z-index: 420;
+    width: min(460px, 94vw);
+    transform: translateX(105%); transition: transform 0.22s ease, visibility 0.22s;
+    visibility: hidden;
+  }
+  .adv-workspace.cfg-abierta .adv-config { transform: none; visibility: visible; }
+  .adv-workspace .adv-config .param-card {
+    height: 100%; display: flex; flex-direction: column;
+    border-radius: 0; margin: 0;
+  }
+  .adv-workspace .adv-cfg-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+  .adv-workspace .adv-cfg-content { grid-template-columns: minmax(0, 1fr); }
+  .adv-config .param-card-header { display: flex; align-items: center; }
+  .adv-cfg-cerrar {
+    display: inline-flex; align-items: center; justify-content: center;
+    margin-left: auto; width: 36px; height: 36px; border: none; border-radius: var(--radius);
+    background: none; color: inherit; font-size: 1rem; cursor: pointer;
+  }
+  .adv-cfg-cerrar:hover { background: rgba(255, 255, 255, 0.12); }
+  /* Pestañas en rejilla de tres, como en la columna de escritorio. */
+  .adv-workspace[data-mode="advanced"] .adv-tabs {
+    display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px;
+    padding: 10px 12px; overflow: visible; background: var(--accent-bg);
+  }
+  .adv-workspace[data-mode="advanced"] .adv-tab {
+    margin: 0; padding: 8px 6px; border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--surface); font-size: 0.66rem; white-space: normal; line-height: 1.2; text-align: center;
+  }
+  .adv-workspace[data-mode="advanced"] .adv-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .adv-workspace[data-mode="advanced"] .adv-tab.active.con-activo::after { background: #fff; }
+
+  .adv-cfg-velo {
+    position: fixed; inset: 0; z-index: 410; background: rgba(20, 14, 10, 0.45);
+  }
+  .adv-cfg-velo[hidden] { display: none; }
+  html.adv-cajon-abierto, html.adv-cajon-abierto body { overflow: hidden; }
+}
