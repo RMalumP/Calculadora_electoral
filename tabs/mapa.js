@@ -25,11 +25,11 @@ registerTab('map', 'tab-content', String.raw`
       </div>
 
       <div class="mapa-controles">
-        <label class="mapa-campo">
+        <label class="mapa-campo" id="mapa-campo-ambito">
           <span>Elección</span>
           <select id="mapa-ambito" aria-label="Tipo de elección"></select>
         </label>
-        <label class="mapa-campo">
+        <label class="mapa-campo" id="mapa-campo-eleccion">
           <span>Convocatoria</span>
           <select id="mapa-eleccion" aria-label="Convocatoria"></select>
         </label>
@@ -58,6 +58,9 @@ registerTab('map', 'tab-content', String.raw`
         </label>
         <span class="mapa-estado" id="mapa-estado" role="status"></span>
       </div>
+
+      <!-- Las dos configuraciones del comparador de la avanzada, editables aquí (js/mapa-comparador.js). -->
+      <section class="mapa-cmp" id="mapa-cmp" hidden aria-label="Comparación A frente a B"></section>
 
       <div class="mapa-cuerpo">
 

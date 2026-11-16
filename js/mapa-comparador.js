@@ -27,6 +27,21 @@ const MAPA_CMP = (() => {
     return !!(c && ladoValido(c.a) && ladoValido(c.b));
   }
 
+  /** Hay una comparación hecha, aunque alguno de sus lados no se pueda pintar. */
+  const hay = () => !!comparacion();
+
+  /** Qué lado no se puede pintar y por qué, para decirlo en vez de dejar el mapa en blanco. */
+  function motivoNoPintable() {
+    const c = comparacion();
+    if (!c) return '';
+    const malos = ['a', 'b'].filter(l => !ladoValido(c[l]));
+    if (!malos.length) return '';
+    const L = malos.map(l => l.toUpperCase()).join(' y ');
+    const isla = malos.some(l => c[l].data.meta?.circBase === 'Isla');
+    return `${L} ${malos.length > 1 ? 'no son elecciones' : 'no es una elección'} que el mapa pueda pintar` +
+      (isla ? ' (reparte por islas y sus códigos no casan con las provincias).' : ': sólo hay geometría de España.');
+  }
+
   function vacio() {
     return { porId: new Map(), escA: 0, escB: 0, mueven: 0, nombres: [], repetido: false };
   }
@@ -87,10 +102,14 @@ const MAPA_CMP = (() => {
     cacheNivel = {};
   }
 
-  return { disponible, porNivel, partidos, partidoActual, actualizar, describir };
+  return { disponible, hay, motivoNoPintable, porNivel, partidos, partidoActual, actualizar, describir,
+           version: () => version };
 })();
 
 /* ── Lecturas de un agregado ────────────────────────────────────── */
+
+/** Qué se ve en los modos del comparador: 'dif' (la diferencia), 'a' o 'b' (cada lado). */
+let mapaCmpVista = 'dif';
 
 const mapaCmpColor = ref => (ref && typeof advPartyColor === 'function') ? advPartyColor(ref) : '#888';
 
@@ -105,7 +124,9 @@ const MAPA_CMP_MUEVE = '#7a4a8c';
 
 /* ── Modos ──────────────────────────────────────────────────────── */
 
-const mapaCmpSirve = () => MAPA_CMP.disponible();
+// Los modos siguen en la lista aunque un lado no se pueda pintar: si no, al
+// cambiar ese lado desde la barra el modo desaparecería con la barra dentro.
+const mapaCmpSirve = () => MAPA_CMP.hay();
 
 MAPA_MODOS.push({
   id: 'cmp-vuelco',
@@ -282,12 +303,87 @@ MAPA_PANEL_EXTRAS.push((pieza, nivel) => {
 
 document.addEventListener('click', e => {
   const b = e.target.closest ? e.target.closest('[data-cmp-volver]') : null;
-  if (!b || typeof switchTab !== 'function') return;
-  switchTab('advanced');
-  if (typeof advCmpOpen === 'function') setTimeout(() => advCmpOpen(null), 200);
+  if (b) mapaCmpAbrirComparador();
 });
 
 /* ── Enlace desde el comparador ─────────────────────────────────── */
+
+/* ── Barra con A y B, editables desde el mapa ───────────────────── */
+
+let _mapaCmpBarraFirma = '';
+
+/**
+ * Enseña u oculta la barra del comparador según el modo y la repinta si ha
+ * cambiado algo. En los modos del comparador, la elección del mapa no pinta
+ * nada: sus desplegables se esconden y en su sitio van A y B.
+ */
+function mapaCmpBarra(forzar) {
+  const barra = document.getElementById('mapa-cmp');
+  if (!barra) return;
+  const modo = mapaModo(mapaModoActual);
+  const activo = !!(modo && modo.necesitaComparador);
+  ['mapa-campo-ambito', 'mapa-campo-eleccion'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.hidden = activo;
+  });
+  barra.hidden = !activo;
+  if (!activo) { _mapaCmpBarraFirma = ''; return; }
+  const firma = MAPA_CMP.version() + '|' + (MAPA_CMP.hay() ? 1 : 0) + '|' + mapaCmpVista;
+  if (!forzar && firma === _mapaCmpBarraFirma) return;
+  _mapaCmpBarraFirma = firma;
+
+  const foco = barra.contains(document.activeElement) ? document.activeElement.id : null;
+  barra.innerHTML = mapaCmpBarraHtml();
+  if (foco) document.getElementById(foco)?.focus();
+}
+
+function mapaCmpBarraHtml() {
+  const esc = MAPA.escapar;
+  if (!MAPA_CMP.hay() || typeof advCmpSideHtml !== 'function') {
+    return '<p class="mapa-panel-nota">Todavía no hay ninguna comparación. Ábrela en la calculadora avanzada con «⚖ Comparar».</p>' +
+      '<button type="button" class="mapa-boton" data-mcmp-abrir>Abrir el comparador</button>';
+  }
+  const cmp = _advCmp.cmp;
+  const r = cmp.resumen;
+  const gan = g => g ? mapaPastilla(g.siglas, mapaCmpColor(g.ref)) + ' ' + g.esc : 'nadie';
+  const motivo = MAPA_CMP.motivoNoPintable();
+  return '<div class="mapa-cmp-cab">' +
+      '<span class="mapa-cmp-titulo">Comparación</span>' +
+      '<span class="mapa-cmp-resumen"><b>' + r.mueven + '</b> ' + (r.mueven === 1 ? 'escaño cambia' : 'escaños cambian') + ' de partido · gana en A ' + gan(r.a.ganador) + ' · en B ' + gan(r.b.ganador) + '</span>' +
+      '<span class="mapa-cmp-botones">' +
+        '<button type="button" class="adv-mini-btn" data-cmp-swap title="A pasa a ser B y B pasa a ser A">⇄ Intercambiar</button>' +
+        '<button type="button" class="adv-mini-btn" data-mcmp-abrir title="Segunda barrera, prorrateo, compensación, parejas de candidaturas, tablas y gráficos">Comparador completo</button>' +
+      '</span></div>' +
+    '<div class="mapa-cmp-lados">' + advCmpSideHtml('a', { prefijo: 'mcmp', compacto: true }) +
+      advCmpSideHtml('b', { prefijo: 'mcmp', compacto: true }) + '</div>' +
+    (motivo ? '<p class="mapa-cmp-aviso">' + esc(motivo) + '</p>' : '');
+}
+
+function mapaCmpBarraInit() {
+  const barra = document.getElementById('mapa-cmp');
+  if (!barra || barra.dataset.listo) return;
+  barra.dataset.listo = '1';
+  barra.addEventListener('change', ev => {
+    if (typeof advCmpOnChange === 'function' && ev.target.closest('[data-cmp]')) advCmpOnChange(ev);
+  });
+  barra.addEventListener('click', ev => {
+    if (ev.target.closest('[data-mcmp-abrir]')) { mapaCmpAbrirComparador(); return; }
+    if (typeof advCmpOnClick === 'function') advCmpOnClick(ev);
+  });
+}
+
+function mapaCmpAbrirComparador() {
+  if (typeof switchTab !== 'function') return;
+  switchTab('advanced');
+  const abrir = intentos => {
+    if (typeof advCmpOpen === 'function' && typeof _advLoaded !== 'undefined') { advCmpOpen(null); return; }
+    if (intentos > 0) setTimeout(() => abrir(intentos - 1), 300);
+  };
+  setTimeout(() => abrir(30), 200);
+}
+
+// Tras cada pintado: la barra sigue al modo que se esté viendo.
+MAPA_TRAS_PINTAR.push(() => { mapaCmpBarraInit(); mapaCmpBarra(); });
 
 /** El comparador ha cambiado: se rehace la lista de modos y, si se está viendo uno de estos, se repinta. */
 function mapaCmpActualizar() {
@@ -297,6 +393,7 @@ function mapaCmpActualizar() {
   mapaLlenarPartidos();
   const modo = mapaModo(mapaModoActual);
   if (modo && modo.necesitaComparador) mapaRefrescar();
+  else mapaCmpBarra();
 }
 
 /** «Ver en el mapa»: abre la pestaña del mapa con un modo del comparador. */
