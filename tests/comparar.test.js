@@ -148,3 +148,20 @@ test('Emparejamiento automático por la primera palabra de las siglas, sólo si 
   const podemos = A.national.filter(p => /^PODEMOS/.test(p.siglas));
   if (podemos.length > 1) podemos.forEach(p => assert.ok(!r.parejas.a.get(p.key).startsWith('p:')));
 });
+
+test('Intercambiar A y B da la vuelta a todas las diferencias', () => {
+  const A = calc(C19), B = calc(C23, { formula: 'saintlague' });
+  const ab = ctx.cmpComparar(A, B), ba = ctx.cmpComparar(B, A);
+  assert.equal(ab.resumen.mueven, ba.resumen.mueven);
+  ab.partidos.forEach(f => {
+    const g = ba.partidos.find(x => x.id === f.id);
+    assert.ok(g, f.siglas);
+    assert.equal(g.dEsc, -f.dEsc, f.siglas);
+  });
+  ab.circ.filas.forEach(f => {
+    const g = ba.circ.filas.find(x => x.id === f.id);
+    assert.equal(g.mueven, f.mueven, f.name);
+    assert.equal(g.escA, f.escB, f.name);
+  });
+  ab.indices.forEach((i, k) => assert.ok(Math.abs(ba.indices[k].d + i.d) < 1e-9, i.id));
+});

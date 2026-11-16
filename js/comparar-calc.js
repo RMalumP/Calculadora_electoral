@@ -211,8 +211,9 @@ function cmpPorCircunscripcion(A, B, parejas) {
     const ids = new Set([...a.porId.keys(), ...b.porId.keys()]);
     const partidos = [...ids].map(id => {
       const ea = a.porId.get(id)?.esc || 0, eb = b.porId.get(id)?.esc || 0;
-      return { id, siglas: b.etiqueta.get(id) || a.etiqueta.get(id), ref: a.refs.get(id) || b.refs.get(id), escA: ea, escB: eb, d: eb - ea };
-    }).filter(p => p.escA > 0 || p.escB > 0)
+      return { id, siglas: b.etiqueta.get(id) || a.etiqueta.get(id), ref: a.refs.get(id) || b.refs.get(id), escA: ea, escB: eb, d: eb - ea,
+               votosA: a.porId.get(id)?.votos || 0, votosB: b.porId.get(id)?.votos || 0 };
+    }).filter(p => p.escA > 0 || p.escB > 0 || p.votosA > 0 || p.votosB > 0)
       .sort((x, y) => Math.max(y.escA, y.escB) - Math.max(x.escA, x.escB));
     const sumAbs = partidos.reduce((s, p) => s + Math.abs(p.d), 0);
     const gA = ganador(a), gB = ganador(b);

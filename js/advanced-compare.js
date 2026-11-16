@@ -248,6 +248,7 @@ function advCmpOnClick(ev) {
     return;
   }
   if (ev.target.closest('[data-cmp-reset]')) { advCmpReiniciar(); return; }
+  if (ev.target.closest('[data-cmp-swap]')) { advCmpIntercambiar(); return; }
   const otra = ev.target.closest('[data-cmp-otra]');
   if (otra) { advCmpOtraConvocatoria(otra.dataset.cmpOtra); return; }
   const par = ev.target.closest('[data-cmp-par]');
@@ -350,7 +351,11 @@ function advCmpMismasReglas(ca, cb) {
 
 /* ── Pintado ───────────────────────────────────────────────── */
 
-function advCmpSideHtml(letter) {
+/**
+ * Formulario de un lado. `prefijo` separa los id cuando se pinta también en el
+ * mapa; `compacto` deja sólo lo básico (el mapa enseña el resto en el comparador).
+ */
+function advCmpSideHtml(letter, { prefijo = 'cmp', compacto = false } = {}) {
   const side = _advCmp[letter];
   const title = `Configuración ${letter.toUpperCase()}`;
   const other = letter === 'a' ? 'b' : 'a';
@@ -360,14 +365,14 @@ function advCmpSideHtml(letter) {
       : `<p class="adv-empty">${advEscape(side?.error || 'Sin datos.')}</p>`}</section>`;
   }
   const c = side.config;
-  const id = f => `cmp-${letter}-${f}`;
+  const id = f => `${prefijo}-${letter}-${f}`;
   const field = (f, label, control) =>
     `<div class="adv-cmp-field adv-field"><label for="${id(f)}">${label}</label>${control}</div>`;
   const sel = (f, options) => `<div class="adv-select-wrap"><select id="${id(f)}" data-cmp="${letter}:${f}">${options}</select></div>`;
   const years = (side.data.elecciones || []);
 
-  return `<section class="adv-cmp-side adv-cmp-side-${letter}" aria-label="${title}">
-    <h3><span class="adv-cmp-tag">${letter.toUpperCase()}</span>${title}
+  return `<section class="adv-cmp-side adv-cmp-side-${letter}${compacto ? ' adv-cmp-compacto' : ''}" aria-label="${title}">
+    <h3><span class="adv-cmp-tag">${letter.toUpperCase()}</span>${compacto ? '' : title}
       <span class="adv-cmp-acciones">
         ${(_advCmp[other]?.data?.elecciones || []).length > 1 ? `<button type="button" class="adv-mini-btn" data-cmp-otra="${letter}" title="Las reglas de ${other.toUpperCase()} en la convocatoria anterior (o la siguiente) del mismo ámbito">${other.toUpperCase()} en otra convocatoria</button>` : ''}
         <button type="button" class="adv-mini-btn" data-cmp-copy="${other}>${letter}" title="Copiar la configuración de ${other.toUpperCase()} aquí">Copiar de ${other.toUpperCase()}</button></span></h3>
@@ -383,15 +388,15 @@ function advCmpSideHtml(letter) {
           <label class="adv-check"><input type="checkbox" id="${id('b1on')}" data-cmp="${letter}:b1on"${c.barrera1.activa ? ' checked' : ''} aria-label="Activar la barrera"></label>
           <div class="adv-select-wrap"><select id="${id('b1level')}" data-cmp="${letter}:b1level" aria-label="Ámbito de la barrera">${_advCmpOpts(ADV_CMP_BARRIER_LEVELS, c.barrera1.nivel)}</select></div>
           <input type="number" id="${id('b1val')}" data-cmp="${letter}:b1val" min="0" max="100" step="0.1" value="${c.barrera1.valor}"></div>`)}
-      ${field('b2val', 'Segunda barrera (%)', `<div class="adv-cmp-inline">
+      ${compacto ? '' : field('b2val', 'Segunda barrera (%)', `<div class="adv-cmp-inline">
           <label class="adv-check"><input type="checkbox" id="${id('b2on')}" data-cmp="${letter}:b2on"${c.barrera2?.activa ? ' checked' : ''} aria-label="Activar la segunda barrera"></label>
           <div class="adv-select-wrap"><select id="${id('b2level')}" data-cmp="${letter}:b2level" aria-label="Ámbito de la segunda barrera">${_advCmpOpts(ADV_CMP_BARRIER_LEVELS, c.barrera2?.nivel)}</select></div>
           <input type="number" id="${id('b2val')}" data-cmp="${letter}:b2val" min="0" max="100" step="0.1" value="${c.barrera2?.valor || 0}"></div>`)}
-      ${typeof PRORRATEO_METODOS !== 'undefined' ? field('prorrateo', 'Prorrateo entre circunscripciones', sel('prorrateo', _advCmpOpts(PRORRATEO_METODOS.map(m => [m.id, m.name]), c.prorrateo || 'hare'))) : ''}
+      ${!compacto && typeof PRORRATEO_METODOS !== 'undefined' ? field('prorrateo', 'Prorrateo entre circunscripciones', sel('prorrateo', _advCmpOpts(PRORRATEO_METODOS.map(m => [m.id, m.name]), c.prorrateo || 'hare'))) : ''}
       ${field('seatsMode', 'Escaños', `<div class="adv-cmp-inline">
           <div class="adv-select-wrap"><select id="${id('seatsMode')}" data-cmp="${letter}:seatsMode"><option value="sheet"${c.seatsMode === 'sheet' ? ' selected' : ''}>Los originales</option><option value="custom"${c.seatsMode === 'custom' ? ' selected' : ''}>Total personalizado</option></select></div>
           <input type="number" id="${id('totalSeats')}" data-cmp="${letter}:totalSeats" min="1" max="9999" value="${c.totalSeats}"${c.seatsMode === 'custom' ? '' : ' disabled'} aria-label="Total de escaños"></div>`)}
-      ${field('compModo', 'Compensación', `<div class="adv-cmp-inline">
+      ${compacto ? '' : field('compModo', 'Compensación', `<div class="adv-cmp-inline">
           <div class="adv-select-wrap"><select id="${id('compModo')}" data-cmp="${letter}:compModo">${_advCmpOpts(ADV_CMP_COMP, c.comp?.modo || 'ninguna')}</select></div>
           <input type="number" id="${id('bolsa')}" data-cmp="${letter}:bolsa" min="0" value="${c.comp?.bolsa || 0}"${c.comp?.modo === 'bolsa' ? '' : ' hidden'} aria-label="Escaños de la bolsa"></div>`)}
     </div>
@@ -651,15 +656,19 @@ function advCmpGraficosHtml(cmp) {
 
 const ADV_CMP_TABS = [['partidos', 'Partidos'], ['circ', 'Circunscripciones'], ['indices', 'Índices'], ['graficos', 'Gráficos']];
 
-function advCmpResultsHtml() {
+/** Cruza los dos lados (comparar-calc.js) y deja el resultado en _advCmp.cmp. */
+function advCmpRecalcular() {
   const A = _advCmp.a, B = _advCmp.b;
-  if (!A?.result || !B?.result) {
-    _advCmp.cmp = null;
-    return '<p class="adv-empty">Cuando los dos lados tengan datos se comparan aquí.</p>';
-  }
+  if (!A?.result || !B?.result) { _advCmp.cmp = null; return null; }
   const cmp = cmpComparar(A.result, B.result, advCmpParejasManual());
   cmp.resumen.mismaEleccion = A.election === B.election && A.config.yearKey === B.config.yearKey;
   _advCmp.cmp = cmp;
+  return cmp;
+}
+
+function advCmpResultsHtml() {
+  const cmp = _advCmp.cmp;
+  if (!cmp) return '<p class="adv-empty">Cuando los dos lados tengan datos se comparan aquí.</p>';
   const tab = _advCmp.tab;
   const panel = tab === 'circ' ? advCmpCircHtml(cmp) : tab === 'indices' ? advCmpIndicesHtml(cmp)
     : tab === 'graficos' ? advCmpGraficosHtml(cmp) : advCmpPartidosHtml(cmp);
@@ -682,7 +691,18 @@ function advCmpResultsHtml() {
 
 const advCmpEscEn = (fila, id) => cmpEscanosEn(fila, id);
 
+/**
+ * Tras cualquier cambio: recalcula, repinta la ventana si está abierta, guarda
+ * y avisa al mapa, que puede estar enseñando (y editando) la misma comparación.
+ */
 function advCmpRender() {
+  advCmpRecalcular();
+  advCmpPintar();
+  advCmpGuardar();
+  if (typeof mapaCmpActualizar === 'function') mapaCmpActualizar();
+}
+
+function advCmpPintar() {
   const body = select('#adv-compare-body');
   if (!body || !_advCmp.open) return;
   // Se conserva el foco al repintar: si no, cambiar un desplegable lo perdería.
@@ -694,13 +714,12 @@ function advCmpRender() {
   body.innerHTML = `<div class="adv-cmp-introbar"><p class="adv-cmp-intro">Dos configuraciones independientes, calculadas a la vez sin tocar el panel principal.
       B parte de A con otra fórmula; cambia lo que quieras de cada lado.</p>
       <span class="adv-cmp-acciones">
+        <button type="button" class="adv-mini-btn" data-cmp-swap title="A pasa a ser B y B pasa a ser A">⇄ Intercambiar A y B</button>
         <button type="button" class="adv-mini-btn" data-cmp-reset title="A vuelve a ser la configuración del panel principal y B, A con otra fórmula">Empezar desde el panel</button>
         <button type="button" class="adv-mini-btn" data-cmp-fold aria-expanded="${!_advCmp.plegado}">${_advCmp.plegado ? 'Mostrar las configuraciones' : 'Ocultar las configuraciones'}</button></span></div>
     <div class="adv-cmp-sides"${_advCmp.plegado ? ' hidden' : ''}>${advCmpSideHtml('a')}${advCmpSideHtml('b')}</div>
     ${advCmpResultsHtml()}`;
   if (indAbierto) body.querySelector('.adv-cmp-panel details.ind-sel')?.setAttribute('open', '');
-  advCmpGuardar();
-  if (typeof mapaCmpActualizar === 'function') mapaCmpActualizar();
   if (foco) select(`#${foco}`)?.focus();
   else if (focoUi) body.querySelector(`[data-cmp-ui="${focoUi}"]`)?.focus();
 }
@@ -742,6 +761,33 @@ async function advCmpRestaurar(e) {
   _advCmp.a = a; _advCmp.b = b;
   if (ADV_CMP_TABS.some(t => t[0] === e.t)) _advCmp.tab = e.t;
   if (Array.isArray(e.p) && e.p.length) advCmpParejasGuardar(e.p.filter(x => Array.isArray(x) && x.length === 2).map(x => x.map(String)));
+  return true;
+}
+
+/** A pasa a ser B y al revés; las parejas de candidaturas se dan la vuelta con ellos. */
+function advCmpIntercambiar() {
+  if (!_advCmp.a || !_advCmp.b) return;
+  const parejas = advCmpParejasManual().map(([x, y]) => [y, x]);
+  [_advCmp.a, _advCmp.b] = [_advCmp.b, _advCmp.a];
+  if (parejas.length) advCmpParejasGuardar(parejas);
+  advCmpRender();
+}
+
+/**
+ * Crea una comparación sin pasar por la ventana (la pide el mapa): la guardada
+ * en el navegador si la hay; si no, A es la convocatoria pedida con sus reglas
+ * y B, la misma con otra fórmula.
+ */
+async function advCmpCrearDesde(election, yearKey) {
+  if (_advCmp.a && _advCmp.b) return true;
+  if (await advCmpRestaurar(advCmpGuardadoLeer())) { advCmpRender(); return true; }
+  const a = { election, data: null, config: null, result: null, error: null, loading: true };
+  await advCmpLoad(a, election, yearKey);
+  if (_advCmp.a && _advCmp.b) return true;   // mientras cargaba llegó otra (un enlace)
+  if (!a.result) return false;
+  _advCmp.a = a;
+  _advCmp.b = advCmpSideFromOther(a);
+  advCmpRender();
   return true;
 }
 
