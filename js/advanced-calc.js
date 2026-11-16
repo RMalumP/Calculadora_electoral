@@ -45,6 +45,7 @@ function advDefaultConfig(meta) {
     totalSeats: meta?.escanosTotales || 350,
     minPorCircunscripcion: meta?.minimoDefault != null ? meta.minimoDefault : 2,
     repartoBase: 'poblacion', // 'poblacion' | 'censo'
+    prorrateo: 'hare',        // método de prorrateo entre circunscripciones (prorrateo.js)
     // Añadidos que no trae la hoja: apagados mientras nadie los encienda.
     bono: { activa: false, escanos: 0, modo: 'incluido' }, // 'incluido' | 'extra'
     extras: {
@@ -332,17 +333,11 @@ function advApportionSeats(districts, config, lockedSeats) {
   free.forEach(d => { d.seats = minOf(d); });
 
   if (remaining > 0 && basisSum > 0) {
-    // Resto mayor (cuota Hare) sobre población/censo, como la LOREG.
-    const quota = basisSum / remaining;
-    const exact = basis.map(b => b / quota);
-    const floors = exact.map(Math.floor);
-    let assigned = floors.reduce((a, b) => a + b, 0);
-    const order = exact
-      .map((e, i) => ({ i, rem: e - floors[i] }))
-      .sort((a, b) => b.rem - a.rem || basis[b.i] - basis[a.i]);
-    let k = 0;
-    while (assigned < remaining && order.length) { floors[order[k % order.length].i]++; assigned++; k++; }
-    free.forEach((d, i) => { d.seats += floors[i]; });
+    // Por defecto, resto mayor (cuota Hare) sobre población/censo, como la
+    // LOREG; también se puede prorratear por divisores (prorrateo.js).
+    const metodo = config.prorrateo || 'hare';
+    const extra = prorrateoRepartir(basis, remaining, metodo, free.map(d => d.seats));
+    free.forEach((d, i) => { d.seats += extra[i]; });
   } else if (remaining > 0) {
     for (let i = 0; i < remaining; i++) free[i % n].seats++;
   }
@@ -712,6 +707,9 @@ function advCalculate(data, config, edits, locks) {
       totalSeats, baseSeats, totalValid, totalBlanco, totalNulos, totalCenso, totalVotantes,
       participacion: totalCenso > 0 ? totalVotantes / totalCenso * 100 : 0,
       numDistricts: districts.length + extraDistricts.length,
+      malaponderacion: prorrateoMalaponderacion(
+        districts.map(d => (config.repartoBase === 'censo' ? d.censoTotal : d.poblacion) || 0),
+        districts.map(d => d.seats)),
       gallagher: disproportion,
       gallagherBefore
     }

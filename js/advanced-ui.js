@@ -347,6 +347,7 @@ function advSyncConfigToForm() {
   select('#adv-total-seats').value = c.totalSeats;
   select('#adv-min-seats').value   = c.minPorCircunscripcion;
   select('#adv-reparto-base').value = c.repartoBase;
+  select('#adv-prorrateo').value = c.prorrateo || 'hare';
   select('#adv-blanco').checked = c.blancoEnDenominador;
 
   select('#adv-bono-on').checked  = !!c.bono?.activa;
@@ -395,6 +396,7 @@ function advReadForm() {
     totalSeats:  parseInt(select('#adv-total-seats').value) || 350,
     minPorCircunscripcion: parseInt(select('#adv-min-seats').value) || 0,
     repartoBase: select('#adv-reparto-base').value,
+    prorrateo:   select('#adv-prorrateo').value || 'hare',
     bono: {
       activa:  select('#adv-bono-on').checked,
       modo:    select('#adv-bono-modo').value,
@@ -704,6 +706,8 @@ function advRenderSummary() {
     ['Votos válidos', advNum(s.totalValid), true],
     ['Votos en blanco', advNum(s.totalBlanco), true],
     ['Participación', s.participacion > 0 ? advPct(s.participacion) : '—', true],
+    ...(s.malaponderacion && s.malaponderacion.peor >= 0 && s.numDistricts > 1
+      ? [['Desigualdad del voto', `${s.malaponderacion.ratio.toLocaleString('es-ES', { maximumFractionDigits: 2 })}×`, false]] : []),
     ...(_advResult.compensation
       ? [['Compensatorios', `+${advNum(_advResult.compensation.added)}`, false]] : []),
     ...(_advResult.compensation
@@ -1330,6 +1334,16 @@ function advApplyBarrierPreset(id) {
   set(1, p.b1); set(2, p.b2);
   advBxRender([]);
   advOnConfigChange();
+}
+
+function advInitProrrateo() {
+  const sel = select('#adv-prorrateo');
+  if (!sel || sel.options.length) return;
+  PRORRATEO_METODOS.forEach(m => {
+    const o = document.createElement('option');
+    o.value = m.id; o.textContent = m.name;
+    sel.appendChild(o);
+  });
 }
 
 function advInitBarriers() {
@@ -2082,10 +2096,11 @@ function advInit() {
   advInitMetaDialog();
   advInitSessionButtons();
   advInitBarriers();
+  advInitProrrateo();
 
   ['#adv-level', '#adv-formula', '#adv-b1-on', '#adv-b1-level', '#adv-b1-val', '#adv-b1-exen', '#adv-b2-exen',
    '#adv-b2-on', '#adv-b2-level', '#adv-b2-val', '#adv-blanco',
-   '#adv-seats-mode', '#adv-total-seats', '#adv-min-seats', '#adv-reparto-base',
+   '#adv-seats-mode', '#adv-total-seats', '#adv-min-seats', '#adv-reparto-base', '#adv-prorrateo',
    '#adv-bono-on', '#adv-bono-modo', '#adv-bono-seats',
    '#adv-extra-ccaa', '#adv-extra-ccaa-seats',
    '#adv-extra-nacional', '#adv-extra-nacional-seats',

@@ -11,7 +11,7 @@ const vm = require('node:vm');
 const RAIZ = path.join(__dirname, '..');
 const ctx = vm.createContext({ window: {}, document: { querySelectorAll: () => [] }, console });
 ctx.window = ctx;
-['js/helpers.js', 'js/constants.js', 'js/algorithms.js', 'js/advanced-compensation.js',
+['js/helpers.js', 'js/constants.js', 'js/algorithms.js', 'js/advanced-compensation.js', 'js/prorrateo.js',
  'js/advanced-calc.js', 'js/advanced-data.js', 'js/advanced-territorial.js'].forEach(f =>
   vm.runInContext(fs.readFileSync(path.join(RAIZ, f), 'utf8'), ctx, { filename: f }));
 
@@ -99,4 +99,28 @@ test('La compensación acepta Droop, Hagenbach-Bischoff e Imperiali', () => {
   }
   assert.equal(ctx.advCompFormulaFor('droop'), 'droop');
   assert.equal(ctx.advCompFormulaFor('adams'), 'dhondt');
+});
+
+test('Prorrateo: todos los métodos reparten el total y cambian quién gana escaños', () => {
+  const data = datos('ES-Congreso-2023-07-23');
+  const base = { ...ctx.advDefaultConfig(data.meta), seatsMode: 'custom', totalSeats: 350, minPorCircunscripcion: 1 };
+  const porMetodo = {};
+  for (const prorrateo of ['hare', 'dhondt', 'webster', 'adams', 'hh']) {
+    const r = ctx.advCalculate(data, { ...base, prorrateo }, {}, {});
+    assert.equal(r.summary.totalSeats, 350, prorrateo);
+    porMetodo[prorrateo] = r.districts.map(d => d.seats).join(',');
+  }
+  assert.notEqual(porMetodo.adams, porMetodo.dhondt);
+});
+
+test('Prorrateo: método de Huntington-Hill con un caso calculado a mano', () => {
+  const r = JSON.parse(JSON.stringify(ctx.prorrateoRepartir([100, 30, 10], 6, 'hh', [1, 1, 1])));
+  // Prioridades p/√(n(n+1)): A gana los cuatro primeros, luego B (21,2) y otra vez A (18,3).
+  assert.deepEqual(r, [5, 1, 0]);
+});
+
+test('Malaponderación: reparto exacto da razón 1', () => {
+  const m = ctx.prorrateoMalaponderacion([100, 200], [1, 2]);
+  assert.equal(m.ratio, 1);
+  assert.equal(m.loosemore, 0);
 });

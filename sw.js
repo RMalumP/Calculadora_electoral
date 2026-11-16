@@ -18,6 +18,7 @@ const ASSETS = [
   './css/variables.css',
   './js/accesibilidad.js',
   './js/advanced-calc.js',
+  './js/prorrateo.js',
   './js/advanced-compare.js',
   './js/advanced-exportar.js',
   './js/carga-avanzada.js',

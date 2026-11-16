@@ -217,7 +217,13 @@ registerTab('advanced', 'tab-content', String.raw`
                         <option value="censo">Censo electoral</option>
                       </select>
                     </div>
-                    <small>Mínimo fijo por circunscripción y resto por cuota Hare, como la LOREG.</small>
+                    <small>Mínimo fijo por circunscripción y resto por el método elegido (Hare es el de la LOREG).</small>
+                  </div>
+                  <div class="adv-field adv-only">
+                    <label for="adv-prorrateo">Método de prorrateo</label>
+                    <div class="adv-select-wrap">
+                      <select id="adv-prorrateo"></select>
+                    </div>
                   </div>
                 </div>
 

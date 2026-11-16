@@ -51,6 +51,8 @@ registerTab('theory', 'tab-content', String.raw`
               <button class="theory-system-btn theory-btn-gap" data-system="dos-vueltas" onclick="showTheorySystem('dos-vueltas')">Segunda vuelta con transferencias</button>
               <div class="theory-group">Coaliciones</div>
               <button class="theory-system-btn theory-btn-gap" data-system="coaliciones" onclick="showTheorySystem('coaliciones')">Coaliciones y listas conjuntas</button>
+              <div class="theory-group">Prorrateo de escaños</div>
+              <button class="theory-system-btn theory-btn-gap" data-system="prorrateo" onclick="showTheorySystem('prorrateo')">Prorrateo entre circunscripciones</button>
             </div>
           </div>
         </div>
@@ -266,6 +268,18 @@ registerTab('theory', 'tab-content', String.raw`
               <div class="theory-formula">Votos(lista) = Σ votos(miembros)<br>Escaños(miembro) = reparto proporcional de los escaños de la lista según los votos de cada miembro</div>
               <h4 class="theory-h4">Ejemplo</h4>
               <p class="theory-p">Barrera del 8 %. A y B tienen un 5,9 % cada uno: separados no entran. Juntos suman un 11,8 %, superan la barrera y logran un escaño que se asigna al miembro con más votos.</p>
+            </div>
+
+            <div id="theory-prorrateo" class="theory-content-section">
+              <h3 class="theory-title">Prorrateo de escaños entre circunscripciones</h3>
+              <h4 class="theory-h4">Descripción</h4>
+              <p class="theory-p">Antes de contar votos hay que decidir cuántos escaños tiene cada circunscripción. El <b>prorrateo</b> reparte los escaños según la población o el censo. En España, 2 por provincia y el resto por cuota Hare (resto mayor). En EE. UU. se usa Huntington-Hill.</p>
+              <p class="theory-p">Los métodos de divisor (D'Hondt/Jefferson, Webster, Adams, Huntington-Hill) dan prioridad a unas circunscripciones u otras: D'Hondt favorece a las grandes, Adams a las pequeñas, Webster es neutro y Huntington-Hill es un punto intermedio. En la Calculadora avanzada, con «Total personalizado», eliges el método.</p>
+              <p class="theory-p">La <b>malaponderación</b> mide cuánto desigual es el voto: la relación entre los habitantes por escaño de la circunscripción más cara y de la más barata (1 = igualdad perfecta).</p>
+              <h4 class="theory-h4">Fórmula</h4>
+              <div class="theory-formula">Hare: cuota = población total / escaños; cada una recibe ⌊pob / cuota⌋ y los restos mayores se llevan los que faltan<br>Divisor: se asigna cada escaño a la mayor prioridad = población / d(n)<br>d(n): D'Hondt n+1 · Webster n+½ · Adams n · Huntington-Hill √(n(n+1))</div>
+              <h4 class="theory-h4">Ejemplo</h4>
+              <p class="theory-p">Poblaciones 100, 30 y 10 con 1 escaño de partida cada una y 6 por repartir. Con Huntington-Hill los escaños añadidos son 5 / 1 / 0, de modo que el reparto final es 6 / 2 / 1.</p>
             </div>
 
           </div>
