@@ -140,7 +140,7 @@ registerTab('advanced', 'tab-content', String.raw`
                     </div>
                     <input type="number" id="adv-b1-val" aria-label="Valor de la barrera (%)" min="0" max="100" step="0.1" value="3">
                   </div>
-                  <div class="adv-row adv-only" title="Si el partido es el más votado en tantas circunscripciones, se salta esta barrera (0 = no hay exención)">
+                  <div class="adv-row adv-bx-sub adv-only" title="Si el partido es el más votado en tantas circunscripciones, se salta esta barrera (0 = no hay exención)">
                     <label for="adv-b1-exen" class="adv-sublabel">…o ganar circunscripciones</label>
                     <input type="number" id="adv-b1-exen" min="0" max="500" step="1" value="0">
                   </div>
@@ -159,7 +159,7 @@ registerTab('advanced', 'tab-content', String.raw`
                     </div>
                     <input type="number" id="adv-b2-val" min="0" max="100" step="0.1" value="3">
                   </div>
-                  <div class="adv-row" title="Si el partido es el más votado en tantas circunscripciones, se salta esta barrera (0 = no hay exención)">
+                  <div class="adv-row adv-bx-sub" title="Si el partido es el más votado en tantas circunscripciones, se salta esta barrera (0 = no hay exención)">
                     <label for="adv-b2-exen" class="adv-sublabel">…o ganar circunscripciones</label>
                     <input type="number" id="adv-b2-exen" min="0" max="500" step="1" value="0">
                   </div>

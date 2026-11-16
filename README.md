@@ -9,7 +9,7 @@ Aplicación web (sin servidor ni instalación) para calcular el reparto de esca�
 | **Calculadora** | Metes votos de partidos y obtienes el reparto con D'Hondt, Sainte-Laguë, Hare, Droop, Imperiali, mayoritarios…, con barrera, bono de mayoría y compensatorios. |
 | **Pactómetro** | Ves qué bloques suman mayoría con los escaños calculados. |
 | **Calculadora avanzada** | Elecciones reales (Congreso, Senado, Europeas, Cabildos…) con su base de datos: cambias circunscripción, fórmula, barreras, escaños, bono y compensación. Modos Sencillo y Avanzado. |
-| **Teoría** | Descripción, fórmula y ejemplo de cada sistema. |
+| **Teoría** | Descripción, fórmula y ejemplo de cada sistema, de las barreras, los indicadores, la segunda vuelta, las coaliciones y los sistemas mixtos y preferenciales. |
 
 En la avanzada:
 
@@ -19,6 +19,16 @@ En la avanzada:
 - **Exportar**: CSV del recuento (y del desglose territorial) e imagen PNG.
 - **Compartir** (🔗): copia un enlace con la configuración en la URL; al abrirlo carga el mismo ámbito y opciones.
 - **Sesión**: se guarda sola en el navegador; también se puede guardar y cargar en un archivo `.json`.
+
+Novedades de sistemas electorales:
+
+- **Indicadores** (Gallagher, Loosemore-Hanby, Rae, Sainte-Laguë, número efectivo de partidos, voto desperdiciado, votos por escaño): un selector permite ver uno, varios o todos, en la calculadora, la avanzada y Comparar.
+- **Barreras**: ajustes rápidos (Alemania, Suecia, Dinamarca…), exención por circunscripciones ganadas y barreras adicionales sin límite.
+- **Compensación** con cualquier fórmula (Droop, Hagenbach-Bischoff, Imperiali…).
+- **Segunda vuelta**: reglas de acceso (dos primeros, Francia) y simulador manual de a quién votan los eliminados (`js/segunda-vuelta*.js`).
+- **Coaliciones**: reparto interno de la lista conjunta y comparación juntos o separados (`js/coaliciones*.js`).
+- **Prorrateo** entre circunscripciones (Hare, D'Hondt, Webster, Adams, Huntington-Hill) y medida de la desigualdad del voto (`js/prorrateo.js`).
+- **Apagado hasta que haya datos** (`js/experimental.js`): sistemas mixtos MMP y paralelo (`algorithms-mixtos.js`) y listas abiertas, STV, voto alternativo, Borda y Condorcet (`algorithms-preferencial.js`). Están programados y probados, sin interfaz.
 
 La interfaz tiene tema claro y oscuro (botón 🌓: automático, claro u oscuro) y se adapta a móvil.
 

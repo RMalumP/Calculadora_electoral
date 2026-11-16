@@ -1285,13 +1285,13 @@ function advBxRender(lista) {
   box.innerHTML = lista.map((b, i) => `
     <div class="adv-fieldset adv-bx-row" data-bx="${i}" data-disabled="${!b.activa}">
       <label class="adv-check"><input type="checkbox" class="adv-bx-on"${b.activa ? ' checked' : ''}> Barrera adicional ${i + 3}</label>
-      <div class="adv-row">
+      <div class="adv-row adv-bx-main">
         <div class="adv-select-wrap"><select class="adv-bx-level" aria-label="Ámbito de la barrera">${
           ADV_BX_NIVELES.map(([v, t]) => `<option value="${v}"${b.nivel === v ? ' selected' : ''}>${t}</option>`).join('')}</select></div>
         <input type="number" class="adv-bx-val" aria-label="Valor de la barrera (%)" min="0" max="100" step="0.1" value="${parseFloat(b.valor) || 0}">
         <button type="button" class="adv-mini-btn adv-bx-del" aria-label="Quitar la barrera" title="Quitar">✕</button>
       </div>
-      <div class="adv-row">
+      <div class="adv-row adv-bx-sub">
         <label class="adv-sublabel">…o ganar circunscripciones</label>
         <input type="number" class="adv-bx-exen" min="0" max="500" step="1" value="${parseInt(b.exencion) || 0}">
       </div>

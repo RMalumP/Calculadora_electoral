@@ -325,7 +325,7 @@ registerTab('theory', 'tab-content', String.raw`
               <h4 class="theory-h4">Fórmula</h4>
               <div class="theory-formula">AV: se elimina al último y se repiten los recuentos<br>Borda: n−1 puntos al primero, n−2 al segundo…<br>Condorcet: gana quien supera a cada rival en más papeletas</div>
               <h4 class="theory-h4">Ejemplo</h4>
-              <p class="theory-p">A 40 (A>B>C), B 35 (B>C>A), C 25 (C>B>A). Mayoría simple: A. Voto alternativo: sale C y B suma 60, así que gana B. Borda: A 80, B 95, C 25… gana B. Condorcet: B vence a A (60–40) y a C (75–25): gana B.</p>
+              <p class="theory-p">A 40 (A>B>C), B 35 (B>C>A), C 25 (C>B>A). Mayoría simple: A. Voto alternativo: sale C y B suma 60, así que gana B. Borda: A 80, B 135, C 85: gana B. Condorcet: B vence a A (60–40) y a C (75–25): gana B.</p>
             </div>
 
           </div>

@@ -1472,6 +1472,9 @@ body.adv-popup-open { overflow: hidden; }
 
 /* ── Barreras: exención y barreras adicionales ── */
 .adv-sublabel { font-size: 0.75rem; color: var(--text-muted); align-self: center; flex: 2 !important; }
-.adv-bx-row .adv-bx-del { flex: 0 0 auto; padding: 0 8px; }
+.adv-bx-main { display: grid; grid-template-columns: minmax(0, 1fr) 76px 34px; gap: 6px; }
+.adv-bx-sub { display: grid; grid-template-columns: minmax(0, 1fr) 76px; gap: 6px; align-items: center; }
+.adv-bx-row .adv-bx-del { padding: 0; }
+.adv-bx-row .adv-select-wrap select { width: 100%; }
 #adv-bx-wrap { margin: 4px 0 8px; }
 #adv-bx-wrap > .adv-mini-btn { margin: 2px 0 4px; }
