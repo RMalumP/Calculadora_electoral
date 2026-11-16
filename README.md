@@ -25,7 +25,7 @@ Novedades de sistemas electorales:
 - **Indicadores** (Gallagher, Loosemore-Hanby, Rae, Sainte-Laguë, número efectivo de partidos, voto desperdiciado, votos por escaño): un selector permite ver uno, varios o todos, en la calculadora, la avanzada y Comparar.
 - **Barreras**: ajustes rápidos (Alemania, Suecia, Dinamarca…), exención por circunscripciones ganadas y barreras adicionales sin límite.
 - **Compensación** con cualquier fórmula (Droop, Hagenbach-Bischoff, Imperiali…).
-- **Segunda vuelta**: reglas de acceso (dos primeros, Francia), simulador manual en la calculadora y reparto real en la avanzada con los votos de la vuelta 2 de la hoja (o simulado si faltan). Formato de datos y plan para EE. UU. y Reino Unido en [`datos/SEGUNDA_VUELTA.md`](datos/SEGUNDA_VUELTA.md).
+- **Segunda vuelta**: reglas de acceso (dos primeros, Francia), simulador manual en la calculadora y reparto real en la avanzada con los votos de la vuelta 2 de la hoja (o simulado si faltan). Formato de datos en [`datos/SEGUNDA_VUELTA.md`](datos/SEGUNDA_VUELTA.md); EE. UU. y Reino Unido (sin segunda vuelta) en [`datos/OTROS_SISTEMAS.md`](datos/OTROS_SISTEMAS.md).
 - **Coaliciones**: lista conjunta que pasa la barrera con la suma, reparto interno y comparación juntos o separados, en la calculadora y en la avanzada (`js/coaliciones*.js`).
 - **Prorrateo** entre circunscripciones (Hare, D'Hondt, Webster, Adams, Huntington-Hill) y medida de la desigualdad del voto (`js/prorrateo.js`).
 - **Apagado hasta que haya datos** (`js/experimental.js`): sistemas mixtos MMP y paralelo (`algorithms-mixtos.js`) y listas abiertas, STV, voto alternativo, Borda y Condorcet (`algorithms-preferencial.js`). Están programados y probados, sin interfaz.
