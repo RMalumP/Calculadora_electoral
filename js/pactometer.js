@@ -13,7 +13,7 @@ let votingPanelOpen   = true;
 
 /* ── FILAS DEL PACTÓMETRO ──────────────────────────────────── */
 
-function addPactometerRow(name = '', seats = '', color = '', block = '', siglas = '') {
+function addPactometerRow(name = '', seats = '', color = '', block = '', siglas = '', seatsB = '') {
   const colorVal = color || PALETTE[pactRowCount % PALETTE.length];
   pactRowCount++;
   const tbody = document.getElementById('pactometer-body');
@@ -28,6 +28,7 @@ function addPactometerRow(name = '', seats = '', color = '', block = '', siglas 
       <input type="text" class="pact-name-input${pactNamesHidden ? (' names-hidden-mode' + (name ? ' names-has-value' : '')) : ''}" placeholder="Nombre del partido" value="${escapeHtml(name)}" style="flex:1;min-width:0;border:none;background:transparent;font-family:'Source Sans 3',sans-serif;font-size:14px;outline:none;color:inherit">
     </div></td>
     <td style="text-align:center"><input type="number" min="0" placeholder="0" value="${escapeHtml(seats)}" style="text-align:center;font-size:1.1rem;font-weight:600" oninput="updateHemicycle()"></td>
+    <td class="pact-b-cell" style="text-align:center"><input type="number" min="0" class="pact-seats-b" placeholder="0" value="${escapeHtml(seatsB)}" title="Escaños en B" style="text-align:center;font-size:1.1rem;font-weight:600" oninput="updateHemicycle()"></td>
     <td style="text-align:center">
       <div style="display:flex;gap:4px;justify-content:center">
         <button onclick="setBlock(this,'left')"  style="padding:4px 8px;border:1px solid var(--border);background:${block==='left'?'var(--accent)':'var(--surface)'};color:${block==='left'?'white':'var(--text-muted)'};border-radius:3px;cursor:pointer;font-size:0.7rem;font-weight:600;font-family:'Source Sans 3',sans-serif;min-width:40px" class="block-btn-left">${escapeHtml(currentLeftLabel)}</button>
@@ -37,7 +38,7 @@ function addPactometerRow(name = '', seats = '', color = '', block = '', siglas 
   tbody.appendChild(tr);
 
   const nameInput  = tr.querySelector('.pact-name-input');
-  const seatsInput = tr.querySelector('input[type=number]');
+  const seatsInput = tr.querySelector('input[type=number]:not(.pact-seats-b)');
 
   nameInput.addEventListener('input', function () {
     if (pactNamesHidden) {
@@ -96,24 +97,10 @@ function setBlock(btn, side) {
 }
 
 function copyResultsToPactometer(allocated, totalSeats) {
-  if (pactLocked) return;
-  const capName = currentSeatName.charAt(0).toUpperCase() + currentSeatName.slice(1);
-  document.getElementById('pact-seats-header').textContent = capName;
-
-  const tbody = document.getElementById('pactometer-body');
-  tbody.innerHTML = '';
-  pactRowCount = 0;
-
-  const withSeats = allocated.filter(p => p.seats > 0);
-  withSeats.forEach(party => addPactometerRow(party.name, party.seats, party.color, '', party.siglas || ''));
-
-  if (withSeats.length > 0) {
-    addPactometerRow(); addPactometerRow();
-  } else {
-    for (let i = 0; i < 5; i++) addPactometerRow();
-  }
-
-  updateHemicycle();
+  // Se anota siempre; sólo se vuelca a la tabla si el origen es la básica y no está bloqueado.
+  pactRegistrarBasica(allocated, totalSeats);
+  if (pactLocked || pactFuente !== 'basica') return;
+  pactCargarTabla();
 }
 
 /* ── VALIDACIÓN DE TOTAL FIJO ─────────────────────────────── */
@@ -151,6 +138,7 @@ function validateAndUpdatePactTotal() {
 /* ── HEMICICLO ─────────────────────────────────────────────── */
 
 function updateHemicycle() {
+  if (typeof pactFuentesRefrescar === 'function') pactFuentesRefrescar();
   const rows = [...document.querySelectorAll('#pactometer-body tr')];
   let calculatedTotal = 0, leftSeats = 0, rightSeats = 0, abstentionSeats = 0;
   const leftColors = [], rightColors = [], abstentionParties = [];
