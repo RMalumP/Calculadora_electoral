@@ -1,0 +1,72 @@
+/* ── Calculadora básica: disposición para móvil y tablet ─────────────
+   Solo reorganiza; no quita ninguna función. */
+
+.row-more-cell { display: none; }
+
+/* ── Móvil: cada partido es una tarjeta compacta ── */
+@media (max-width: 700px) {
+  #votes-table, #votes-table thead, #votes-table tbody { display: block; width: 100%; min-width: 0; }
+  .votes-table-scroll { overflow-x: visible; }
+
+  /* Cabecera: solo los conmutadores (Siglas, Agrupación, nombres) */
+  #votes-table thead tr { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 10px; }
+  #votes-table thead th { display: none; border: none; padding: 0; }
+  #votes-table thead th:nth-child(3) { display: flex; gap: 6px; padding: 0; }
+  #votes-table thead th:nth-child(3) button { font-size: 0.74rem !important; padding: 6px 10px !important; min-height: 36px; }
+
+  #votes-table tbody tr {
+    display: grid;
+    grid-template-columns: auto 44px minmax(0, 1fr) auto;
+    grid-template-areas:
+      "hd co nm mo"
+      "hd co vo pc"
+      "ac ac ac ac"
+      "gr gr gr gr";
+    align-items: center;
+    gap: 2px 8px;
+    padding: 6px 10px;
+  }
+  #votes-table tbody tr td { padding: 0 !important; border: none; text-align: left; min-width: 0; }
+  #votes-table tbody td:nth-child(1) { grid-area: hd; display: flex; align-items: center; gap: 2px; }
+  #votes-table tbody td:nth-child(2) { grid-area: ac; display: none; }
+  #votes-table tbody td:nth-child(3) { grid-area: co; }
+  #votes-table tbody td:nth-child(4) { grid-area: gr; display: none !important; }
+  #votes-table tbody td:nth-child(5) { grid-area: nm; }
+  #votes-table tbody td:nth-child(6) { grid-area: vo; }
+  #votes-table tbody td:nth-child(7) { grid-area: pc; text-align: right; min-width: 3.2em; }
+  #votes-table tbody td.row-more-cell { grid-area: mo; display: block; align-self: start; }
+  #votes-table tbody td:empty { display: none !important; }
+
+  #votes-table input[type="color"] { width: 36px; height: 36px; }
+  #votes-table td:nth-child(5) .otros-label { font-size: 0.95rem; }
+  #votes-table .name-input, #votes-table .votes-input {
+    min-height: 34px; font-size: 1rem; width: 100%; box-sizing: border-box;
+    border: 1px solid var(--border-light); border-radius: var(--radius); padding: 2px 8px;
+  }
+  #votes-table .votes-input { font-size: 1.1rem; }
+  .row-more-btn {
+    min-width: 40px; min-height: 40px; align-self: start; border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--surface); color: var(--text-muted); font-size: 1.1rem; cursor: pointer;
+  }
+  .row-more-btn[aria-expanded="true"] { background: var(--accent-pale); color: var(--accent); border-color: var(--accent-light); }
+
+  /* Acciones secundarias: solo al pulsar «⋯» */
+  #votes-table tr.row-open td:nth-child(2) { display: block; }
+  #votes-table tr.row-open td.group-col { display: block !important; }
+  #votes-table tr.row-open .row-actions { flex-direction: row; gap: 8px; justify-content: flex-start; padding-top: 4px; }
+  #votes-table .row-btn { font-size: 0.8rem; padding: 6px 12px; min-height: 36px; border-radius: var(--radius); }
+  #votes-table .btn-to-otros::after { content: " Mover a «Otros»"; }
+  #votes-table .btn-lock::after { content: " Bloquear"; }
+  #votes-table .btn-lock.locked::after { content: " Bloqueado"; }
+  #votes-table .group-num-btn { min-width: 44px; min-height: 36px; }
+  #votes-table tr.row-open td.group-col::before { content: "Agrupación"; font-size: 0.78rem; color: var(--text-muted); margin-right: 8px; }
+  #votes-table tr.row-open td.group-col { display: flex !important; align-items: center; }
+  #votes-table:not(.groupings-active) tr.row-open td.group-col { display: none !important; }
+
+  /* Filas de blanco y nulos: etiqueta + votos + % */
+  #votes-table tbody tr.special-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) auto;
+    grid-template-areas: "nm vo pc";
+  }
+  #votes-table tbody tr.special-row td:nth-child(5) { font-size: 0.9rem; }
+}
