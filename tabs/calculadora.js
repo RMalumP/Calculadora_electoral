@@ -9,7 +9,15 @@
  */
 
 registerTab('calculator', 'tab-content active', String.raw`
-  <div class="workspace">
+  <div class="workspace" id="bas-workspace">
+
+    <!-- Barra de parámetros (solo por debajo de 1100 px): resumen, abrir panel y calcular -->
+    <div class="adv-cfg-barra bas-cfg-barra">
+      <span class="adv-cfg-barra-txt" id="bas-cfg-barra-txt">—</span>
+      <button type="button" class="adv-cfg-abrir" id="bas-cfg-abrir" aria-controls="bas-param">Parámetros</button>
+      <button type="button" class="adv-cfg-abrir bas-calc-mini" onclick="calculate()">▶ Calcular</button>
+    </div>
+    <div class="adv-cfg-velo" id="bas-cfg-velo" hidden></div>
 
     <!-- ══ COLUMNA IZQUIERDA: tabla de votos + desglose ══ -->
     <div class="left-column">
@@ -91,7 +99,12 @@ registerTab('calculator', 'tab-content active', String.raw`
       </div>
 
       <!-- Censo y abstención -->
-      <div class="abstention-block">
+      <button type="button" class="bas-fold-toggle" id="bas-censo-toggle" aria-expanded="false" aria-controls="bas-censo">
+        <span class="adv-mas-caret" aria-hidden="true">▸</span>
+        <span class="adv-mas-name">Censo y abstención</span>
+        <span class="adv-mas-sum" id="bas-censo-sum">—</span>
+      </button>
+      <div class="abstention-block" id="bas-censo">
         <table>
           <thead>
             <tr>
@@ -161,9 +174,9 @@ registerTab('calculator', 'tab-content active', String.raw`
     <main class="main-right">
 
       <!-- Parámetros -->
-      <article class="param-area">
+      <article class="param-area" id="bas-param">
         <div class="param-card">
-          <div class="param-card-header">Parámetros</div>
+          <div class="param-card-header">Parámetros<button type="button" class="adv-cfg-cerrar" id="bas-cfg-cerrar" aria-label="Cerrar los parámetros">✕</button></div>
           <div class="param-body">
 
             <div class="param-field">

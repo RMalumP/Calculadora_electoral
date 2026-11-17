@@ -81,3 +81,58 @@
 @media (max-width: 700px) {
   .param-body .param-fold { grid-column: 1 / -1; }
 }
+
+/* ── Censo y abstención plegables ── */
+.bas-fold-toggle {
+  display: none; align-items: baseline; gap: 4px 10px; width: 100%; box-sizing: border-box;
+  padding: 10px 12px; min-height: 44px; cursor: pointer; text-align: left; font: inherit; color: var(--text);
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+}
+.bas-fold-toggle .adv-mas-caret { color: var(--accent); transition: transform 0.15s; }
+.bas-fold-toggle[aria-expanded="true"] .adv-mas-caret { transform: rotate(90deg); }
+.bas-fold-toggle .adv-mas-sum { flex: 1; min-width: 0; text-align: right; font-size: 0.76rem; font-style: italic; color: var(--text-muted); }
+.bas-cfg-barra { display: none; }
+
+/* ── Tablet vertical y móvil (< 1100 px): una columna y parámetros en panel lateral ── */
+@media (max-width: 1099px) {
+  .bas-fold-toggle { display: flex; }
+  #bas-censo:not(.abierto) { display: none; }
+
+  .workspace { flex-direction: column; align-items: stretch; gap: 12px; }
+  .left-column, .main-right { flex: none; width: 100%; min-width: 0; }
+
+  .bas-cfg-barra { display: flex; flex-wrap: nowrap; box-sizing: border-box; width: 100%; min-width: 0; overflow: hidden; margin: 0; }
+  .bas-cfg-barra .adv-cfg-abrir { padding: 6px 10px; }
+  .bas-cfg-barra .adv-cfg-barra-txt { flex: 1 1 0; min-width: 0; }
+  .bas-cfg-barra .adv-cfg-abrir { background: var(--surface); color: var(--accent); }
+  .bas-cfg-barra .bas-calc-mini { background: var(--accent); color: #fff; }
+
+  #bas-param {
+    position: fixed; top: 0; right: 0; bottom: 0; z-index: 420; width: min(460px, 94vw);
+    transform: translateX(105%); transition: transform 0.22s ease, visibility 0.22s; visibility: hidden;
+  }
+  #bas-workspace.cfg-abierta #bas-param { transform: none; visibility: visible; }
+  #bas-param .param-card { height: 100%; display: flex; flex-direction: column; border-radius: 0; overflow-y: auto; }
+  #bas-param .param-body { display: flex; flex-direction: column; flex: 1; overflow-y: auto; overscroll-behavior: contain; }
+  #bas-param .param-card-header { display: flex; align-items: center; }
+  #bas-param .adv-cfg-cerrar { display: inline-flex; }
+}
+
+/* ── Tablet horizontal y escritorio: votos a la izquierda, parámetros y resultados a la derecha ── */
+@media (min-width: 1100px) {
+  .workspace { display: grid; grid-template-columns: minmax(500px, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+  .left-column { width: auto; min-width: 0; }
+  .main-right { min-width: 0; flex: none; }
+  .param-area { width: 100%; }
+  .param-body { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; }
+  .param-body .formula-field, .param-body .calc-btn, .param-body .param-fold { grid-column: 1 / -1; }
+  #votes-table { min-width: 0; }
+}
+
+/* ── Pestañas con scroll horizontal: se difumina el borde para indicar que hay más ── */
+@media (max-width: 760px) {
+  .tabs-container {
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+    mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+  }
+}
