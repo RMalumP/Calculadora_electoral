@@ -430,7 +430,13 @@ tr.drag-over-below       { border-bottom: 2px solid var(--accent) !important; }
 .pacto-fuente-estado { flex: 1 1 220px; margin: 0; font-size: 0.8rem; color: var(--text-muted); }
 
 /* Columna B y comparación: sólo con el origen «A y B a la vez» */
-.pact-b-cell, .pacto-ab-card { display: none; }
+.pact-b-cell, .pacto-ab-card, .pact-ab-only { display: none; }
+.pact-modo-ab .pact-bdiff-btn { display: inline-block; }
+.pact-modo-ab .pact-blk-b { display: flex; gap: 4px; justify-content: center; align-items: center; margin-top: 4px; }
+.pact-modo-ab .pact-blk-b[hidden] { display: none; }
+.pact-blk-b-etq { font-size: 0.7rem; color: var(--text-muted); }
+.pact-bdiff-btn { margin-top: 4px; padding: 2px 6px; border: 1px dashed var(--border); border-radius: 3px; background: none; color: var(--text-muted); font-size: 0.68rem; font-weight: 600; cursor: pointer; }
+.pact-bdiff-btn.activo { border-style: solid; border-color: var(--accent); color: var(--accent); }
 .pact-modo-ab th.pact-b-cell, .pact-modo-ab td.pact-b-cell { display: table-cell; }
 .pact-modo-ab .pacto-ab-card { display: block; }
 .pact-modo-ab #pact-hemi-card, .pact-modo-ab .pacto-total-bar { display: none; }
@@ -482,4 +488,14 @@ tr.drag-over-below       { border-bottom: 2px solid var(--accent) !important; }
   #pactometer-table td:nth-child(2) { padding: 4px 2px !important; }
   #pactometer-table td:nth-child(3) .pact-name-input { font-size: 13px !important; }
   #pactometer-table td:nth-child(4), #pactometer-table td:nth-child(5), #pactometer-table th:nth-child(4), #pactometer-table th:nth-child(5) { width: 48px !important; }
+  /* Con «A y B» hay seis columnas: anchos fijos para que el bloque no se salga. */
+  .pact-modo-ab #pactometer-table { table-layout: fixed; width: 100%; }
+  .pact-modo-ab #pactometer-table th:nth-child(2), .pact-modo-ab #pactometer-table td:nth-child(2) { width: 30px !important; }
+  .pact-modo-ab #pactometer-table td:nth-child(2) input[type=color] { width: 24px; height: 24px; padding: 0; }
+  .pact-modo-ab #pactometer-table th:nth-child(4), .pact-modo-ab #pactometer-table td:nth-child(4),
+  .pact-modo-ab #pactometer-table th:nth-child(5), .pact-modo-ab #pactometer-table td:nth-child(5) { width: 46px !important; padding: 6px 1px !important; }
+  .pact-modo-ab #pactometer-table td:nth-child(4) input, .pact-modo-ab #pactometer-table td:nth-child(5) input { font-size: 0.95rem !important; padding: 2px 0 !important; }
+  .pact-modo-ab #pactometer-table th:last-child, .pact-modo-ab #pactometer-table td:last-child { width: 74px !important; }
+  .pact-modo-ab #pactometer-table th { font-size: 0.6rem; letter-spacing: 0; overflow: hidden; text-overflow: ellipsis; }
+  .pact-blk-b-etq { display: none; }
 }
