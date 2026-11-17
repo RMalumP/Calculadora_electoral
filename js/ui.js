@@ -334,7 +334,11 @@ function clearPactometerSeats() {
 function clearPactometerBlocks() {
   selectAll('#pactometer-body tr').forEach(tr => {
     tr.dataset.block = '';
-    tr.querySelectorAll('td:last-child button').forEach(b => {
+    if (tr.dataset.bdiff) {
+      tr.dataset.blockB = '';
+      tr.querySelectorAll('.pact-blk-b button').forEach(b => { b.style.background = ''; b.style.color = ''; });
+    }
+    tr.querySelectorAll('.pact-blk-a button').forEach(b => {
       b.style.background = '';
       b.style.color = '';
     });

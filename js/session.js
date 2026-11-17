@@ -92,7 +92,8 @@ function sesionAnotar() {
     escanos: tr.querySelector('input[type=number]')?.value || '',
     escanosB: tr.querySelector('.pact-seats-b')?.value || '',
     color:  tr.querySelector('input[type=color]')?.value || '',
-    bloque: tr.dataset.block || ''
+    bloque: tr.dataset.block || '',
+    bloqueB: tr.dataset.bdiff ? (tr.dataset.blockB || 'none') : ''
   }));
 
   return {
@@ -209,7 +210,7 @@ function _sesionRecuperarPactometro(p) {
   tbody.innerHTML = '';
   pactRowCount = 0;
   (p.filas || []).forEach(f =>
-    addPactometerRow(f.nombre, f.escanos, f.color, f.bloque, f.siglas, f.escanosB || ''));
+    addPactometerRow(f.nombre, f.escanos, f.color, f.bloque, f.siglas, f.escanosB || '', f.bloqueB || ''));
   if (!(p.filas || []).length) addPactometerRow();
   if (p.fuente && typeof pactAplicarFuenteSesion === 'function') pactAplicarFuenteSesion(p.fuente);
 

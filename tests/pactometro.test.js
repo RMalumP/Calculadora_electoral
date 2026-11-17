@@ -83,3 +83,11 @@ test('el marcado, el index y la caché sin conexión conocen el origen de escañ
   assert.ok(leer('index.html').includes('js/pactometro-fuentes.js'));
   assert.ok(leer('sw.js').includes('./js/pactometro-fuentes.js'));
 });
+
+test('cada partido puede tener en B un bloque distinto al de A (por defecto, el mismo)', () => {
+  const pact = leer('js/pactometer.js');
+  for (const f of ['setBlockB', 'togglePactBDiff']) assert.ok(pact.includes(`function ${f}`), `falta ${f}`);
+  // Sin «B≠», B usa el bloque de A; con él, el propio.
+  const fuentes = leer('js/pactometro-fuentes.js');
+  assert.match(fuentes, /lado === 'b' && tr\.dataset\.bdiff \? \(tr\.dataset\.blockB \|\| ''\) : \(tr\.dataset\.block \|\| ''\)/);
+});

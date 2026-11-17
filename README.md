@@ -7,7 +7,7 @@ Aplicación web (sin servidor ni instalación) para calcular el reparto de esca�
 | Pestaña | Para qué sirve |
 | --- | --- |
 | **Calculadora** | Metes votos de partidos y obtienes el reparto con D'Hondt, Sainte-Laguë, Hare, Droop, Imperiali, mayoritarios…, con barrera, bono de mayoría y compensatorios. |
-| **Pactómetro** | Ves qué bloques suman mayoría con los escaños calculados. Por defecto usa la calculadora básica; el selector «Origen de los escaños» permite usar la avanzada, el lado A o B del comparador, o los dos a la vez (dos columnas de escaños y una barra por lado que dice qué pactos dan mayoría en A y en B). Los bloques se recuerdan por partido al cambiar de origen. |
+| **Pactómetro** | Ves qué bloques suman mayoría con los escaños calculados. Por defecto usa la calculadora básica; el selector «Origen de los escaños» permite usar la avanzada, el lado A o B del comparador, o los dos a la vez (dos columnas de escaños y una barra por lado que dice qué pactos dan mayoría en A y en B). Los bloques se recuerdan por partido al cambiar de origen. En «A y B», el botón «B≠» de cada partido permite ponerlo en B en otro bloque (por defecto, el mismo que en A). |
 | **Calculadora avanzada** | Elecciones reales (Congreso, Senado, Europeas, Cabildos…) con su base de datos: cambias circunscripción, fórmula, barreras, escaños, bono y compensación. Modos Sencillo y Avanzado. |
 | **Teoría** | Descripción, fórmula y ejemplo de cada sistema, de las barreras, los indicadores, la segunda vuelta, las coaliciones y los sistemas mixtos y preferenciales. |
 

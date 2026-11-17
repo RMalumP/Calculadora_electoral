@@ -13,13 +13,16 @@ let votingPanelOpen   = true;
 
 /* ── FILAS DEL PACTÓMETRO ──────────────────────────────────── */
 
-function addPactometerRow(name = '', seats = '', color = '', block = '', siglas = '', seatsB = '') {
+function addPactometerRow(name = '', seats = '', color = '', block = '', siglas = '', seatsB = '', blockB = '') {
   const colorVal = color || PALETTE[pactRowCount % PALETTE.length];
   pactRowCount++;
   const tbody = document.getElementById('pactometer-body');
   const tr = document.createElement('tr');
   tr.dataset.pactRowId = pactRowCount;
   tr.dataset.block = block || '';
+  if (blockB) { tr.dataset.bdiff = '1'; tr.dataset.blockB = blockB === 'none' ? '' : blockB; }
+  const bSel = tr.dataset.bdiff ? tr.dataset.blockB : '';
+  const btnCss = on => `padding:4px 8px;border:1px solid var(--border);background:${on?'var(--accent)':'var(--surface)'};color:${on?'white':'var(--text-muted)'};border-radius:3px;cursor:pointer;font-size:0.7rem;font-weight:600;font-family:'Source Sans 3',sans-serif;min-width:40px`;
   tr.innerHTML = `
     <td><button class="del-btn" onclick="delPactometerRow(this)" title="Eliminar">✕</button></td>
     <td style="text-align:center;padding:4px 6px"><input type="color" value="${escapeHtml(colorVal)}" title="Color del partido" onchange="updateHemicycle()"></td>
@@ -30,9 +33,16 @@ function addPactometerRow(name = '', seats = '', color = '', block = '', siglas 
     <td style="text-align:center"><input type="number" min="0" placeholder="0" value="${escapeHtml(seats)}" style="text-align:center;font-size:1.1rem;font-weight:600" oninput="updateHemicycle()"></td>
     <td class="pact-b-cell" style="text-align:center"><input type="number" min="0" class="pact-seats-b" placeholder="0" value="${escapeHtml(seatsB)}" title="Escaños en B" style="text-align:center;font-size:1.1rem;font-weight:600" oninput="updateHemicycle()"></td>
     <td style="text-align:center">
-      <div style="display:flex;gap:4px;justify-content:center">
+      <div class="pact-blk-a" style="display:flex;gap:4px;justify-content:center">
         <button onclick="setBlock(this,'left')"  style="padding:4px 8px;border:1px solid var(--border);background:${block==='left'?'var(--accent)':'var(--surface)'};color:${block==='left'?'white':'var(--text-muted)'};border-radius:3px;cursor:pointer;font-size:0.7rem;font-weight:600;font-family:'Source Sans 3',sans-serif;min-width:40px" class="block-btn-left">${escapeHtml(currentLeftLabel)}</button>
         <button onclick="setBlock(this,'right')" style="padding:4px 8px;border:1px solid var(--border);background:${block==='right'?'var(--accent)':'var(--surface)'};color:${block==='right'?'white':'var(--text-muted)'};border-radius:3px;cursor:pointer;font-size:0.7rem;font-weight:600;font-family:'Source Sans 3',sans-serif;min-width:40px" class="block-btn-right">${escapeHtml(currentRightLabel)}</button>
+      </div>
+    
+      <button type="button" class="pact-bdiff-btn pact-ab-only${tr.dataset.bdiff ? ' activo' : ''}" onclick="togglePactBDiff(this)" aria-pressed="${tr.dataset.bdiff ? 'true' : 'false'}" title="En B este partido va en otro bloque">B≠</button>
+      <div class="pact-blk-b pact-ab-only"${tr.dataset.bdiff ? '' : ' hidden'}>
+        <span class="pact-blk-b-etq">En B:</span>
+        <button onclick="setBlockB(this,'left')"  style="${btnCss(bSel==='left')}" class="block-btn-left">${escapeHtml(currentLeftLabel)}</button>
+        <button onclick="setBlockB(this,'right')" style="${btnCss(bSel==='right')}" class="block-btn-right">${escapeHtml(currentRightLabel)}</button>
       </div>
     </td>`;
   tbody.appendChild(tr);
@@ -76,17 +86,49 @@ function delPactometerRow(btn) {
   }
 }
 
+/** Bloque propio de B (sólo con «B≠» activo). */
+function setBlockB(btn, side) {
+  const tr = btn.closest('tr');
+  tr.dataset.blockB = tr.dataset.blockB === side ? '' : side;
+  tr.querySelectorAll('.pact-blk-b button').forEach(b => {
+    const on = (b.classList.contains('block-btn-left') && tr.dataset.blockB === 'left') ||
+               (b.classList.contains('block-btn-right') && tr.dataset.blockB === 'right');
+    b.style.background = on ? 'var(--accent)' : 'var(--surface)';
+    b.style.color = on ? 'white' : 'var(--text-muted)';
+  });
+  updateHemicycle();
+}
+
+/** Activa o quita que el partido tenga en B un bloque distinto al de A. */
+function togglePactBDiff(btn) {
+  const tr = btn.closest('tr');
+  const activo = !tr.dataset.bdiff;
+  if (activo) { tr.dataset.bdiff = '1'; tr.dataset.blockB = tr.dataset.block || ''; }
+  else { delete tr.dataset.bdiff; delete tr.dataset.blockB; }
+  btn.classList.toggle('activo', activo);
+  btn.setAttribute('aria-pressed', String(activo));
+  const blq = tr.querySelector('.pact-blk-b');
+  if (blq) blq.hidden = !activo;
+  tr.querySelectorAll('.pact-blk-b button').forEach(b => {
+    const on = activo && ((b.classList.contains('block-btn-left') && tr.dataset.blockB === 'left') ||
+                          (b.classList.contains('block-btn-right') && tr.dataset.blockB === 'right'));
+    b.style.background = on ? 'var(--accent)' : 'var(--surface)';
+    b.style.color = on ? 'white' : 'var(--text-muted)';
+  });
+  updateHemicycle();
+}
+
 function setBlock(btn, side) {
   const tr = btn.closest('tr');
   if (tr.dataset.block === side) {
     tr.dataset.block = '';
-    tr.querySelectorAll('td:last-child button').forEach(b => {
+    tr.querySelectorAll('.pact-blk-a button').forEach(b => {
       b.style.background = 'var(--surface)';
       b.style.color = 'var(--text-muted)';
     });
   } else {
     tr.dataset.block = side;
-    tr.querySelectorAll('td:last-child button').forEach(b => {
+    tr.querySelectorAll('.pact-blk-a button').forEach(b => {
       const isSelected = (b.classList.contains('block-btn-left') && side === 'left') ||
                          (b.classList.contains('block-btn-right') && side === 'right');
       b.style.background = isSelected ? 'var(--accent)' : 'var(--surface)';

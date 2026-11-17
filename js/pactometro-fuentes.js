@@ -24,7 +24,9 @@ const PACT_FUENTES_NOMBRE = {
 let pactFuente = 'basica';
 const pactFuentes = { basica: null, avanzada: null, a: null, b: null };
 const pactBloques = new Map();
+const pactBloquesB = new Map();   // bloque propio de B, sólo para los partidos con «B≠»
 let _pactCargando = false;
+let _pactTablaFuente = 'basica';  // origen con el que se rellenó la tabla que se ve
 
 /* ── Lógica pura ───────────────────────────────────────────── */
 
@@ -168,6 +170,9 @@ function _pactGuardarBloques() {
     const k = pactClave(p);
     if (!k) return;
     if (tr.dataset.block) pactBloques.set(k, tr.dataset.block); else pactBloques.delete(k);
+    // El bloque propio de B sólo existe en una tabla de «A y B»; otra tabla no lo borra.
+    if (_pactTablaFuente !== 'ab') return;
+    if (tr.dataset.bdiff) pactBloquesB.set(k, tr.dataset.blockB || 'none'); else pactBloquesB.delete(k);
   });
 }
 
@@ -199,9 +204,11 @@ function pactCargarTabla() {
   tbody.innerHTML = '';
   pactRowCount = 0;
   filas.forEach(r => {
-    const bloque = restaurar ? (pactBloques.get(pactClave({ name: r[0], siglas: r[4] })) || '') : r[3];
-    addPactometerRow(r[0], r[1], r[2], bloque, r[4], r[5]);
+    const k = pactClave({ name: r[0], siglas: r[4] });
+    const bloque = restaurar ? (pactBloques.get(k) || '') : r[3];
+    addPactometerRow(r[0], r[1], r[2], bloque, r[4], r[5], restaurar && f === 'ab' ? (pactBloquesB.get(k) || '') : '');
   });
+  _pactTablaFuente = f;
   const n = filas.length ? 2 : 5;
   for (let i = 0; i < n; i++) addPactometerRow();
   updateHemicycle();
@@ -252,6 +259,7 @@ function pactCambiarFuente(id) {
 function pactAplicarFuenteSesion(id) {
   if (!PACT_FUENTES_NOMBRE[id]) return;
   pactFuente = id;
+  _pactTablaFuente = id;
   pactAplicarFuenteUi();
 }
 
@@ -314,7 +322,7 @@ function _pactFilasLado(lado) {
     color: tr.querySelector('input[type=color]')?.value || '#888888',
     name: tr.querySelector('.pact-name-input')?.value.trim() || '',
     siglas: tr.querySelector('.pact-siglas-input')?.value.trim() || '',
-    block: tr.dataset.block || ''
+    block: lado === 'b' && tr.dataset.bdiff ? (tr.dataset.blockB || '') : (tr.dataset.block || '')
   }));
 }
 
