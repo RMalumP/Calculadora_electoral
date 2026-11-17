@@ -148,13 +148,11 @@ function advCmpEnsureDom() {
   return overlay;
 }
 
-async function advCmpOpen(opener) {
-  const overlay = advCmpEnsureDom();
-  _advCmp.opener = opener || null;
-  _advCmp.open = true;
-  overlay.classList.add('open');
-  document.body.classList.add('adv-popup-open');
-
+/**
+ * Deja listos los dos lados (los recupera de la sesión o los crea desde el
+ * panel) sin abrir la ventana: el pactómetro también los necesita.
+ */
+async function advCmpAsegurarLados() {
   if (!_advCmp.a && await advCmpRestaurar(advCmpGuardadoLeer())) {
     if (typeof autoToast === 'function') autoToast('Comparación recuperada');
   }
@@ -169,6 +167,16 @@ async function advCmpOpen(opener) {
       if (_advCmp.a.result) _advCmp.b = advCmpSideFromOther(_advCmp.a);
     }
   }
+}
+
+async function advCmpOpen(opener) {
+  const overlay = advCmpEnsureDom();
+  _advCmp.opener = opener || null;
+  _advCmp.open = true;
+  overlay.classList.add('open');
+  document.body.classList.add('adv-popup-open');
+
+  await advCmpAsegurarLados();
   advCmpRender();
   select('#adv-compare-close').focus();
 }
@@ -699,6 +707,7 @@ function advCmpRender() {
   advCmpRecalcular();
   advCmpPintar();
   advCmpGuardar();
+  if (typeof pactRegistrarComparador === 'function') pactRegistrarComparador();
   if (typeof mapaCmpActualizar === 'function') mapaCmpActualizar();
 }
 

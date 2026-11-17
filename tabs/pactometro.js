@@ -25,6 +25,19 @@ registerTab('pactometer', 'tab-content', String.raw`
         </div>
       </div>
 
+      <!-- Origen de los escaños: básica (por defecto), avanzada o comparador A / B / A y B -->
+      <div class="pacto-fuente">
+        <label for="pact-fuente" class="pacto-fuente-etq">Origen de los escaños:</label>
+        <select id="pact-fuente" onchange="pactCambiarFuente(this.value)" aria-describedby="pact-fuente-estado">
+          <option value="basica">Calculadora básica</option>
+          <option value="avanzada">Calculadora avanzada</option>
+          <option value="a">Comparador · lado A</option>
+          <option value="b">Comparador · lado B</option>
+          <option value="ab">Comparador · A y B a la vez</option>
+        </select>
+        <p id="pact-fuente-estado" class="pacto-fuente-estado" role="status" aria-live="polite"></p>
+      </div>
+
       <!-- Tabla de partidos -->
       <div class="card">
         <div class="card-header">
@@ -43,6 +56,7 @@ registerTab('pactometer', 'tab-content', String.raw`
               <th style="width:50px;text-align:center"><button id="pact-siglas-toggle-btn" onclick="togglePactSiglasVisibility()" style="font-size:0.6rem;font-weight:700;letter-spacing:0.02em;padding:2px 5px;border:1px solid var(--border);border-radius:3px;background:none;cursor:pointer;color:var(--text-muted);white-space:nowrap;line-height:1.5">Siglas ▼</button></th>
               <th>Partido <button id="pact-hide-names-btn" onclick="togglePactHideNames()" style="display:none;font-size:0.58rem;font-weight:700;letter-spacing:0.02em;padding:2px 5px;border:1px solid #8b3131;border-radius:3px;background:none;cursor:pointer;color:#8b3131;white-space:nowrap;line-height:1.5;margin-left:6px">Ocultar nombre</button></th>
               <th style="text-align:center;width:120px" id="pact-seats-header">Escaños</th>
+              <th class="pact-b-cell" style="text-align:center;width:120px" id="pact-seats-b-header">Escaños B</th>
               <th style="width:100px;text-align:center">Bloque</th>
             </tr>
           </thead>
@@ -66,8 +80,14 @@ registerTab('pactometer', 'tab-content', String.raw`
         </div>
       </div>
 
+      <!-- Comparación A y B: sustituye al hemiciclo cuando el origen es «A y B a la vez» -->
+      <div class="card pacto-ab-card" id="pact-ab-card" style="margin-top:20px">
+        <div class="card-header"><span class="dot"></span>Mayorías en A y en B</div>
+        <div class="pacto-ab-body" id="pact-ab-body"></div>
+      </div>
+
       <!-- Hemiciclo -->
-      <div class="card" style="margin-top:20px">
+      <div class="card" id="pact-hemi-card" style="margin-top:20px">
         <div class="card-header"><span class="dot"></span>Hemiciclo</div>
         <div class="pacto-hemi-body">
 

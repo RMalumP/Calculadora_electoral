@@ -820,6 +820,7 @@ function advRun() {
     advRenderStatus(`<div class="adv-notice error"><strong>Error al calcular.</strong><br>${advEscape(err.message)}</div>`);
     return;
   }
+  if (typeof pactRegistrarAvanzada === 'function') pactRegistrarAvanzada(_advResult);
   const avisoRespaldo = _advParties.respaldo
     ? `<div class="adv-notice warn"><strong>Datos de respaldo (Google Sheets).</strong> No se ha podido cargar la base
          de datos interna (${advEscape(_advParties.respaldo)}); se muestran los de la hoja de Google.</div>`

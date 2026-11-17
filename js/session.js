@@ -90,6 +90,7 @@ function sesionAnotar() {
     nombre: tr.querySelector('.pact-name-input')?.value || '',
     siglas: tr.querySelector('.pact-siglas-input')?.value || '',
     escanos: tr.querySelector('input[type=number]')?.value || '',
+    escanosB: tr.querySelector('.pact-seats-b')?.value || '',
     color:  tr.querySelector('input[type=color]')?.value || '',
     bloque: tr.dataset.block || ''
   }));
@@ -126,6 +127,7 @@ function sesionAnotar() {
       siglas: pactSiglasVisible,
       nombresOcultos: pactNamesHidden,
       bloqueado: pactLocked,
+      fuente: pactFuente,
       panelVotacion: votingPanelOpen
     }
   };
@@ -207,8 +209,9 @@ function _sesionRecuperarPactometro(p) {
   tbody.innerHTML = '';
   pactRowCount = 0;
   (p.filas || []).forEach(f =>
-    addPactometerRow(f.nombre, f.escanos, f.color, f.bloque, f.siglas));
+    addPactometerRow(f.nombre, f.escanos, f.color, f.bloque, f.siglas, f.escanosB || ''));
   if (!(p.filas || []).length) addPactometerRow();
+  if (p.fuente && typeof pactAplicarFuenteSesion === 'function') pactAplicarFuenteSesion(p.fuente);
 
   const ajuste = select('#settings-select');
   if (ajuste && p.ajuste) ajuste.value = p.ajuste;
