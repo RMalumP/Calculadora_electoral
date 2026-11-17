@@ -23,6 +23,7 @@ const ASSETS = [
   './js/comparar-calc.js',
   './js/advanced-compare.js',
   './js/advanced-exportar.js',
+  './js/basica-ui.js',
   './js/carga-avanzada.js',
   './js/advanced-compensation.js',
   './js/advanced-data.js',

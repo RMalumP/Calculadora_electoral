@@ -182,8 +182,8 @@ registerTab('calculator', 'tab-content active', String.raw`
               </div>
             </div>
 
-            <div class="param-field" id="bonus-field" style="display:none">
-              <label id="bonus-label-toggle" style="cursor:pointer;user-select:none" onclick="toggleParamField('bonus')">▼ Bono mayoría</label>
+            <div class="param-field param-fold" id="bonus-field" style="display:none">
+              <div class="param-fold-head"><label id="bonus-label-toggle" style="cursor:pointer;user-select:none" onclick="toggleParamField('bonus')">▼ Bono mayoría</label><span class="param-sum" id="bonus-sum"></span></div>
               <div id="bonus-input-wrap" style="display:none">
                 <input type="number" id="majority-bonus" value="0" min="0" max="100">
                 <div style="margin-top:8px;display:flex;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;font-size:0.72rem;font-weight:600;letter-spacing:0.03em;">
@@ -203,8 +203,8 @@ registerTab('calculator', 'tab-content active', String.raw`
               </div>
             </div>
 
-            <div class="param-field" id="comp-field">
-              <label id="comp-label-toggle" style="cursor:pointer;user-select:none" onclick="toggleParamField('comp')">▼ Escaños compensatorios</label>
+            <div class="param-field param-fold" id="comp-field">
+              <div class="param-fold-head"><label id="comp-label-toggle" style="cursor:pointer;user-select:none" onclick="toggleParamField('comp')">▼ Escaños compensatorios</label><span class="param-sum" id="comp-sum"></span></div>
               <div id="comp-input-wrap" style="display:none">
                 <select id="comp-mode" onchange="onCompModeChange()">
                   <option value="none">Ninguno</option>

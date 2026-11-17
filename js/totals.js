@@ -8,6 +8,7 @@ let _realTotalAll   = 0;
 let _censusAutoTracking = true;
 
 function updateTotals() {
+  if (typeof actualizarResumenParametros === 'function') actualizarResumenParametros();
   const rows = getAllPartyRows();
   let sumParty = 0;
 
