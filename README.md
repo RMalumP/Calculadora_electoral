@@ -30,7 +30,7 @@ Novedades de sistemas electorales:
 - **Prorrateo** entre circunscripciones (Hare, D'Hondt, Webster, Adams, Huntington-Hill) y medida de la desigualdad del voto (`js/prorrateo.js`).
 - **Apagado hasta que haya datos** (`js/experimental.js`): sistemas mixtos MMP y paralelo (`algorithms-mixtos.js`) y listas abiertas, STV, voto alternativo, Borda y Condorcet (`algorithms-preferencial.js`). Están programados y probados, sin interfaz.
 
-La interfaz tiene tema claro y oscuro (botón 🌓: automático, claro u oscuro) y se adapta a móvil.
+La interfaz tiene tema claro y oscuro (botón 🌓: automático, claro u oscuro) y se adapta a móvil y tablet. En la calculadora básica, por debajo de 1100 px los partidos pasan a tarjetas (acciones tras «⋯»), el censo se pliega y los parámetros se abren en un panel lateral desde una barra con resumen y botón «Calcular»; en horizontal, votos a la izquierda y parámetros con resultados a la derecha.
 
 ## Estructura
 

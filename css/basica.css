@@ -1,0 +1,138 @@
+/* ── Calculadora básica: disposición para móvil y tablet ─────────────
+   Solo reorganiza; no quita ninguna función. */
+
+.row-more-cell { display: none; }
+
+/* ── Móvil: cada partido es una tarjeta compacta ── */
+@media (max-width: 700px) {
+  #votes-table, #votes-table thead, #votes-table tbody { display: block; width: 100%; min-width: 0; }
+  .votes-table-scroll { overflow-x: visible; }
+
+  /* Cabecera: solo los conmutadores (Siglas, Agrupación, nombres) */
+  #votes-table thead tr { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 10px; }
+  #votes-table thead th { display: none; border: none; padding: 0; }
+  #votes-table thead th:nth-child(3) { display: flex; gap: 6px; padding: 0; }
+  #votes-table thead th:nth-child(3) button { font-size: 0.74rem !important; padding: 6px 10px !important; min-height: 36px; }
+
+  #votes-table tbody tr {
+    display: grid;
+    grid-template-columns: auto 44px minmax(0, 1fr) auto;
+    grid-template-areas:
+      "hd co nm mo"
+      "hd co vo pc"
+      "ac ac ac ac"
+      "gr gr gr gr";
+    align-items: center;
+    gap: 2px 8px;
+    padding: 6px 10px;
+  }
+  #votes-table tbody tr td { padding: 0 !important; border: none; text-align: left; min-width: 0; }
+  #votes-table tbody td:nth-child(1) { grid-area: hd; display: flex; align-items: center; gap: 2px; }
+  #votes-table tbody td:nth-child(2) { grid-area: ac; display: none; }
+  #votes-table tbody td:nth-child(3) { grid-area: co; }
+  #votes-table tbody td:nth-child(4) { grid-area: gr; display: none !important; }
+  #votes-table tbody td:nth-child(5) { grid-area: nm; }
+  #votes-table tbody td:nth-child(6) { grid-area: vo; }
+  #votes-table tbody td:nth-child(7) { grid-area: pc; text-align: right; min-width: 3.2em; }
+  #votes-table tbody td.row-more-cell { grid-area: mo; display: block; align-self: start; }
+  #votes-table tbody td:empty { display: none !important; }
+
+  #votes-table input[type="color"] { width: 36px; height: 36px; }
+  #votes-table td:nth-child(5) .otros-label { font-size: 0.95rem; }
+  #votes-table .name-input, #votes-table .votes-input {
+    min-height: 34px; font-size: 1rem; width: 100%; box-sizing: border-box;
+    border: 1px solid var(--border-light); border-radius: var(--radius); padding: 2px 8px;
+  }
+  #votes-table .votes-input { font-size: 1.1rem; }
+  .row-more-btn {
+    min-width: 40px; min-height: 40px; align-self: start; border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--surface); color: var(--text-muted); font-size: 1.1rem; cursor: pointer;
+  }
+  .row-more-btn[aria-expanded="true"] { background: var(--accent-pale); color: var(--accent); border-color: var(--accent-light); }
+
+  /* Acciones secundarias: solo al pulsar «⋯» */
+  #votes-table tr.row-open td:nth-child(2) { display: block; }
+  #votes-table tr.row-open td.group-col { display: block !important; }
+  #votes-table tr.row-open .row-actions { flex-direction: row; gap: 8px; justify-content: flex-start; padding-top: 4px; }
+  #votes-table .row-btn { font-size: 0.8rem; padding: 6px 12px; min-height: 36px; border-radius: var(--radius); }
+  #votes-table .btn-to-otros::after { content: " Mover a «Otros»"; }
+  #votes-table .btn-lock::after { content: " Bloquear"; }
+  #votes-table .btn-lock.locked::after { content: " Bloqueado"; }
+  #votes-table .group-num-btn { min-width: 44px; min-height: 36px; }
+  #votes-table tr.row-open td.group-col::before { content: "Agrupación"; font-size: 0.78rem; color: var(--text-muted); margin-right: 8px; }
+  #votes-table tr.row-open td.group-col { display: flex !important; align-items: center; }
+  #votes-table:not(.groupings-active) tr.row-open td.group-col { display: none !important; }
+
+  /* Filas de blanco y nulos: etiqueta + votos + % */
+  #votes-table tbody tr.special-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) auto;
+    grid-template-areas: "nm vo pc";
+  }
+  #votes-table tbody tr.special-row td:nth-child(5) { font-size: 0.9rem; }
+}
+
+/* ── Parámetros: bono y compensatorios como bloques plegables con resumen ── */
+.param-fold { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); padding: 0; }
+.param-fold-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px 10px; padding: 10px 12px; min-height: 40px; box-sizing: border-box; }
+.param-fold-head label { margin: 0 !important; min-height: 0 !important; cursor: pointer; flex: 0 0 auto; }
+.param-sum { flex: 1; min-width: 0; font-size: 0.76rem; font-style: italic; color: var(--text-muted); text-align: right; }
+.param-sum.con-activo { color: var(--accent); font-style: normal; font-weight: 600; }
+.param-fold > div:not(.param-fold-head) { padding: 4px 12px 12px; border-top: 1px solid var(--border-light); }
+@media (max-width: 700px) {
+  .param-body .param-fold { grid-column: 1 / -1; }
+}
+
+/* ── Censo y abstención plegables ── */
+.bas-fold-toggle {
+  display: none; align-items: baseline; gap: 4px 10px; width: 100%; box-sizing: border-box;
+  padding: 10px 12px; min-height: 44px; cursor: pointer; text-align: left; font: inherit; color: var(--text);
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+}
+.bas-fold-toggle .adv-mas-caret { color: var(--accent); transition: transform 0.15s; }
+.bas-fold-toggle[aria-expanded="true"] .adv-mas-caret { transform: rotate(90deg); }
+.bas-fold-toggle .adv-mas-sum { flex: 1; min-width: 0; text-align: right; font-size: 0.76rem; font-style: italic; color: var(--text-muted); }
+.bas-cfg-barra { display: none; }
+
+/* ── Tablet vertical y móvil (< 1100 px): una columna y parámetros en panel lateral ── */
+@media (max-width: 1099px) {
+  .bas-fold-toggle { display: flex; }
+  #bas-censo:not(.abierto) { display: none; }
+
+  .workspace { flex-direction: column; align-items: stretch; gap: 12px; }
+  .left-column, .main-right { flex: none; width: 100%; min-width: 0; }
+
+  .bas-cfg-barra { display: flex; flex-wrap: nowrap; box-sizing: border-box; width: 100%; min-width: 0; overflow: hidden; margin: 0; }
+  .bas-cfg-barra .adv-cfg-abrir { padding: 6px 10px; }
+  .bas-cfg-barra .adv-cfg-barra-txt { flex: 1 1 0; min-width: 0; }
+  .bas-cfg-barra .adv-cfg-abrir { background: var(--surface); color: var(--accent); }
+  .bas-cfg-barra .bas-calc-mini { background: var(--accent); color: #fff; }
+
+  #bas-param {
+    position: fixed; top: 0; right: 0; bottom: 0; z-index: 420; width: min(460px, 94vw);
+    transform: translateX(105%); transition: transform 0.22s ease, visibility 0.22s; visibility: hidden;
+  }
+  #bas-workspace.cfg-abierta #bas-param { transform: none; visibility: visible; }
+  #bas-param .param-card { height: 100%; display: flex; flex-direction: column; border-radius: 0; overflow-y: auto; }
+  #bas-param .param-body { display: flex; flex-direction: column; flex: 1; overflow-y: auto; overscroll-behavior: contain; }
+  #bas-param .param-card-header { display: flex; align-items: center; }
+  #bas-param .adv-cfg-cerrar { display: inline-flex; }
+}
+
+/* ── Tablet horizontal y escritorio: votos a la izquierda, parámetros y resultados a la derecha ── */
+@media (min-width: 1100px) {
+  .workspace { display: grid; grid-template-columns: minmax(500px, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+  .left-column { width: auto; min-width: 0; }
+  .main-right { min-width: 0; flex: none; }
+  .param-area { width: 100%; }
+  .param-body { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; }
+  .param-body .formula-field, .param-body .calc-btn, .param-body .param-fold { grid-column: 1 / -1; }
+  #votes-table { min-width: 0; }
+}
+
+/* ── Pestañas con scroll horizontal: se difumina el borde para indicar que hay más ── */
+@media (max-width: 760px) {
+  .tabs-container {
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+    mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+  }
+}
