@@ -90,11 +90,41 @@ function updateHeaderActions(tabName) {
   selectAll('.adv-session-btn').forEach(b => { b.hidden = tabName !== 'advanced'; });
 }
 
+/** Aviso mientras se descarga una pestaña aplazada (mapa, teoría). */
+function tabAvisoCargando(tabName, texto) {
+  selectAll('.tab-content').forEach(t => t.classList.remove('active'));
+  selectAll('.tab').forEach(b => b.classList.remove('active'));
+  select(`.tab[data-tab="${tabName}"]`)?.classList.add('active');
+  let aviso = select('#tab-cargando');
+  if (!aviso) {
+    aviso = document.createElement('section');
+    aviso.id = 'tab-cargando';
+    aviso.className = 'tab-content';
+    select('.main')?.appendChild(aviso);
+  }
+  aviso.innerHTML = `<div class="tab-cargando-aviso" role="status">${escapeHtml(texto)}</div>`;
+  aviso.classList.add('active');
+}
+
 function switchTab(tabName, updateHash = true) {
+  if (!TAB_SLUGS[tabName]) return;
+
+  // El mapa y la teoría no vienen en el arranque: se piden al abrirlas (o
+  // antes, si el navegador ha tenido un rato libre). Ver js/carga-diferida.js.
+  if (!select(`#${tabName}-tab`) && typeof tabDiferidaPendiente === 'function'
+      && tabDiferidaPendiente(tabName)) {
+    tabAvisoCargando(tabName, 'Cargando…');
+    TABS_DIFERIDAS[tabName]()
+      .then(() => switchTab(tabName, updateHash))
+      .catch(() => tabAvisoCargando(tabName,
+        'No se ha podido cargar esta pestaña. Comprueba la conexión y vuelve a intentarlo.'));
+    return;
+  }
+
   selectAll('.tab-content').forEach(t => t.classList.remove('active'));
   selectAll('.tab').forEach(b => b.classList.remove('active'));
   const tabId = `${tabName}-tab`;
-  if (!TAB_SLUGS[tabName] || !select(`#${tabId}`)) return;
+  if (!select(`#${tabId}`)) return;
   select(`#${tabId}`)?.classList.add('active');
   select(`.tab[data-tab="${tabName}"]`)?.classList.add('active');
   updateHeaderActions(tabName);
@@ -110,7 +140,8 @@ function switchTab(tabName, updateHash = true) {
     }
   }
 
-  if (tabName === 'map') mapaCargar().catch(() => {});
+  // Los módulos ya están (la sección existe); falta la geometría.
+  if (tabName === 'map' && typeof mapaCargar === 'function') mapaCargar().catch(() => {});
 
   if (tabName === 'advanced') {
     advCargarModulos().then(() => advEnsureLoaded()).catch(() => {

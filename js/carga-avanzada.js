@@ -41,6 +41,9 @@ function _advInsertarScript(src) {
 /** Descarga los módulos de la avanzada (una sola vez) y arranca su interfaz. */
 function advCargarModulos() {
   if (_advModulosPromesa) return _advModulosPromesa;
+  // La avanzada usa el mapa en dos sitios (su ventana «Mapa» y el «Ver en el
+  // mapa» del comparador), así que se piden sus módulos por detrás, sin esperar.
+  if (typeof mapaCargarModulos === 'function') mapaCargarModulos().catch(() => {});
   _advModulosPromesa = Promise.all(ADV_MODULOS.map(_advInsertarScript))
     .then(() => {
       // Sus listeners de DOMContentLoaded ya no se disparan: se arranca a mano.

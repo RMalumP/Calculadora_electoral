@@ -41,6 +41,8 @@ js/                   Lógica
   algorithms.js         Reparto de escaños (sin DOM, probado con Node)
   advanced-*.js         Calculadora avanzada; se cargan al abrir su pestaña (carga-avanzada.js),
                         salvo advanced-compensation.js, que usa también la calculadora normal
+  mapa-*.js             Mapa; se cargan al abrir su pestaña (carga-diferida.js), y por detrás
+                        en cuanto el navegador está ocioso
   accesibilidad.js      ARIA, teclado y tema
 css/                  Estilos (tema-oscuro.css sobreescribe las variables de variables.css)
 datos/                Base de datos electoral (ver datos/LEEME.md)
@@ -69,4 +71,8 @@ Las de Node cargan los scripts del proyecto tal cual y comprueban, entre otras c
 
 ### Caché sin conexión
 
-`sw.js` precachea los archivos de la aplicación y la última elección de cada ámbito. Al cambiar algo que deba renovarse sí o sí, sube la constante `CACHE`.
+`sw.js` precachea los archivos de la aplicación y la última elección de cada ámbito. Los archivos propios (`css/`, `js/`, `tabs/`, `icons/`) se sirven **de la caché primero** y se renuevan por detrás, porque se reemplazan todos a la vez al subir `CACHE`; la página y los datos van a la red primero. Al cambiar algo que deba renovarse sí o sí, sube la constante `CACHE`.
+
+### Qué se descarga al arrancar
+
+Sólo lo que hace falta para la calculadora básica (unos 420 KB en 40 peticiones). La calculadora avanzada (`js/carga-avanzada.js`), el mapa y la teoría (`js/carga-diferida.js`) se piden al abrir su pestaña y, si no, en cuanto el navegador está ocioso.

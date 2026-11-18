@@ -274,3 +274,11 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 1px; }
 input.names-hidden-mode { color: #c07070 !important; }               /* rojo claro: placeholder vacío */
 input.names-hidden-mode::placeholder { color: #c07070 !important; }
 input.names-hidden-mode.names-has-value { color: #8b3131 !important; } /* rojo oscuro: nombre real */
+
+/* Aviso mientras se descarga una pestaña aplazada (mapa, teoría). */
+.tab-cargando-aviso {
+  padding: 48px 20px;
+  text-align: center;
+  color: var(--text-muted);
+  font-style: italic;
+}
