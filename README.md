@@ -66,8 +66,9 @@ No hay paso de compilación: se edita y se recarga. Para servirla en local:
 
     node --test tests/*.test.js                 # algoritmos y motor de la avanzada (Node 20+)
     python3 -m unittest discover -s tests -v    # editor y conversor (necesita openpyxl)
+    node tests/navegador.js                     # prueba de humo en Chromium (necesita Playwright)
 
-Las de Node cargan los scripts del proyecto tal cual y comprueban, entre otras cosas, que el Congreso de 2023 da los escaños oficiales. Las dos baterías se ejecutan en GitHub Actions en cada PR (`.github/workflows/pruebas.yml`).
+Las de Node cargan los scripts del proyecto tal cual y comprueban, entre otras cosas, que el Congreso de 2023 da los escaños oficiales. `tests/navegador.js` levanta su propio servidor, abre las cinco pestañas en 390 y 1400 px, usa lo principal de cada una y falla si hay un error de JavaScript o un desborde horizontal; sin Playwright instalado se salta sola. Las tres se ejecutan en GitHub Actions en cada PR (`.github/workflows/pruebas.yml`).
 
 ### Caché sin conexión
 

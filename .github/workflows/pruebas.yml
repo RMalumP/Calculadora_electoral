@@ -36,3 +36,13 @@ jobs:
           node-version: '20'
       - name: Pruebas del cálculo (Node)
         run: node --test tests/*.test.js
+
+      # Prueba de humo en un navegador: abre las cinco pestañas en 390 y 1400 px
+      # y falla si hay un error de JavaScript o algo se sale de la pantalla.
+      - name: Instalar Playwright y Chromium
+        run: |
+          npm install --no-save playwright@1.49.1
+          npx playwright install --with-deps chromium
+
+      - name: Prueba de humo en el navegador
+        run: node tests/navegador.js
