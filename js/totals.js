@@ -7,6 +7,20 @@ let _realTotalValid = 0;
 let _realTotalAll   = 0;
 let _censusAutoTracking = true;
 
+/**
+ * Lo mismo que updateTotals(), pero agrupando: al escribir en una casilla de
+ * votos saltaba en cada tecla, y recorre todas las filas dos veces y rehace el
+ * desplegable de «Otros». Con muchos partidos se notaba. Un cálculo por
+ * fotograma es de sobra para lo que el ojo ve.
+ */
+let _totalsPendiente = false;
+
+function updateTotalsPronto() {
+  if (_totalsPendiente) return;
+  _totalsPendiente = true;
+  requestAnimationFrame(() => { _totalsPendiente = false; updateTotals(); });
+}
+
 function updateTotals() {
   if (typeof actualizarResumenParametros === 'function') actualizarResumenParametros();
   const rows = getAllPartyRows();
@@ -43,8 +57,8 @@ function updateTotals() {
   }
 
   updateText(select('#total-valid'), totalValid.toLocaleString('es-ES'));
-  updateHTML(select('#blank-pct'), totalValid > 0 ? pctBar(blank / totalValid * 100) : '—');
-  updateHTML(select('#null-pct'), totalAll > 0 ? pctBar(nullv / totalAll * 100) : '—');
+  updateText(select('#blank-pct'), totalValid > 0 ? pctBar(blank / totalValid * 100) : '—');
+  updateText(select('#null-pct'), totalAll > 0 ? pctBar(nullv / totalAll * 100) : '—');
 
   rows.forEach(tr => {
     const input = tr.dataset.isOtros
@@ -52,7 +66,9 @@ function updateTotals() {
       : tr.querySelector('.votes-input');
     const v = parseVoteValue(input?.value);
     const pctCell = tr.querySelector('.pct-display');
-    if (pctCell) pctCell.innerHTML = totalValid > 0 ? pctBar(v / totalValid * 100) : '—';
+    // textContent y no innerHTML: pctBar devuelve texto, y esto se ejecuta
+    // una vez por fila en cada repaso.
+    if (pctCell) pctCell.textContent = totalValid > 0 ? pctBar(v / totalValid * 100) : '—';
   });
 
   updateParticipation();
@@ -90,13 +106,13 @@ function updateParticipation() {
 
   if (census > 0 && totalAll > 0) {
     updateText(select('#total-participation'), (totalAll / census * 100).toFixed(2) + '%');
-    updateHTML(select('#abstention-pct'), pctBar(abst / census * 100));
+    updateText(select('#abstention-pct'), pctBar(abst / census * 100));
   } else if (totalAll > 0) {
     updateText(select('#total-participation'), '100%');
-    updateHTML(select('#abstention-pct'), '0%');
+    updateText(select('#abstention-pct'), '0%');
   } else {
     updateText(select('#total-participation'), '—');
-    updateHTML(select('#abstention-pct'), '—');
+    updateText(select('#abstention-pct'), '—');
   }
 }
 

@@ -18,7 +18,10 @@
  */
 
 const AUTOSAVE_KEY = 'ce-sesion-v1';
-const AUTOSAVE_EVERY_MS = 3000;
+/** Espera tras el último cambio antes de guardar. */
+const AUTOSAVE_ESPERA_MS = 1500;
+/** Red de seguridad: aunque nadie toque nada, se repasa de vez en cuando. */
+const AUTOSAVE_REPASO_MS = 30000;
 
 /** Sesión de la avanzada pendiente de reponer cuando carguen sus datos. */
 window.CE_ADV_PENDIENTE = null;
@@ -61,13 +64,41 @@ function autoSnapshot(previous) {
   };
 }
 
+/** Lo último leído del almacenamiento, para no analizarlo en cada guardado. */
+let _autoPrevio = null;
+
 function autoSaveNow() {
   if (!_autoActive) return;
-  const snap = autoSnapshot(autoRead());
+  if (_autoPrevio === null) _autoPrevio = autoRead();
+  const snap = autoSnapshot(_autoPrevio);
   // guardadoEn cambia siempre: se compara sin él para no escribir en vano.
   const key = JSON.stringify({ ...snap, calc: { ...snap.calc, guardadoEn: '' }, adv: snap.adv && { ...snap.adv, guardadoEn: '' } });
   if (key === _autoLast) return;
-  if (autoWrite({ ...snap, guardadoEn: new Date().toISOString() }) !== null) _autoLast = key;
+  const guardado = { ...snap, guardadoEn: new Date().toISOString() };
+  if (autoWrite(guardado) !== null) { _autoLast = key; _autoPrevio = guardado; }
+}
+
+/**
+ * Guarda poco después del último cambio, en vez de repasarlo todo cada tres
+ * segundos pase lo que pase. Antes se reconstruía el estado entero (incluida
+ * la avanzada con sus 52 circunscripciones) y se serializaba dos veces veinte
+ * veces por minuto, también con la pestaña en segundo plano, casi siempre para
+ * no escribir nada.
+ */
+let _autoTimer = null;
+
+function autoGuardarPronto() {
+  if (!_autoActive || _autoTimer) return;
+  _autoTimer = setTimeout(() => { _autoTimer = null; autoSaveNow(); }, AUTOSAVE_ESPERA_MS);
+}
+
+/** Cambios que merecen guardar: lo que se escribe, se elige o se pulsa. */
+function autoEscucharCambios() {
+  ['input', 'change'].forEach(ev =>
+    document.addEventListener(ev, autoGuardarPronto, { passive: true, capture: true }));
+  document.addEventListener('click', e => {
+    if (e.target.closest?.('button, .tab, label')) autoGuardarPronto();
+  }, { passive: true, capture: true });
 }
 
 /** Aviso breve de que se ha repuesto la sesión, con salida a empezar de cero. */
@@ -125,8 +156,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   select('#auto-clear-btn')?.addEventListener('click', autoClear);
 
-  // Se guarda sólo lo que cambia, cada pocos segundos y al salir de la página.
-  setInterval(autoSaveNow, AUTOSAVE_EVERY_MS);
+  // Se guarda poco después de cada cambio, al esconder la pestaña y al salir.
+  autoEscucharCambios();
+  setInterval(() => { if (!document.hidden) autoSaveNow(); }, AUTOSAVE_REPASO_MS);
   document.addEventListener('visibilitychange', () => { if (document.hidden) autoSaveNow(); });
   window.addEventListener('pagehide', autoSaveNow);
 });

@@ -71,8 +71,20 @@ document.addEventListener('click', e => {
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && document.getElementById('bas-workspace')?.classList.contains('cfg-abierta')) basPanel(false);
 });
-document.addEventListener('input', basResumenBarra);
-document.addEventListener('change', basResumenBarra);
+/* El resumen de la barra se rehace agrupado: escuchaba en todo el documento y
+   saltaba en cada tecla, también al escribir en la avanzada o en el pactómetro. */
+let _basResumenPendiente = false;
+
+function basResumenPronto(e) {
+  // Sólo interesa lo de la calculadora básica.
+  if (e && !e.target.closest?.('#calculator-tab')) return;
+  if (_basResumenPendiente) return;
+  _basResumenPendiente = true;
+  requestAnimationFrame(() => { _basResumenPendiente = false; basResumenBarra(); });
+}
+
+document.addEventListener('input', basResumenPronto);
+document.addEventListener('change', basResumenPronto);
 
 /* Al calcular con el panel abierto o en pantalla pequeña, se cierra y se baja a los resultados. */
 window.addEventListener('load', () => {

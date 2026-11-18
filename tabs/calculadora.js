@@ -52,13 +52,13 @@ registerTab('calculator', 'tab-content active', String.raw`
             <tr class="special-row">
               <td></td><td></td><td></td><td class="group-col"></td>
               <td>Votos en blanco</td>
-              <td><input type="text" id="blank-votes" class="votes-input" placeholder="0" min="0" max="9000000000" oninput="formatVoteInput(this);updateTotals()" onfocus="onVoteFocus(this)" onblur="onVoteBlur(this)"></td>
+              <td><input type="text" id="blank-votes" class="votes-input" placeholder="0" min="0" max="9000000000" oninput="formatVoteInput(this);updateTotalsPronto()" onfocus="onVoteFocus(this)" onblur="onVoteBlur(this)"></td>
               <td class="pct-cell" id="blank-pct">—</td>
             </tr>
             <tr class="special-row">
               <td></td><td></td><td></td><td class="group-col"></td>
               <td>Votos nulos</td>
-              <td><input type="text" id="null-votes" class="votes-input" placeholder="0" min="0" max="9000000000" oninput="formatVoteInput(this);updateTotals()" onfocus="onVoteFocus(this)" onblur="onVoteBlur(this)"></td>
+              <td><input type="text" id="null-votes" class="votes-input" placeholder="0" min="0" max="9000000000" oninput="formatVoteInput(this);updateTotalsPronto()" onfocus="onVoteFocus(this)" onblur="onVoteBlur(this)"></td>
               <td class="pct-cell" id="null-pct">—</td>
             </tr>
           </tbody>
@@ -182,7 +182,7 @@ registerTab('calculator', 'tab-content active', String.raw`
             <div class="param-field">
               <label id="seats-label-toggle" style="cursor:pointer;user-select:none" onclick="toggleParamField('seats')">▲ Número de escaños</label>
               <div id="seats-input-wrap">
-                <input type="number" id="seats" value="350" min="1" max="9999" oninput="updateTotals()">
+                <input type="number" id="seats" value="350" min="1" max="9999" oninput="updateTotalsPronto()">
                 <small>Representantes a asignar</small>
               </div>
             </div>
@@ -190,7 +190,7 @@ registerTab('calculator', 'tab-content active', String.raw`
             <div class="param-field">
               <label id="barrier-label-toggle" style="cursor:pointer;user-select:none" onclick="toggleParamField('barrier')">▲ Barrera electoral (%)</label>
               <div id="barrier-input-wrap">
-                <input type="number" id="barrier" value="3" min="0" max="100" step="0.1" oninput="updateTotals()">
+                <input type="number" id="barrier" value="3" min="0" max="100" step="0.1" oninput="updateTotalsPronto()">
                 <small>Umbral mínimo de votos válidos</small>
               </div>
             </div>
