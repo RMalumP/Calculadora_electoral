@@ -65,6 +65,31 @@ async function usar(page, tab) {
     const esc = await page.evaluate(() =>
       [...document.querySelectorAll('#results-body .result-badge')].reduce((s, b) => s + (parseInt(b.textContent) || 0), 0));
     if (esc !== 350) throw new Error(`la calculadora reparte ${esc} escaños y no 350`);
+    // Escenarios con nombre: guardar, cambiar algo y volver.
+    const escenario = await page.evaluate(async () => {
+      const antes = [...document.querySelectorAll('#results-body .result-badge')].map(b => b.textContent).join('/');
+      const prompt0 = window.prompt, confirm0 = window.confirm;
+      window.prompt = () => 'Prueba'; window.confirm = () => true;
+      try {
+        escGuardarActual();
+        const seats = document.getElementById('seats');
+        seats.value = '100'; seats.dispatchEvent(new Event('change', { bubbles: true }));
+        calculate();
+        await new Promise(r => setTimeout(r, 300));
+        const otro = [...document.querySelectorAll('#results-body .result-badge')].map(b => b.textContent).join('/');
+        const guardado = [...document.querySelectorAll('#esc-lista .esc-abrir')]
+          .find(b => b.querySelector('.esc-nombre').textContent.trim() === 'Prueba');
+        if (!guardado) return { error: 'el escenario guardado no sale en la lista' };
+        guardado.click();
+        await new Promise(r => setTimeout(r, 600));
+        const vuelta = [...document.querySelectorAll('#results-body .result-badge')].map(b => b.textContent).join('/');
+        document.querySelector('#esc-lista .esc-borrar')?.click();
+        return { error: null, cambia: otro !== antes, vuelve: vuelta === antes };
+      } finally { window.prompt = prompt0; window.confirm = confirm0; }
+    });
+    if (escenario.error) throw new Error(escenario.error);
+    if (!escenario.cambia) throw new Error('bajar a 100 escaños no cambia el reparto');
+    if (!escenario.vuelve) throw new Error('abrir el escenario guardado no devuelve su reparto');
   } else if (tab === 'advanced') {
     await page.waitForFunction(() => document.querySelectorAll('#adv-election option').length > 0, { timeout: 60000 });
     await page.waitForFunction(() => document.querySelectorAll('#adv-results .adv-ccaa, #adv-results table').length > 0, { timeout: 60000 });
@@ -128,6 +153,8 @@ async function usar(page, tab) {
   const fallos = [];
 
   for (const [nombre, viewport] of ANCHOS) {
+    // Para no decir «sin errores» de un ancho que sí los ha tenido.
+    const fallosAlEmpezar = fallos.length;
     const ctx = await navegador.newContext({ viewport });
     const page = await ctx.newPage();
     const errores = [];
@@ -149,7 +176,9 @@ async function usar(page, tab) {
       }
     }
     if (errores.length) fallos.push(`${nombre}: ${[...new Set(errores)].join(' · ')}`);
-    else console.log(`${nombre}: las ${PESTANAS.length} pestañas, sin errores ni desbordes`);
+    if (fallos.length === fallosAlEmpezar) {
+      console.log(`${nombre}: las ${PESTANAS.length} pestañas, sin errores ni desbordes`);
+    }
     await ctx.close();
   }
 

@@ -58,9 +58,22 @@
     <button class="save-icon-btn" id="theme-btn" type="button"
             title="Cambiar el tema (automático, claro u oscuro)" aria-label="Cambiar el tema">🌓</button>
 
+    <!-- Escenarios con nombre, guardados en este navegador (js/escenarios.js). -->
+    <span class="menu-dd" id="esc-menu">
+      <button type="button" class="save-icon-btn menu-dd-btn" aria-haspopup="true" aria-expanded="false"
+              title="Guardar este escenario con un nombre, o abrir uno guardado"
+              aria-label="Escenarios guardados">🗂<span class="cab-rotulo"> Escenarios</span><span id="esc-cuenta"></span></button>
+      <span class="menu-dd-list esc-lista-caja" role="menu" hidden>
+        <button type="button" role="menuitem" id="esc-guardar">+ Guardar el de ahora…</button>
+        <div class="esc-sep"></div>
+        <div id="esc-lista"></div>
+      </span>
+    </span>
+
     <!-- Sesión guardada automáticamente en este navegador. -->
     <button class="save-icon-btn" id="auto-clear-btn"
-            title="Borrar la sesión guardada en este navegador y empezar de cero">🗑 Nueva sesión</button>
+            title="Borrar la sesión guardada en este navegador y empezar de cero"
+            aria-label="Nueva sesión">🗑<span class="cab-rotulo"> Nueva sesión</span></button>
 
     <!-- Calculadora y pactómetro: copia autónoma de la página. -->
     <button class="save-icon-btn" id="save-html-btn" onclick="saveHTML()"
@@ -129,6 +142,8 @@
 <!-- Lee la sesión compartida de la URL antes de que ui.js reconstruya las filas -->
 <script src="js/basica-exportar.js" defer></script>
 <script src="js/autosave.js" defer></script>
+<!-- Después de autosave.js: usa autoSnapshot() para recoger el estado. -->
+<script src="js/escenarios.js" defer></script>
 <script src="js/ui.js" defer></script>
 <script src="js/accesibilidad.js" defer></script>
 <script>

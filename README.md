@@ -40,6 +40,8 @@ Novedades de sistemas electorales:
 - **Prorrateo** entre circunscripciones (Hare, D'Hondt, Webster, Adams, Huntington-Hill) y medida de la desigualdad del voto (`js/prorrateo.js`).
 - **Mixtos y preferenciales** (`algorithms-mixtos.js`, `algorithms-preferencial.js`): se usan desde la pestaña «Otros sistemas», con los datos a mano. Lo que sigue apagado (`js/experimental.js`) es ofrecerlos en la calculadora avanzada sobre elecciones reales, que necesita un voto uninominal por distrito y unas papeletas ordenadas que la base de datos no tiene.
 
+**Escenarios** (🗂 en la cabecera): guarda con nombre lo que haya en pantalla (calculadora, pactómetro, avanzada y pestaña abierta) y lo repone de una lista, en este navegador. Sirve para tener a mano «2023 con barrera del 5 %» y «2023 con circunscripción única» sin bajarse dos archivos. El autoguardado sigue recordando aparte lo último que se estaba haciendo.
+
 La interfaz tiene tema claro y oscuro (botón 🌓: automático, claro u oscuro) y se adapta a móvil y tablet. En la calculadora básica, por debajo de 1100 px los partidos pasan a tarjetas (acciones tras «⋯»), el censo se pliega y los parámetros se abren en un panel lateral desde una barra con resumen y botón «Calcular»; en horizontal, votos a la izquierda y parámetros con resultados a la derecha.
 
 ## Estructura
@@ -56,6 +58,7 @@ js/                   Lógica
                         en cuanto el navegador está ocioso
   sistemas-ui.js        Pestaña «Otros sistemas»; con ella se cargan algorithms-mixtos.js
                         y algorithms-preferencial.js, que antes se descargaban siempre
+  escenarios.js         Escenarios guardados con nombre en este navegador
   accesibilidad.js      ARIA, teclado y tema
 css/                  Estilos (tema-oscuro.css sobreescribe las variables de variables.css)
 datos/                Base de datos electoral (ver datos/LEEME.md)
