@@ -245,6 +245,8 @@ function _applyCompensation(allocated, totalValid, formula, barrier) {
 /* ── VISUALIZACIÓN DE RESULTADOS ───────────────────────────── */
 
 function displayResults(allocated, totalValid, totalSeats, formula, excludedBarrier, noSeatsEligible, allParties = [], baseSeats = null) {
+  // Lo que se acaba de calcular, para exportarlo sin volver a leer la tabla.
+  window.lastBasicResult = { allocated, totalValid, totalSeats, formula };
   const tbody = document.getElementById('results-body');
   tbody.innerHTML = '';
 
@@ -300,7 +302,7 @@ function displayResults(allocated, totalValid, totalSeats, formula, excludedBarr
   const card = document.getElementById('results-card');
   card.style.display = 'block';
   card.classList.add('visible');
-  card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  desplazarA(card);
 
   showHemicycleToggle();
   updateHemicycleIfVisible();

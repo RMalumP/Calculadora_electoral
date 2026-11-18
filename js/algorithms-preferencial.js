@@ -3,9 +3,10 @@
  * Voto preferencial y ordinal: listas abiertas y desbloqueadas, STV, voto
  * alternativo (IRV), Borda y Condorcet. Sin DOM.
  *
- * ESTADO: motor listo y probado, pero DESACTIVADO en la interfaz (véase
- * CE_EXPERIMENTAL en experimental.js) hasta que haya votos por candidato o
- * papeletas con preferencias. Las papeletas tienen esta forma:
+ * Lo usa la pestaña «Otros sistemas» (tabs/sistemas.js), donde las papeletas
+ * se escriben a mano. En la calculadora avanzada sigue sin ofrecerse, porque
+ * la base de datos no trae ni votos por candidato ni papeletas ordenadas
+ * (véase CE_EXPERIMENTAL en experimental.js). Las papeletas tienen esta forma:
  *
  *   { prefs: ['A', 'C', 'B'], count: 120 }   // orden de preferencia y nº de papeletas
  *

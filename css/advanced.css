@@ -687,6 +687,8 @@ tr.adv-edit-total td {
   line-height: 1;
   user-select: none;
   padding: 0 1px;
+  /* El gesto sobre el asa es un arrastre, no un desplazamiento de la página. */
+  touch-action: none;
 }
 .adv-drag-handle:active { cursor: grabbing; }
 
@@ -1659,4 +1661,73 @@ body.adv-popup-open { overflow: hidden; }
   }
   .adv-cfg-velo[hidden] { display: none; }
   html.adv-cajon-abierto, html.adv-cajon-abierto body { overflow: hidden; }
+}
+
+/* ── OSCILACIÓN ───────────────────────────────────────────────
+   El panel de «¿y si el PSOE sube dos puntos?» (js/avanzada-oscilacion.js). */
+
+.adv-osc-lista { display: flex; flex-direction: column; gap: 2px; margin: 6px 0 4px; }
+
+.adv-osc-fila {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(90px, 1.3fr) 62px minmax(0, auto);
+  align-items: center;
+  gap: 8px;
+  padding: 3px 0;
+}
+
+.adv-osc-nombre {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.adv-osc-punto { width: 9px; height: 9px; border-radius: 2px; flex: none; }
+
+.adv-osc-rango { width: 100%; min-width: 0; accent-color: var(--accent); cursor: pointer; }
+
+.adv-osc-num {
+  width: 100%;
+  padding: 3px 5px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 0.76rem;
+  text-align: right;
+}
+
+.adv-osc-pct {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.adv-osc-pct b { color: var(--text); }
+
+.adv-osc-suma {
+  margin: 6px 0 8px;
+  font-size: 0.74rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.adv-osc-vacio { color: var(--text-muted); font-style: italic; }
+
+@media (max-width: 700px) {
+  .adv-osc-fila { grid-template-columns: minmax(0, 1fr) 56px; grid-template-areas: "nombre num" "rango rango" "pct pct"; gap: 4px 8px; }
+  .adv-osc-nombre { grid-area: nombre; }
+  .adv-osc-num    { grid-area: num; }
+  .adv-osc-rango  { grid-area: rango; }
+  .adv-osc-pct    { grid-area: pct; }
+  .adv-osc-fila + .adv-osc-fila { border-top: 1px solid var(--border-light); padding-top: 7px; }
 }

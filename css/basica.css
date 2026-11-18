@@ -28,6 +28,8 @@
   }
   #votes-table tbody tr td { padding: 0 !important; border: none; text-align: left; min-width: 0; }
   #votes-table tbody td:nth-child(1) { grid-area: hd; display: flex; align-items: center; gap: 2px; }
+  /* El asa de arrastrar, con tamaño de dedo: con 18×20 px no hay quien la coja. */
+  #votes-table .drag-handle { width: 30px; height: 40px; font-size: 16px; }
   #votes-table tbody td:nth-child(2) { grid-area: ac; display: none; }
   #votes-table tbody td:nth-child(3) { grid-area: co; }
   #votes-table tbody td:nth-child(4) { grid-area: gr; display: none !important; }

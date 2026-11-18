@@ -493,3 +493,68 @@ details.ind-detalle > div { padding-top: 2px; }
 }
 .menu-dd-list > button:hover, .menu-dd-list > button:focus-visible { background: var(--accent-pale); color: var(--accent); outline: none; }
 .menu-dd-btn[aria-expanded="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+/* ── ESCENARIOS GUARDADOS ─────────────────────────────────────
+   El menú 🗂 de la cabecera (js/escenarios.js). Es una lista, no sólo
+   botones, así que necesita algo más de sitio que un menú corriente. */
+
+.esc-lista-caja { min-width: 290px; max-width: min(380px, calc(100vw - 16px)); max-height: 70vh; overflow-y: auto; }
+
+.esc-sep { height: 1px; margin: 4px 2px; background: var(--border-light); }
+
+.esc-vacio {
+  margin: 0;
+  padding: 8px 12px;
+  font-size: 0.78rem;
+  font-style: italic;
+  color: var(--text-muted);
+}
+
+.esc-fila { display: flex; align-items: stretch; gap: 2px; }
+
+.esc-abrir {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 7px 10px;
+  border: none;
+  border-radius: var(--radius);
+  background: none;
+  color: var(--text);
+  font-family: 'Source Sans 3', sans-serif;
+  text-align: left;
+  cursor: pointer;
+}
+
+.esc-abrir:hover, .esc-abrir:focus-visible { background: var(--accent-pale); outline: none; }
+
+.esc-nombre {
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.esc-meta {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.esc-borrar {
+  flex: none;
+  width: 30px;
+  border: none;
+  border-radius: var(--radius);
+  background: none;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.esc-borrar:hover { background: #8b3131; color: #fff; }

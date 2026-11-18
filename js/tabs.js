@@ -16,23 +16,35 @@
 
 const TAB_REGISTRY = [];
 
-/** Llamada desde cada archivo de tabs/ para declarar su marcado. */
+/** Si ya se ha hecho el volcado inicial, lo que llegue tarde se vuelca solo. */
+let _tabsMontadas = false;
+
+/**
+ * Llamada desde cada archivo de tabs/ para declarar su marcado. Las pestañas
+ * que se descargan a demanda (mapa y teoría, ver js/carga-diferida.js) se
+ * registran después del volcado inicial, así que se vuelcan al registrarse.
+ */
 function registerTab(id, className, html) {
-  TAB_REGISTRY.push({ id, className, html });
+  const tab = { id, className, html };
+  TAB_REGISTRY.push(tab);
+  if (_tabsMontadas) mountTab(tab);
 }
 
-/** Vuelca en el contenedor principal el marcado de todas las pestañas. */
-function mountTabs() {
+/** Vuelca una pestaña en el contenedor principal, si no estaba ya. */
+function mountTab(tab) {
   const main = document.querySelector('.main');
-  if (!main) return;
+  if (!main || document.getElementById(`${tab.id}-tab`)) return;
+  const section = document.createElement('section');
+  section.id = `${tab.id}-tab`;
+  section.className = tab.className;
+  section.innerHTML = tab.html;
+  main.appendChild(section);
+}
 
-  TAB_REGISTRY.forEach(tab => {
-    const section = document.createElement('section');
-    section.id = `${tab.id}-tab`;
-    section.className = tab.className;
-    section.innerHTML = tab.html;
-    main.appendChild(section);
-  });
+/** Vuelca el marcado de todas las pestañas registradas hasta ahora. */
+function mountTabs() {
+  TAB_REGISTRY.forEach(mountTab);
+  _tabsMontadas = true;
 }
 
 document.addEventListener('DOMContentLoaded', mountTabs);

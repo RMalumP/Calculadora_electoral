@@ -23,7 +23,16 @@ let _advParties = null;     // datos de la elección cargada
 let _advResult  = null;     // último resultado calculado
 let _advConfig  = null;
 let _advColorCache = new Map();
-let _advCollapsed  = new Set();   // nombres de CCAA colapsadas
+/**
+ * Comunidades desplegadas. Antes se guardaban las plegadas y el conjunto
+ * arrancaba vacío, así que al abrir la avanzada con el Congreso aparecían las
+ * 19 comunidades abiertas con sus 52 tablas: mucho que bajar y 229 KB de HTML
+ * que rehacer en cada cambio de ajuste. Ahora arrancan plegadas y el cuerpo de
+ * cada una se construye al desplegarla (advRellenarCcaa).
+ */
+let _advExpandidas = new Set();
+/** Las circunscripciones de cada comunidad del último resultado, para rellenar. */
+let _advGruposCcaa = new Map();
 let _advExpandedDistricts = new Set();
 
 /**
@@ -118,8 +127,11 @@ async function advLoadElection(force, eleccionKey, conservar) {
     _advCustomParties = {};
     _advPartyColors = {};
     _advLocks = {};
+    // La oscilación también: son puntos sobre unas candidaturas concretas.
+    if (typeof advOscOlvidar === 'function') advOscOlvidar();
   }
-  const key = select('#adv-election')?.value || ADV_ELECTIONS[0].key;
+  const key = select('#adv-election')?.value ||
+    (typeof advAmbitoPorDefecto === 'function' ? advAmbitoPorDefecto() : ADV_ELECTIONS[0].key);
   advRenderStatus(`<div class="adv-loading"><span class="adv-spinner"></span>Cargando datos electorales…</div>`);
   select('#adv-results').innerHTML = '';
   select('#adv-summary').innerHTML = '';
@@ -322,6 +334,10 @@ function advBuildElectionOptions() {
     o.value = e.key; o.textContent = e.label;
     sel.appendChild(o);
   });
+  // Sin esto el navegador se queda con la primera del índice, que por orden
+  // alfabético es Brasil; se arranca en el Congreso de España.
+  const porDefecto = typeof advAmbitoPorDefecto === 'function' ? advAmbitoPorDefecto() : null;
+  if (porDefecto) sel.value = porDefecto;
 }
 
 /** Vuelca la configuración actual en los controles del formulario. */
@@ -660,6 +676,7 @@ function advCajonResumen(extra) {
 function advInitSections() {
   advInitMas();
   advInitCajon();
+  if (typeof advOscInit === 'function') advOscInit();
   const tabs = select('#adv-tabs');
   if (tabs) {
     tabs.innerHTML = '';
@@ -815,11 +832,18 @@ function advRun() {
   advUpdateHeader(rows);
   try {
     const parties = [..._advParties.parties, ...Object.values(_advCustomParties)];
-    _advResult = advCalculate({ ..._advParties, parties, rows }, _advConfig, _advEdits, _advLocks);
+    const datos = { ..._advParties, parties, rows };
+    // Al recuperar una sesión con oscilación hace falta saber de dónde partía.
+    if (typeof advOscAsegurarBase === 'function') advOscAsegurarBase(datos, _advConfig, _advLocks);
+    // La oscilación se traduce en ediciones de votos; las puestas a mano mandan.
+    const ediciones = typeof advOscMezclar === 'function'
+      ? advOscMezclar(_advEdits, datos, _advConfig) : _advEdits;
+    _advResult = advCalculate(datos, _advConfig, ediciones, _advLocks);
   } catch (err) {
     advRenderStatus(`<div class="adv-notice error"><strong>Error al calcular.</strong><br>${advEscape(err.message)}</div>`);
     return;
   }
+  if (typeof advOscRecordar === 'function') { advOscRecordar(_advResult); advOscSincronizar(); }
   if (typeof pactRegistrarAvanzada === 'function') pactRegistrarAvanzada(_advResult);
   const avisoRespaldo = _advParties.respaldo
     ? `<div class="adv-notice warn"><strong>Datos de respaldo (Google Sheets).</strong> No se ha podido cargar la base
@@ -988,6 +1012,8 @@ function advNationalCard() {
             <button type="button" role="menuitem" data-adv-popup="mapa">Mapa de esta simulación</button>
             <button type="button" role="menuitem" data-adv-popup="last">Último escaño</button>
             <button type="button" role="menuitem" data-adv-popup="coef">Coeficientes</button>
+            <button type="button" role="menuitem" id="adv-a-basica"
+                    title="Copia estas candidaturas, sus votos y los ajustes a la calculadora normal">Llevar a la calculadora</button>
           </span>
         </span>
         <span class="menu-dd">
@@ -1053,11 +1079,13 @@ function advDistrictsCard() {
     if (!groups.has(k)) groups.set(k, []);
     groups.get(k).push(d);
   });
+  // Se guardan para poder construir el cuerpo de una comunidad al desplegarla.
+  _advGruposCcaa = groups;
 
   const body = [...groups.entries()].map(([ccaa, ds]) => {
     const seats = ds.reduce((s, d) => s + d.seats + (d.bonoSeats || 0), 0);
     const votes = ds.reduce((s, d) => s + d.validVotes, 0);
-    const open  = !_advCollapsed.has(ccaa);
+    const open  = _advExpandidas.has(ccaa);
 
     // Composición de escaños de la comunidad para la barra apilada.
     const comp = new Map();
@@ -1067,11 +1095,8 @@ function advDistrictsCard() {
     const stack = [...comp.values()].sort((a, b) => b.seats - a.seats)
       .map(x => `<span style="width:${(x.seats / Math.max(1, seats) * 100).toFixed(2)}%;background:${advPartyColor(x.p)}" title="${advEscape(x.p.siglas || x.p.name)}: ${x.seats}"></span>`).join('');
 
-    // Con circunscripción autonómica el grupo ya es la circunscripción: su
-    // cuerpo es la tabla de resultados, no otra ficha anidada.
-    const inner = level === 'ccaa'
-      ? `<div style="padding:6px 10px 10px">${advDistrictHTML(ds[0], false, true)}</div>`
-      : ds.map(d => advDistrictHTML(d, false)).join('');
+    // Plegada, el cuerpo va vacío: lo construye advRellenarCcaa al abrirla.
+    const inner = open ? advCcaaInnerHTML(ccaa, ds, level) : '';
 
     const nProv = ds.reduce((s2, d) => s2 + (d.members?.length || 1), 0);
     const meta = level === 'ccaa'
@@ -1103,7 +1128,7 @@ function advDistrictsCard() {
               data-lock-ccaa="${advEscape(ccaa)}" title="${advEscape(lockTitle)}" aria-pressed="${allLocked}"
         >${allLocked ? '🔒' : someLocked ? '🔓' : '🔓'}</button>
       </div>
-      <div class="adv-ccaa-body" data-ccaa-body="${advEscape(ccaa)}" ${open ? '' : 'hidden'}>
+      <div class="adv-ccaa-body" data-ccaa-body="${advEscape(ccaa)}" ${open ? 'data-relleno="1"' : 'hidden'}>
         ${inner}
       </div>
     </div>`;
@@ -1125,6 +1150,39 @@ function advDistrictsCard() {
     </div>
     ${body}
   </div>`;
+}
+
+/**
+ * El contenido de una comunidad: con circunscripción autonómica el grupo ya es
+ * la circunscripción, así que su cuerpo es la tabla de resultados y no otra
+ * ficha anidada.
+ */
+function advCcaaInnerHTML(ccaa, ds, level) {
+  const nivel = level || _advConfig?.circunscripcion;
+  return nivel === 'ccaa'
+    ? `<div style="padding:6px 10px 10px">${advDistrictHTML(ds[0], false, true)}</div>`
+    : ds.map(d => advDistrictHTML(d, false)).join('');
+}
+
+/**
+ * Construye el cuerpo de una comunidad la primera vez que se despliega y le
+ * engancha sus controles. Al plegarla se vacía otra vez: así la página no
+ * acarrea las 52 tablas que nadie está mirando.
+ */
+function advRellenarCcaa(ccaa, body) {
+  if (!body || body.dataset.relleno === '1') return;
+  const ds = _advGruposCcaa.get(ccaa);
+  if (!ds) return;
+  body.innerHTML = advCcaaInnerHTML(ccaa, ds);
+  body.dataset.relleno = '1';
+  advAttachResultHandlers(body);
+}
+
+/** Vacía el cuerpo de una comunidad al plegarla. */
+function advVaciarCcaa(body) {
+  if (!body) return;
+  body.innerHTML = '';
+  delete body.dataset.relleno;
 }
 
 const ADV_VISIBLE_ROWS = 6;
@@ -1338,8 +1396,17 @@ function advSetEdit(districtId, field, partyKey, rawValue) {
  */
 let _advPristine = null;
 
-function advComputePristine() {
-  if (!_advParties) { _advPristine = null; return; }
+/**
+ * Sólo hace falta cuando hay algo editado a mano (o se está en modo edición):
+ * es un segundo cálculo entero y antes se repetía en cada cambio de ajuste
+ * aunque no hubiera ni una edición.
+ */
+function advPristineHaceFalta() {
+  return _advEditMode || Object.keys(_advEdits || {}).length > 0;
+}
+
+function advComputePristine(forzar) {
+  if (!_advParties || (!forzar && !advPristineHaceFalta())) { _advPristine = null; return; }
   try {
     const parties = [..._advParties.parties, ...Object.values(_advCustomParties)];
     _advPristine = advCalculate({ ..._advParties, parties, rows: advSelectedRows() }, _advConfig, null, null);
@@ -1348,13 +1415,19 @@ function advComputePristine() {
   }
 }
 
+/** Lo calcula en el momento si aún no está (primera edición de la sesión). */
+function _advPristineDistrito(districtId) {
+  if (!_advPristine) advComputePristine(true);
+  return _advPristine?.districts.find(x => x.id === districtId) || null;
+}
+
 function advOriginalSeats(districtId) {
-  const d = _advPristine?.districts.find(x => x.id === districtId);
+  const d = _advPristineDistrito(districtId);
   return d ? d.seats : null;
 }
 
 function advOriginalVotes(districtId, partyKey) {
-  const d = _advPristine?.districts.find(x => x.id === districtId);
+  const d = _advPristineDistrito(districtId);
   if (!d) return null;
   return d.partyVotes.get(partyKey) || 0;
 }
@@ -1958,9 +2031,11 @@ function advAttachLockMenu(btn, opts) {
 /** Reordenar filas arrastrando, como en la tabla de la calculadora básica. *//** Reordenar filas arrastrando, como en la tabla de la calculadora básica. */
 function advAttachRowDrag(scope) {
   scope.querySelectorAll('.adv-drag-handle').forEach(handle => {
-    handle.addEventListener('mousedown', e => {
-      if (e.button !== 0) return;
+    // Eventos de puntero: vale igual para ratón, dedo y lápiz.
+    handle.addEventListener('pointerdown', e => {
+      if (e.button > 0 || !e.isPrimary) return;
       e.preventDefault();
+      try { handle.setPointerCapture(e.pointerId); } catch (err) { /* ya soltado */ }
       const tr = handle.closest('tr');
       const tbody = tr.parentElement;
       tr.classList.add('dragging');
@@ -1980,9 +2055,11 @@ function advAttachRowDrag(scope) {
         }
       };
 
-      const onUp = () => {
-        document.removeEventListener('mousemove', onMove);
-        document.removeEventListener('mouseup', onUp);
+      const onUp = ev => {
+        handle.removeEventListener('pointermove', onMove);
+        handle.removeEventListener('pointerup', onUp);
+        handle.removeEventListener('pointercancel', onUp);
+        try { handle.releasePointerCapture(ev.pointerId); } catch (err) { /* ya soltado */ }
         const above = tbody.querySelector('.drag-over-above');
         const below = tbody.querySelector('.drag-over-below');
         if (above && above !== tr) tbody.insertBefore(tr, above);
@@ -1998,8 +2075,9 @@ function advAttachRowDrag(scope) {
         }
       };
 
-      document.addEventListener('mousemove', onMove);
-      document.addEventListener('mouseup', onUp);
+      handle.addEventListener('pointermove', onMove);
+      handle.addEventListener('pointerup', onUp);
+      handle.addEventListener('pointercancel', onUp);
     });
   });
 }
@@ -2176,11 +2254,12 @@ function advSessionSnapshot() {
     eleccion: select('#adv-election')?.value || '',
     config: _advConfig,
     ediciones: _advEdits,
+    oscilacion: typeof advOscAnotar === 'function' ? advOscAnotar() : null,
     candidaturas: _advCustomParties,
     colores: _advPartyColors,
     candados: _advLocks,
     vista: {
-      colapsadas: [..._advCollapsed],
+      expandidas: [..._advExpandidas],
       desplegadas: [..._advExpandedDistricts],
       edicion: _advEditMode
     }
@@ -2221,10 +2300,14 @@ async function advApplySession(s) {
   }
 
   _advEdits         = s.ediciones    || {};
+  if (typeof advOscRecuperar === 'function') advOscRecuperar(s.oscilacion);
   _advCustomParties = s.candidaturas || {};
   _advPartyColors   = s.colores      || {};
   _advLocks         = s.candados     || {};
-  _advCollapsed         = new Set(s.vista?.colapsadas  || []);
+  // Las sesiones anteriores guardaban las plegadas; ahora se guardan las
+  // desplegadas. Una sesión vieja arranca con todo plegado, que es el nuevo
+  // estado de partida: es una preferencia de vista, no un dato.
+  _advExpandidas        = new Set(s.vista?.expandidas  || []);
   _advExpandedDistricts = new Set(s.vista?.desplegadas || []);
   _advEditMode          = !!s.vista?.edicion;
 
@@ -2254,43 +2337,53 @@ function advInitSessionButtons() {
 
 /* ── Interacción ───────────────────────────────────────────── */
 
-function advAttachResultHandlers() {
+/**
+ * Engancha los controles de los resultados. Con `raiz` sólo los de ese trozo:
+ * así el cuerpo de una comunidad recién desplegada queda vivo sin repintar ni
+ * volver a enganchar los 52 bloques.
+ */
+function advAttachResultHandlers(raiz) {
+  const zona = raiz || select('#adv-results');
+  if (!zona) return;
+  const todos = sel => [...zona.querySelectorAll(sel)];
+  const completo = !raiz;
+
   // Los campos editables recalculan al confirmar, no en cada tecla: al
   // recalcular se vuelve a dibujar la tabla y se perdería el foco.
-  selectAll('#adv-results .adv-edit-votes').forEach(inp => {
+  todos('.adv-edit-votes').forEach(inp => {
     inp.addEventListener('change', () =>
       advSetEdit(inp.dataset.district, 'votes', inp.dataset.party, inp.value));
     inp.addEventListener('keydown', e => { if (e.key === 'Enter') inp.blur(); });
   });
 
-  selectAll('#adv-results .adv-edit-seats').forEach(inp => {
+  todos('.adv-edit-seats').forEach(inp => {
     inp.addEventListener('change', () =>
       advSetEdit(inp.dataset.district, 'seats', null, inp.value));
     inp.addEventListener('keydown', e => { if (e.key === 'Enter') inp.blur(); });
   });
 
-  selectAll('#adv-results .adv-row-del').forEach(btn => {
+  todos('.adv-row-del').forEach(btn => {
     btn.addEventListener('click', () => advRemoveParty(btn.dataset.district, btn.dataset.party));
   });
 
-  selectAll('#adv-results .adv-row-color').forEach(inp => {
+  todos('.adv-row-color').forEach(inp => {
     inp.addEventListener('change', () => {
       _advPartyColors[inp.dataset.party] = inp.value;
       advRun();
     });
   });
 
-  selectAll('#adv-results .adv-add-btn').forEach(btn => {
+  todos('.adv-add-btn').forEach(btn => {
     btn.addEventListener('click', () => advOpenAddParty(btn.dataset.district, btn));
   });
 
-  selectAll('#adv-results .adv-lock[data-lock-district]').forEach(btn => {
+  todos('.adv-lock[data-lock-district]').forEach(btn => {
     const id = btn.dataset.lockDistrict;
     btn.addEventListener('click', e => { e.stopPropagation(); advToggleLock(id); });
     advAttachLockMenu(btn, { districtId: id });
   });
 
-  selectAll('#adv-results .adv-lock[data-lock-all]').forEach(btn => {
+  todos('.adv-lock[data-lock-all]').forEach(btn => {
     btn.addEventListener('click', e => {
       e.stopPropagation();
       advOpenLockMenu({ scope: 'all', anchor: btn });
@@ -2298,29 +2391,31 @@ function advAttachResultHandlers() {
     advAttachLockMenu(btn, { scope: 'all' });
   });
 
-  selectAll('#adv-results .adv-lock[data-lock-ccaa]').forEach(btn => {
+  todos('.adv-lock[data-lock-ccaa]').forEach(btn => {
     const ccaa = btn.dataset.lockCcaa;
     btn.addEventListener('click', e => { e.stopPropagation(); advToggleCcaaLock(ccaa); });
     advAttachLockMenu(btn, { ccaaName: ccaa });
   });
 
-  const results = select('#adv-results');
-  if (results && _advEditMode) advAttachRowDrag(results);
+  if (_advEditMode) advAttachRowDrag(zona);
 
-  selectAll('#adv-results .adv-ccaa-header').forEach(btn => {
+  todos('.adv-ccaa-header').forEach(btn => {
     btn.addEventListener('click', () => {
       const ccaa = btn.dataset.ccaa;
       const body = select(`#adv-results [data-ccaa-body="${CSS.escape(ccaa)}"]`);
-      const open = _advCollapsed.has(ccaa);
-      if (open) _advCollapsed.delete(ccaa); else _advCollapsed.add(ccaa);
-      if (body) body.hidden = !open;
-      btn.setAttribute('aria-expanded', String(open));
+      const abrir = !_advExpandidas.has(ccaa);
+      if (abrir) _advExpandidas.add(ccaa); else _advExpandidas.delete(ccaa);
+      // Al abrir se construye su contenido; al cerrar se tira, para no
+      // acarrear tablas que nadie mira.
+      if (abrir) advRellenarCcaa(ccaa, body); else advVaciarCcaa(body);
+      if (body) body.hidden = !abrir;
+      btn.setAttribute('aria-expanded', String(abrir));
       const arrow = btn.querySelector('.adv-ccaa-arrow');
-      if (arrow) arrow.textContent = open ? '▼' : '▶';
+      if (arrow) arrow.textContent = abrir ? '▼' : '▶';
     });
   });
 
-  selectAll('#adv-results .adv-more-btn').forEach(btn => {
+  todos('.adv-more-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const id = btn.dataset.district;
       if (_advExpandedDistricts.has(id)) _advExpandedDistricts.delete(id);
@@ -2329,11 +2424,17 @@ function advAttachResultHandlers() {
     });
   });
 
+  // Los botones de la cabecera viven fuera de las fichas: sólo al pintar todo,
+  // para no engancharlos otra vez al rellenar una comunidad.
+  if (!completo) return;
   const expand = select('#adv-expand-all');
   const collapse = select('#adv-collapse-all');
-  if (expand) expand.addEventListener('click', () => { _advCollapsed.clear(); advRenderResults(); });
+  if (expand) expand.addEventListener('click', () => {
+    _advGruposCcaa.forEach((_, ccaa) => _advExpandidas.add(ccaa));
+    advRenderResults();
+  });
   if (collapse) collapse.addEventListener('click', () => {
-    _advResult.districts.forEach(d => _advCollapsed.add(d.ccaaName || d.name));
+    _advExpandidas.clear();
     advRenderResults();
   });
 }

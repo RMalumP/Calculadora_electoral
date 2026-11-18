@@ -72,6 +72,7 @@ const TAB_SLUGS = {
   pactometer: 'pactometro',
   advanced:   'avanzada',
   map:        'mapa',
+  systems:    'otros-sistemas',
   theory:     'teoria'
 };
 const SLUG_TO_TAB = Object.fromEntries(Object.entries(TAB_SLUGS).map(([k, v]) => [v, k]));
@@ -90,11 +91,42 @@ function updateHeaderActions(tabName) {
   selectAll('.adv-session-btn').forEach(b => { b.hidden = tabName !== 'advanced'; });
 }
 
+/** Aviso mientras se descarga una pestaña aplazada (mapa, teoría). */
+function tabAvisoCargando(tabName, texto) {
+  selectAll('.tab-content').forEach(t => t.classList.remove('active'));
+  selectAll('.tab').forEach(b => b.classList.remove('active'));
+  select(`.tab[data-tab="${tabName}"]`)?.classList.add('active');
+  let aviso = select('#tab-cargando');
+  if (!aviso) {
+    aviso = document.createElement('section');
+    aviso.id = 'tab-cargando';
+    aviso.className = 'tab-content';
+    select('.main')?.appendChild(aviso);
+  }
+  aviso.innerHTML = `<div class="tab-cargando-aviso" role="status">${escapeHtml(texto)}</div>`;
+  aviso.classList.add('active');
+}
+
 function switchTab(tabName, updateHash = true) {
+  if (!TAB_SLUGS[tabName]) return;
+
+  // El mapa, la teoría y «Otros sistemas» no vienen en el arranque: se piden
+  // al abrirlas (o antes, si el navegador ha tenido un rato libre). Ver
+  // js/carga-diferida.js.
+  if (!select(`#${tabName}-tab`) && typeof tabDiferidaPendiente === 'function'
+      && tabDiferidaPendiente(tabName)) {
+    tabAvisoCargando(tabName, 'Cargando…');
+    TABS_DIFERIDAS[tabName]()
+      .then(() => switchTab(tabName, updateHash))
+      .catch(() => tabAvisoCargando(tabName,
+        'No se ha podido cargar esta pestaña. Comprueba la conexión y vuelve a intentarlo.'));
+    return;
+  }
+
   selectAll('.tab-content').forEach(t => t.classList.remove('active'));
   selectAll('.tab').forEach(b => b.classList.remove('active'));
   const tabId = `${tabName}-tab`;
-  if (!TAB_SLUGS[tabName] || !select(`#${tabId}`)) return;
+  if (!select(`#${tabId}`)) return;
   select(`#${tabId}`)?.classList.add('active');
   select(`.tab[data-tab="${tabName}"]`)?.classList.add('active');
   updateHeaderActions(tabName);
@@ -110,7 +142,8 @@ function switchTab(tabName, updateHash = true) {
     }
   }
 
-  if (tabName === 'map') mapaCargar().catch(() => {});
+  // Los módulos ya están (la sección existe); falta la geometría.
+  if (tabName === 'map' && typeof mapaCargar === 'function') mapaCargar().catch(() => {});
 
   if (tabName === 'advanced') {
     advCargarModulos().then(() => advEnsureLoaded()).catch(() => {
@@ -387,16 +420,33 @@ function showTheorySystem(systemId) {
     );
   }
 
+  /**
+   * Arrastre con eventos de puntero: el mismo código vale para ratón, dedo y
+   * lápiz. Con `mousedown` el dedo no llegaba a disparar nada y reordenar era
+   * imposible en un móvil. El asa lleva `touch-action: none` en el CSS para que
+   * el navegador no entienda el gesto como un desplazamiento de la página.
+   */
   function attachHandle(handle, tr) {
-    handle.addEventListener('mousedown', function (e) {
-      if (e.button !== 0) return;
+    handle.addEventListener('pointerdown', function (e) {
+      if (e.button > 0 || !e.isPrimary) return;
       e.preventDefault();
       dragSrc = tr;
       tr.classList.add('dragging');
+      try { handle.setPointerCapture(e.pointerId); } catch (err) { /* el puntero ya se ha soltado */ }
 
-      function onMouseMove(ev) {
+      // Al arrastrar con el dedo la lista suele ser más larga que la pantalla:
+      // cerca de los bordes se desplaza sola para poder llegar al sitio.
+      function autoScroll(y) {
+        const margen = 60;
+        const alto = window.innerHeight;
+        if (y < margen) window.scrollBy(0, -Math.ceil((margen - y) / 4));
+        else if (y > alto - margen) window.scrollBy(0, Math.ceil((y - (alto - margen)) / 4));
+      }
+
+      function onPointerMove(ev) {
         clearDragStyles();
         tr.classList.add('dragging');
+        autoScroll(ev.clientY);
         for (const row of getRows()) {
           if (row === dragSrc) continue;
           const rect = row.getBoundingClientRect();
@@ -407,20 +457,26 @@ function showTheorySystem(systemId) {
         }
       }
 
-      function onMouseUp() {
-        document.removeEventListener('mousemove', onMouseMove);
-        document.removeEventListener('mouseup', onMouseUp);
+      function onPointerUp(ev) {
+        handle.removeEventListener('pointermove', onPointerMove);
+        handle.removeEventListener('pointerup', onPointerUp);
+        handle.removeEventListener('pointercancel', onPointerUp);
+        try { handle.releasePointerCapture(ev.pointerId); } catch (err) { /* ya soltado */ }
         if (!dragSrc) { clearDragStyles(); return; }
 
         const tbody = select('#votes-body');
         const above = tbody?.querySelector('.drag-over-above');
         const below = tbody?.querySelector('.drag-over-below');
 
-        if (above && above !== dragSrc && tbody) {
-          tbody.insertBefore(dragSrc, above);
-        } else if (below && below !== dragSrc && tbody) {
-          const next = below.nextElementSibling;
-          if (next) tbody.insertBefore(dragSrc, next);
+        // Cancelado (otra ventana, llamada entrante): no se mueve nada.
+        if (ev.type !== 'pointercancel') {
+          if (above && above !== dragSrc && tbody) {
+            tbody.insertBefore(dragSrc, above);
+          } else if (below && below !== dragSrc && tbody) {
+            const next = below.nextElementSibling;
+            if (next) tbody.insertBefore(dragSrc, next);
+            else tbody.appendChild(dragSrc);
+          }
         }
 
         clearDragStyles();
@@ -429,8 +485,11 @@ function showTheorySystem(systemId) {
         updateTotals();
       }
 
-      document.addEventListener('mousemove', onMouseMove);
-      document.addEventListener('mouseup', onMouseUp);
+      // Con el puntero capturado los eventos siguen llegando al asa aunque el
+      // dedo salga de ella, así que no hace falta escuchar en todo el documento.
+      handle.addEventListener('pointermove', onPointerMove);
+      handle.addEventListener('pointerup', onPointerUp);
+      handle.addEventListener('pointercancel', onPointerUp);
     });
   }
 

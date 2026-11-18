@@ -238,10 +238,10 @@ function sesionRecuperar(s) {
   _sesionRecuperarCalculadora(s.calculadora || {});
   _sesionRecuperarPactometro(s.pactometro || {});
   if (_sesionPestanas().includes(s.pestana)) switchTab(s.pestana);
-  if (s.mapa && typeof mapaCargar === 'function') {
+  if (s.mapa && typeof mapaCargarModulos === 'function') {
     // El mapa se monta al abrir su pestaña; la vista guardada se repone en
     // cuanto termine de montarse, esté abierta o no.
-    mapaCargar().then(() => mapaAplicarVista(s.mapa)).catch(() => {});
+    mapaCargarModulos().then(() => mapaCargar()).then(() => mapaAplicarVista(s.mapa)).catch(() => {});
   }
   return true;
 }

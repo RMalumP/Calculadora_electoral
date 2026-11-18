@@ -202,9 +202,11 @@ async function advAplicarEscenarioDeUrl() {
 /* ── Arranque ─────────────────────────────────────────────────── */
 
 document.addEventListener('click', ev => {
-  const b = ev.target.closest('[data-adv-export], #adv-share-btn');
+  const b = ev.target.closest('[data-adv-export], #adv-share-btn, #adv-a-basica');
   if (!b) return;
   if (b.id === 'adv-share-btn') return advCopiarEnlace();
+  // Llevarse el recuento a la calculadora normal (js/basica-exportar.js).
+  if (b.id === 'adv-a-basica') return basDesdeAvanzada();
   const tipo = b.dataset.advExport;
   if (tipo === 'csv') advExportarCSV();
   else if (tipo === 'png') advExportarPNG();

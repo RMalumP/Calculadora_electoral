@@ -222,6 +222,9 @@ tr[data-is-otros="true"] td input[type=color] {
   transition: color var(--transition), background var(--transition);
   user-select: none;
   line-height: 1;
+  /* El gesto sobre el asa es un arrastre, no un desplazamiento de la página:
+     sin esto el navegador se queda el toque y en móvil no se puede reordenar. */
+  touch-action: none;
 }
 .drag-handle:hover { color: var(--accent-light); background: var(--accent-pale); }
 .drag-handle:active { cursor: grabbing; }
@@ -498,4 +501,12 @@ tr.drag-over-below       { border-bottom: 2px solid var(--accent) !important; }
   .pact-modo-ab #pactometer-table th:last-child, .pact-modo-ab #pactometer-table td:last-child { width: 74px !important; }
   .pact-modo-ab #pactometer-table th { font-size: 0.6rem; letter-spacing: 0; overflow: hidden; text-overflow: ellipsis; }
   .pact-blk-b-etq { display: none; }
+}
+
+/* En la cabecera estrecha los botones se quedan en su icono: con el rótulo
+   entero, «Escenarios» y «Nueva sesión» empujaban el resto a una segunda fila
+   y la cabecera se comía otros 52 px de pantalla. El title y el aria-label
+   siguen diciendo lo que hacen. */
+@media (max-width: 760px) {
+  .cab-rotulo { display: none; }
 }

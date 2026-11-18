@@ -126,7 +126,7 @@ function _buildRow(name, votes, color, isOtros) {
     <td style="text-align:center;padding:4px 6px"><input type="color" value="${escapeHtml(colorVal)}" title="Color del partido" ${isOtros ? 'disabled style="cursor:not-allowed"' : ''}></td>
     ${groupCell}
     <td>${nameCell}</td>
-    <td style="padding:2px 4px"><input type="text" class="votes-input" placeholder="0" value="${votesFmt}" min="0" max="9000000000" ${isOtros ? 'data-otros-main="true"' : ''} oninput="formatVoteInput(this);updateTotals();updateSecondRoundIfActive();" onfocus="onVoteFocus(this)" onblur="onVoteBlur(this)"></td>
+    <td style="padding:2px 4px"><input type="text" class="votes-input" placeholder="0" value="${votesFmt}" min="0" max="9000000000" ${isOtros ? 'data-otros-main="true"' : ''} oninput="formatVoteInput(this);updateTotalsPronto();updateSecondRoundIfActive();" onfocus="onVoteFocus(this)" onblur="onVoteBlur(this)"></td>
     <td class="pct-cell pct-display">—</td>
     <td class="row-more-cell">${isOtros ? '' : '<button type="button" class="row-more-btn" onclick="toggleRowMore(this)" aria-expanded="false" title="Más opciones de la fila">⋯</button>'}</td>`;
 

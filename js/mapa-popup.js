@@ -344,7 +344,8 @@ function mapaPopupFicha(porPieza, paleta) {
 function advPopupMapa(body) {
   if (!window.MAPA_ES) {
     body.innerHTML = '<p class="adv-popup-note">Cargando el mapa…</p>';
-    mapaCargar()
+    // Los módulos del mapa no vienen en el arranque (js/carga-diferida.js).
+    mapaCargarModulos().then(() => mapaCargar())
       .then(() => { if (_advPopupKind === 'mapa') advPopupRender(); })
       .catch(() => {
         if (_advPopupKind !== 'mapa') return;

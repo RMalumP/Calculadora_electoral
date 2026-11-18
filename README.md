@@ -9,16 +9,26 @@ Aplicación web (sin servidor ni instalación) para calcular el reparto de esca�
 | **Calculadora** | Metes votos de partidos y obtienes el reparto con D'Hondt, Sainte-Laguë, Hare, Droop, Imperiali, mayoritarios…, con barrera, bono de mayoría y compensatorios. |
 | **Pactómetro** | Ves qué bloques suman mayoría con los escaños calculados. Por defecto usa la calculadora básica; el selector «Origen de los escaños» permite usar la avanzada, el lado A o B del comparador, o los dos a la vez (dos columnas de escaños y una barra por lado que dice qué pactos dan mayoría en A y en B). Los bloques se recuerdan por partido al cambiar de origen. En «A y B», el botón «B≠» de cada partido permite ponerlo en B en otro bloque (por defecto, el mismo que en A). |
 | **Calculadora avanzada** | Elecciones reales (Congreso, Senado, Europeas, Cabildos…) con su base de datos: cambias circunscripción, fórmula, barreras, escaños, bono y compensación. Modos Sencillo y Avanzado. |
+| **Otros sistemas** | Los sistemas que no salen de una tabla de votos: mixtos (MMP compensatorio, con excedentes o de tamaño fijo, y paralelo) y preferenciales (listas abiertas, desbloqueadas y cerradas; STV, voto alternativo, Borda y Condorcet). Los datos se meten a mano, porque ni el voto uninominal por distrito ni las papeletas ordenadas están en la base de datos. Cada ficha de Teoría tiene un botón para probar su sistema aquí. |
 | **Teoría** | Descripción, fórmula y ejemplo de cada sistema, de las barreras, los indicadores, la segunda vuelta, las coaliciones y los sistemas mixtos y preferenciales. |
 
 En la avanzada:
 
 - **Comparar** (⚖): dos configuraciones independientes (cada una con su elección, circunscripción, fórmula, barrera, escaños y compensación) calculadas a la vez, con barras apiladas, diferencias y barras emparejadas por partido.
+- **Oscilación**: deslizadores para subir o bajar cada candidatura en puntos, aplicados por igual en todas las circunscripciones (la oscilación uniforme con la que se leen las encuestas). Lo que una gana o pierde lo absorben las demás, así que los votos válidos no cambian, y la columna «reales» enseña la diferencia con el resultado de verdad.
 - **Voto por territorio**: con circunscripción estatal o autonómica, desglosa el voto por provincia o comunidad (matriz territorio × partidos, o el ranking de un partido).
 - **Ventanas**: representación visual, último escaño y desglose de coeficientes por circunscripción.
 - **Exportar**: CSV del recuento (y del desglose territorial) e imagen PNG.
 - **Compartir** (🔗): copia un enlace con la configuración en la URL; al abrirlo carga el mismo ámbito y opciones.
 - **Sesión**: se guarda sola en el navegador; también se puede guardar y cargar en un archivo `.json`.
+- **Llevar a la calculadora** (menú «Ver»): vuelca el recuento (candidaturas, votos, colores, escaños, fórmula y barrera) en la calculadora básica, para jugar con datos reales sin montar la avanzada entera.
+
+En la calculadora básica, el menú **Exportar** del resultado da lo mismo sin depender de la avanzada:
+
+- **CSV (Excel)**: una fila por candidatura con votos, porcentajes, escaños y la diferencia en puntos; separador `;` y BOM, que es lo que entiende Excel en español.
+- **Imagen**: PNG del reparto, dibujado a doble resolución.
+- **🔗 Copiar enlace**: mete la sesión entera (partidos, votos, colores, parámetros y pactómetro) en el propio enlace, sin servidor. Si no cabe, avisa y remite al botón 💾 de la cabecera.
+- **Imprimir o PDF**: `css/impresion.css` deja en el papel sólo el resultado (fuera cabecera, pestañas, parámetros, tabla de entrada y botones), en blanco y negro salvo los colores de partido, y añade un pie con la fórmula, los totales y la fecha. Vale igual para la avanzada: lo que esté plegado no se imprime.
 
 Novedades de sistemas electorales:
 
@@ -28,7 +38,9 @@ Novedades de sistemas electorales:
 - **Segunda vuelta**: reglas de acceso (dos primeros, Francia), simulador manual en la calculadora y reparto real en la avanzada con los votos de la vuelta 2 de la hoja (o simulado si faltan). Formato de datos en [`datos/SEGUNDA_VUELTA.md`](datos/SEGUNDA_VUELTA.md); EE. UU. y Reino Unido (sin segunda vuelta) en [`datos/OTROS_SISTEMAS.md`](datos/OTROS_SISTEMAS.md).
 - **Coaliciones**: lista conjunta que pasa la barrera con la suma, reparto interno y comparación juntos o separados, en la calculadora y en la avanzada (`js/coaliciones*.js`).
 - **Prorrateo** entre circunscripciones (Hare, D'Hondt, Webster, Adams, Huntington-Hill) y medida de la desigualdad del voto (`js/prorrateo.js`).
-- **Apagado hasta que haya datos** (`js/experimental.js`): sistemas mixtos MMP y paralelo (`algorithms-mixtos.js`) y listas abiertas, STV, voto alternativo, Borda y Condorcet (`algorithms-preferencial.js`). Están programados y probados, sin interfaz.
+- **Mixtos y preferenciales** (`algorithms-mixtos.js`, `algorithms-preferencial.js`): se usan desde la pestaña «Otros sistemas», con los datos a mano. Lo que sigue apagado (`js/experimental.js`) es ofrecerlos en la calculadora avanzada sobre elecciones reales, que necesita un voto uninominal por distrito y unas papeletas ordenadas que la base de datos no tiene.
+
+**Escenarios** (🗂 en la cabecera): guarda con nombre lo que haya en pantalla (calculadora, pactómetro, avanzada y pestaña abierta) y lo repone de una lista, en este navegador. Sirve para tener a mano «2023 con barrera del 5 %» y «2023 con circunscripción única» sin bajarse dos archivos. El autoguardado sigue recordando aparte lo último que se estaba haciendo.
 
 La interfaz tiene tema claro y oscuro (botón 🌓: automático, claro u oscuro) y se adapta a móvil y tablet. En la calculadora básica, por debajo de 1100 px los partidos pasan a tarjetas (acciones tras «⋯»), el censo se pliega y los parámetros se abren en un panel lateral desde una barra con resumen y botón «Calcular»; en horizontal, votos a la izquierda y parámetros con resultados a la derecha.
 
@@ -41,6 +53,12 @@ js/                   Lógica
   algorithms.js         Reparto de escaños (sin DOM, probado con Node)
   advanced-*.js         Calculadora avanzada; se cargan al abrir su pestaña (carga-avanzada.js),
                         salvo advanced-compensation.js, que usa también la calculadora normal
+  avanzada-oscilacion.js  Simulador de oscilación de la avanzada
+  mapa-*.js             Mapa; se cargan al abrir su pestaña (carga-diferida.js), y por detrás
+                        en cuanto el navegador está ocioso
+  sistemas-ui.js        Pestaña «Otros sistemas»; con ella se cargan algorithms-mixtos.js
+                        y algorithms-preferencial.js, que antes se descargaban siempre
+  escenarios.js         Escenarios guardados con nombre en este navegador
   accesibilidad.js      ARIA, teclado y tema
 css/                  Estilos (tema-oscuro.css sobreescribe las variables de variables.css)
 datos/                Base de datos electoral (ver datos/LEEME.md)
@@ -64,9 +82,14 @@ No hay paso de compilación: se edita y se recarga. Para servirla en local:
 
     node --test tests/*.test.js                 # algoritmos y motor de la avanzada (Node 20+)
     python3 -m unittest discover -s tests -v    # editor y conversor (necesita openpyxl)
+    node tests/navegador.js                     # prueba de humo en Chromium (necesita Playwright)
 
-Las de Node cargan los scripts del proyecto tal cual y comprueban, entre otras cosas, que el Congreso de 2023 da los escaños oficiales. Las dos baterías se ejecutan en GitHub Actions en cada PR (`.github/workflows/pruebas.yml`).
+Las de Node cargan los scripts del proyecto tal cual y comprueban, entre otras cosas, que el Congreso de 2023 da los escaños oficiales. `tests/navegador.js` levanta su propio servidor, abre las cinco pestañas en 390 y 1400 px, usa lo principal de cada una y falla si hay un error de JavaScript o un desborde horizontal; sin Playwright instalado se salta sola. Las tres se ejecutan en GitHub Actions en cada PR (`.github/workflows/pruebas.yml`).
 
 ### Caché sin conexión
 
-`sw.js` precachea los archivos de la aplicación y la última elección de cada ámbito. Al cambiar algo que deba renovarse sí o sí, sube la constante `CACHE`.
+`sw.js` precachea los archivos de la aplicación y la última elección de cada ámbito. Los archivos propios (`css/`, `js/`, `tabs/`, `icons/`) se sirven **de la caché primero** y se renuevan por detrás, porque se reemplazan todos a la vez al subir `CACHE`; la página y los datos van a la red primero. Al cambiar algo que deba renovarse sí o sí, sube la constante `CACHE`.
+
+### Qué se descarga al arrancar
+
+Sólo lo que hace falta para la calculadora básica (unos 440 KB en 42 peticiones, frente a 624 KB en 54 antes). La calculadora avanzada (`js/carga-avanzada.js`), el mapa, la teoría y «Otros sistemas» (`js/carga-diferida.js`) se piden al abrir su pestaña y, si no, en cuanto el navegador está ocioso.

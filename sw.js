@@ -1,7 +1,7 @@
 // Versión de la caché: súbela cuando cambie algo que deba reemplazarse sí o sí.
 // No hace falta tocar los ?v= de los scripts: el servidor de red va primero y la
 // caché se busca sin parámetros, así que una URL con o sin ?v= es el mismo archivo.
-const CACHE = 'calculadora-electoral-v15';
+const CACHE = 'calculadora-electoral-v20';
 const ASSETS = [
   './',
   './index.html',
@@ -12,18 +12,25 @@ const ASSETS = [
   './css/basica.css',
   './css/tema-oscuro.css',
   './css/components.css',
+  './css/impresion.css',
+  './css/sistemas.css',
   './css/header-tabs.css',
   './css/layout.css',
   './css/mapa.css',
   './css/otros-drag-responsive.css',
   './css/variables.css',
   './js/accesibilidad.js',
+  './js/carga-diferida.js',
   './js/advanced-calc.js',
   './js/prorrateo.js',
   './js/comparar-calc.js',
   './js/advanced-compare.js',
   './js/advanced-exportar.js',
+  './js/avanzada-oscilacion.js',
   './js/basica-ui.js',
+  './js/basica-exportar.js',
+  './js/escenarios.js',
+  './js/sistemas-ui.js',
   './js/carga-avanzada.js',
   './js/advanced-compensation.js',
   './js/advanced-data.js',
@@ -70,6 +77,7 @@ const ASSETS = [
   './tabs/calculadora.js',
   './tabs/mapa.js',
   './tabs/pactometro.js',
+  './tabs/sistemas.js',
   './tabs/teoria.js',
   './icons/apple-touch-icon.png',
   './icons/icon-192.png',
@@ -108,18 +116,51 @@ self.addEventListener('activate', e => {
   );
 });
 
-// Network-first con respaldo en caché (incluye fuentes de Google ya visitadas)
+/**
+ * Los archivos propios de la aplicación (css/, js/, tabs/, icons/) se
+ * reemplazan todos a la vez al subir CACHE, así que no hace falta preguntar a
+ * la red por ellos: se sirven de la caché y se renuevan por detrás. Antes todo
+ * iba a la red primero, y con la caché llena pero la conexión lenta la página
+ * instalada arrancaba tan despacio como la web, que es lo contrario de para lo
+ * que se instala.
+ *
+ * La página y los datos siguen yendo a la red primero: el índice y las
+ * elecciones cambian sin que cambie el código.
+ */
+function esArchivoDeLaApp(url) {
+  if (url.origin !== self.location.origin) return false;
+  return /\/(css|js|tabs|icons)\/[^/]+$/.test(url.pathname) ||
+         url.pathname.endsWith('/manifest.webmanifest');
+}
+
+/** Caché primero, y se renueva por detrás para la próxima visita. */
+function cacheFirst(request) {
+  return caches.match(request, { ignoreSearch: true }).then(guardado => {
+    const red = fetch(request).then(res => {
+      if (res.ok) caches.open(CACHE).then(c => c.put(request, res.clone()));
+      return res;
+    }).catch(() => guardado);
+    return guardado || red;
+  });
+}
+
+/** Red primero con respaldo en caché (incluye fuentes de Google ya visitadas). */
+function networkFirst(request) {
+  return fetch(request)
+    .then(res => {
+      if (res.ok || res.type === 'opaque') {
+        const copy = res.clone();
+        caches.open(CACHE).then(c => c.put(request, copy));
+      }
+      return res;
+    })
+    .catch(() => caches.match(request, { ignoreSearch: true })
+      .then(r => r || caches.match('./index.html')));
+}
+
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
-  e.respondWith(
-    fetch(e.request)
-      .then(res => {
-        if (res.ok || res.type === 'opaque') {
-          const copy = res.clone();
-          caches.open(CACHE).then(c => c.put(e.request, copy));
-        }
-        return res;
-      })
-      .catch(() => caches.match(e.request, { ignoreSearch: true }).then(r => r || caches.match('./index.html')))
-  );
+  let url;
+  try { url = new URL(e.request.url); } catch (err) { return; }
+  e.respondWith(esArchivoDeLaApp(url) ? cacheFirst(e.request) : networkFirst(e.request));
 });

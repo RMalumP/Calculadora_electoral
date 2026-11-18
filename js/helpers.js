@@ -105,3 +105,27 @@ function styleButton(btn, active, activeColor, inactiveBg, inactiveColor) {
     btn.style.color = active ? 'white' : inactiveColor;
   }
 }
+
+/* ── Desplazamiento ── */
+
+/** ¿Tiene el sistema activado «reducir el movimiento»? */
+function movimientoReducido() {
+  try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; }
+  catch (e) { return false; }
+}
+
+/**
+ * Lleva un elemento a la vista. Respeta «reducir el movimiento» y, si el
+ * elemento ya se ve entero, no mueve nada: en escritorio no tiene sentido dar
+ * un salto cuando los resultados están delante.
+ */
+function desplazarA(el, opciones = {}) {
+  if (!el || el.offsetParent === null) return;
+  const { forzar = false, block = 'nearest' } = opciones;
+  if (!forzar) {
+    const r = el.getBoundingClientRect();
+    const alto = window.innerHeight || document.documentElement.clientHeight;
+    if (r.top >= 0 && r.top < alto * 0.6) return;
+  }
+  el.scrollIntoView({ behavior: movimientoReducido() ? 'auto' : 'smooth', block });
+}

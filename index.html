@@ -4,6 +4,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Calculadora Electoral</title>
+  <meta name="description" content="Calcula el reparto de escaños con D'Hondt, Sainte-Laguë, Hare y otros sistemas, con elecciones reales de España, barreras, bono de mayoría, escaños compensatorios, pactómetro y mapa.">
+
+  <!-- Tarjeta al pegar un enlace compartido (los botones «Compartir» de la
+       avanzada y del mapa generan enlaces que la gente pega en mensajería). -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Calculadora Electoral">
+  <meta property="og:title" content="Calculadora Electoral">
+  <meta property="og:description" content="Reparto de escaños con distintos sistemas electorales, con elecciones reales, pactómetro y mapa.">
+  <meta property="og:image" content="icons/og-card.png">
+  <meta property="og:locale" content="es_ES">
+  <meta name="twitter:card" content="summary_large_image">
+
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#211c18">
   <meta name="color-scheme" content="light dark">
@@ -23,8 +35,8 @@
   <link rel="stylesheet" href="css/otros-drag-responsive.css">
   <link rel="stylesheet" href="css/advanced.css">
   <link rel="stylesheet" href="css/basica.css">
-  <link rel="stylesheet" href="css/mapa.css">
   <link rel="stylesheet" href="css/tema-oscuro.css">
+  <link rel="stylesheet" href="css/impresion.css" media="print">
   <script>try{var t=localStorage.getItem('ce-tema');if(t=='dark'||t=='light')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
 </head>
 <body>
@@ -46,9 +58,22 @@
     <button class="save-icon-btn" id="theme-btn" type="button"
             title="Cambiar el tema (automático, claro u oscuro)" aria-label="Cambiar el tema">🌓</button>
 
+    <!-- Escenarios con nombre, guardados en este navegador (js/escenarios.js). -->
+    <span class="menu-dd" id="esc-menu">
+      <button type="button" class="save-icon-btn menu-dd-btn" aria-haspopup="true" aria-expanded="false"
+              title="Guardar este escenario con un nombre, o abrir uno guardado"
+              aria-label="Escenarios guardados">🗂<span class="cab-rotulo"> Escenarios</span><span id="esc-cuenta"></span></button>
+      <span class="menu-dd-list esc-lista-caja" role="menu" hidden>
+        <button type="button" role="menuitem" id="esc-guardar">+ Guardar el de ahora…</button>
+        <div class="esc-sep"></div>
+        <div id="esc-lista"></div>
+      </span>
+    </span>
+
     <!-- Sesión guardada automáticamente en este navegador. -->
     <button class="save-icon-btn" id="auto-clear-btn"
-            title="Borrar la sesión guardada en este navegador y empezar de cero">🗑 Nueva sesión</button>
+            title="Borrar la sesión guardada en este navegador y empezar de cero"
+            aria-label="Nueva sesión">🗑<span class="cab-rotulo"> Nueva sesión</span></button>
 
     <!-- Calculadora y pactómetro: copia autónoma de la página. -->
     <button class="save-icon-btn" id="save-html-btn" onclick="saveHTML()"
@@ -69,6 +94,7 @@
   <button class="tab"        data-tab="pactometer"  onclick="switchTab('pactometer')">Pactómetro</button>
   <button class="tab"        data-tab="advanced"    onclick="switchTab('advanced')">Calculadora avanzada</button>
   <button class="tab"        data-tab="map"        onclick="switchTab('map')">Mapa</button>
+  <button class="tab"        data-tab="systems"    onclick="switchTab('systems')">Otros sistemas</button>
   <button class="tab"        data-tab="theory"      onclick="switchTab('theory')">Teoría</button>
 </div>
 
@@ -79,20 +105,22 @@
 </div><!-- /main -->
 
 <!-- ══ PESTAÑAS: registro (js/tabs.js) y marcado de cada sección ══ -->
+<!-- El mapa, la teoría y «Otros sistemas» se descargan al abrirlas: js/carga-diferida.js -->
+
+<!-- Pie que sólo sale al imprimir: procedencia, reglas y fecha. -->
+<div id="print-pie" hidden></div>
+
 <script src="js/tabs.js" defer></script>
+<script src="js/carga-diferida.js" defer></script>
 <script src="tabs/calculadora.js" defer></script>
 <script src="tabs/pactometro.js" defer></script>
 <script src="tabs/avanzada.js" defer></script>
-<script src="tabs/mapa.js" defer></script>
-<script src="tabs/teoria.js" defer></script>
 
 <!-- ══ SCRIPTS (orden de dependencias) ══ -->
 <script src="js/helpers.js" defer></script>
 <script src="js/constants.js" defer></script>
 <script src="js/algorithms.js" defer></script>
 <script src="js/experimental.js" defer></script>
-<script src="js/algorithms-mixtos.js" defer></script>
-<script src="js/algorithms-preferencial.js" defer></script>
 <script src="js/coaliciones.js" defer></script>
 <script src="js/coaliciones-ui.js" defer></script>
 <script src="js/segunda-vuelta.js" defer></script>
@@ -110,21 +138,12 @@
 <!-- La calculadora avanzada (y la base de datos local de datos/generado/) se descarga al abrir su pestaña: js/carga-avanzada.js -->
 <script src="js/carga-avanzada.js" defer></script>
 <script src="js/advanced-compensation.js" defer></script>
-<!-- El mapa descarga su geometría al abrir la pestaña: js/mapa.js -->
-<script src="js/mapa.js" defer></script>
-<script src="js/mapa-datos.js" defer></script>
-<script src="js/mapa-ui.js" defer></script>
-<script src="js/mapa-modos.js" defer></script>
-<script src="js/mapa-compara.js" defer></script>
-<script src="js/mapa-puntos.js" defer></script>
-<script src="js/mapa-senado.js" defer></script>
-<script src="js/mapa-cartograma.js" defer></script>
-<script src="js/mapa-exportar.js" defer></script>
-<script src="js/mapa-zoom.js" defer></script>
-<script src="js/mapa-simulacion.js" defer></script>
-<script src="js/mapa-comparador.js" defer></script>
 <script src="js/session.js" defer></script>
+<!-- Lee la sesión compartida de la URL antes de que ui.js reconstruya las filas -->
+<script src="js/basica-exportar.js" defer></script>
 <script src="js/autosave.js" defer></script>
+<!-- Después de autosave.js: usa autoSnapshot() para recoger el estado. -->
+<script src="js/escenarios.js" defer></script>
 <script src="js/ui.js" defer></script>
 <script src="js/accesibilidad.js" defer></script>
 <script>

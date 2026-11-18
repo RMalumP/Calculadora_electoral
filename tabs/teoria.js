@@ -207,6 +207,7 @@ registerTab('theory', 'tab-content', String.raw`
               <div class="theory-formula">Se busca el menor tamaño total T ≥ base tal que, repartiendo T proporcionalmente a los votos,<br>ningún partido tenga menos escaños que sus escaños directos.<br>Compensatorios(partido) = Reparto(T)(partido) − Directos(partido)</div>
               <h4 class="theory-h4">Ejemplo</h4>
               <p class="theory-p">Parlamento base de 20 escaños. Votos: A 40 %, B 35 %, C 25 %. Escaños directos: A 10, B 2, C 1. Proporcionalmente (Hare) les corresponderían A 8, B 7, C 5, así que A tiene 2 excedentes. Para que A conserve sus 10 escaños, el parlamento debe crecer hasta T = 24: con Hare, A tiene cuota 9,6 y el mayor resto le da el décimo (con 23 se quedaría en 9). Reparto final: A 10, B 8, C 6. Compensatorios: A 0, B 6, C 5. Total: 24 escaños.</p>
+              <p class="theory-p"><button type="button" class="ghost-btn" onclick="sisProbar('mixto', 'compensar')">Probarlo en «Otros sistemas»</button></p>
             </div>
 
             <div id="theory-nordico" class="theory-content-section">
@@ -295,6 +296,7 @@ registerTab('theory', 'tab-content', String.raw`
               <div class="theory-formula">Total(partido) = distritos ganados + escaños de lista (reparto proporcional de la parte de lista)</div>
               <h4 class="theory-h4">Ejemplo</h4>
               <p class="theory-p">Votos de lista 50 / 30 / 20 %, distritos 7 / 1 / 0 y 10 escaños de lista con D'Hondt (5 / 3 / 2). Total: A 12, B 4, C 2 (18 escaños); A tiene el 67 % de los escaños con el 50 % de los votos.</p>
+              <p class="theory-p"><button type="button" class="ghost-btn" onclick="sisProbar('mixto', 'paralelo')">Probarlo en «Otros sistemas»</button></p>
             </div>
 
             <div id="theory-preferencial" class="theory-content-section">
@@ -306,6 +308,7 @@ registerTab('theory', 'tab-content', String.raw`
               <div class="theory-formula">1) Escaños(lista) = reparto proporcional por votos<br>2) Abierta: electos = los N con más preferencias<br>   Desbloqueada: sube quien supera umbral × votos de la lista; el resto, por orden</div>
               <h4 class="theory-h4">Ejemplo</h4>
               <p class="theory-p">Lista con 100 votos y 2 escaños; candidatos a (10 preferencias), b (5) y c (30). Cerrada: a y b. Abierta: c y a. Desbloqueada con umbral del 25 %: c supera el umbral (30 ≥ 25) y sube: c y a.</p>
+              <p class="theory-p"><button type="button" class="ghost-btn" onclick="sisProbar('listas')">Probarlo en «Otros sistemas»</button></p>
             </div>
 
             <div id="theory-stv" class="theory-content-section">
@@ -316,6 +319,7 @@ registerTab('theory', 'tab-content', String.raw`
               <div class="theory-formula">Cuota = ⌊votos / (escaños + 1)⌋ + 1<br>Peso de transferencia = (votos del candidato − cuota) / votos del candidato</div>
               <h4 class="theory-h4">Ejemplo</h4>
               <p class="theory-p">2 escaños y 100 papeletas: cuota 34. A tiene 40: es elegido y sus 6 votos de excedente pasan a B. B tiene 30 + 6 = 36 ≥ 34: B también sale elegido.</p>
+              <p class="theory-p"><button type="button" class="ghost-btn" onclick="sisProbar('ordinal', 'stv')">Probarlo en «Otros sistemas»</button></p>
             </div>
 
             <div id="theory-av" class="theory-content-section">
@@ -326,6 +330,7 @@ registerTab('theory', 'tab-content', String.raw`
               <div class="theory-formula">AV: se elimina al último y se repiten los recuentos<br>Borda: n−1 puntos al primero, n−2 al segundo…<br>Condorcet: gana quien supera a cada rival en más papeletas</div>
               <h4 class="theory-h4">Ejemplo</h4>
               <p class="theory-p">A 40 (A>B>C), B 35 (B>C>A), C 25 (C>B>A). Mayoría simple: A. Voto alternativo: sale C y B suma 60, así que gana B. Borda: A 80, B 135, C 85: gana B. Condorcet: B vence a A (60–40) y a C (75–25): gana B.</p>
+              <p class="theory-p"><button type="button" class="ghost-btn" onclick="sisProbar('ordinal', 'av')">Probarlo en «Otros sistemas»</button></p>
             </div>
 
           </div>
