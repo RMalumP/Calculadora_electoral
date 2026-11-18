@@ -92,4 +92,4 @@ Las de Node cargan los scripts del proyecto tal cual y comprueban, entre otras c
 
 ### Qué se descarga al arrancar
 
-Sólo lo que hace falta para la calculadora básica (unos 420 KB en 40 peticiones). La calculadora avanzada (`js/carga-avanzada.js`), el mapa, la teoría y «Otros sistemas» (`js/carga-diferida.js`) se piden al abrir su pestaña y, si no, en cuanto el navegador está ocioso.
+Sólo lo que hace falta para la calculadora básica (unos 440 KB en 42 peticiones, frente a 624 KB en 54 antes). La calculadora avanzada (`js/carga-avanzada.js`), el mapa, la teoría y «Otros sistemas» (`js/carga-diferida.js`) se piden al abrir su pestaña y, si no, en cuanto el navegador está ocioso.
