@@ -687,6 +687,8 @@ tr.adv-edit-total td {
   line-height: 1;
   user-select: none;
   padding: 0 1px;
+  /* El gesto sobre el asa es un arrastre, no un desplazamiento de la página. */
+  touch-action: none;
 }
 .adv-drag-handle:active { cursor: grabbing; }
 
