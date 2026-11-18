@@ -15,6 +15,7 @@ Aplicación web (sin servidor ni instalación) para calcular el reparto de esca�
 En la avanzada:
 
 - **Comparar** (⚖): dos configuraciones independientes (cada una con su elección, circunscripción, fórmula, barrera, escaños y compensación) calculadas a la vez, con barras apiladas, diferencias y barras emparejadas por partido.
+- **Oscilación**: deslizadores para subir o bajar cada candidatura en puntos, aplicados por igual en todas las circunscripciones (la oscilación uniforme con la que se leen las encuestas). Lo que una gana o pierde lo absorben las demás, así que los votos válidos no cambian, y la columna «reales» enseña la diferencia con el resultado de verdad.
 - **Voto por territorio**: con circunscripción estatal o autonómica, desglosa el voto por provincia o comunidad (matriz territorio × partidos, o el ranking de un partido).
 - **Ventanas**: representación visual, último escaño y desglose de coeficientes por circunscripción.
 - **Exportar**: CSV del recuento (y del desglose territorial) e imagen PNG.
@@ -50,6 +51,7 @@ js/                   Lógica
   algorithms.js         Reparto de escaños (sin DOM, probado con Node)
   advanced-*.js         Calculadora avanzada; se cargan al abrir su pestaña (carga-avanzada.js),
                         salvo advanced-compensation.js, que usa también la calculadora normal
+  avanzada-oscilacion.js  Simulador de oscilación de la avanzada
   mapa-*.js             Mapa; se cargan al abrir su pestaña (carga-diferida.js), y por detrás
                         en cuanto el navegador está ocioso
   sistemas-ui.js        Pestaña «Otros sistemas»; con ella se cargan algorithms-mixtos.js

@@ -15,6 +15,8 @@ const ADV_MODULOS = [
   'js/advanced-data.js',
   'js/prorrateo.js',
   'js/advanced-calc.js',
+  // Antes de advanced-ui.js, que la llama al montar las secciones.
+  'js/avanzada-oscilacion.js',
   'js/advanced-ui.js',
   'js/advanced-popups.js',
   // Se registra en ADV_POPUPS, así que va después de advanced-popups.js.

@@ -127,6 +127,8 @@ async function advLoadElection(force, eleccionKey, conservar) {
     _advCustomParties = {};
     _advPartyColors = {};
     _advLocks = {};
+    // La oscilación también: son puntos sobre unas candidaturas concretas.
+    if (typeof advOscOlvidar === 'function') advOscOlvidar();
   }
   const key = select('#adv-election')?.value ||
     (typeof advAmbitoPorDefecto === 'function' ? advAmbitoPorDefecto() : ADV_ELECTIONS[0].key);
@@ -674,6 +676,7 @@ function advCajonResumen(extra) {
 function advInitSections() {
   advInitMas();
   advInitCajon();
+  if (typeof advOscInit === 'function') advOscInit();
   const tabs = select('#adv-tabs');
   if (tabs) {
     tabs.innerHTML = '';
@@ -829,11 +832,18 @@ function advRun() {
   advUpdateHeader(rows);
   try {
     const parties = [..._advParties.parties, ...Object.values(_advCustomParties)];
-    _advResult = advCalculate({ ..._advParties, parties, rows }, _advConfig, _advEdits, _advLocks);
+    const datos = { ..._advParties, parties, rows };
+    // Al recuperar una sesión con oscilación hace falta saber de dónde partía.
+    if (typeof advOscAsegurarBase === 'function') advOscAsegurarBase(datos, _advConfig, _advLocks);
+    // La oscilación se traduce en ediciones de votos; las puestas a mano mandan.
+    const ediciones = typeof advOscMezclar === 'function'
+      ? advOscMezclar(_advEdits, datos, _advConfig) : _advEdits;
+    _advResult = advCalculate(datos, _advConfig, ediciones, _advLocks);
   } catch (err) {
     advRenderStatus(`<div class="adv-notice error"><strong>Error al calcular.</strong><br>${advEscape(err.message)}</div>`);
     return;
   }
+  if (typeof advOscRecordar === 'function') { advOscRecordar(_advResult); advOscSincronizar(); }
   if (typeof pactRegistrarAvanzada === 'function') pactRegistrarAvanzada(_advResult);
   const avisoRespaldo = _advParties.respaldo
     ? `<div class="adv-notice warn"><strong>Datos de respaldo (Google Sheets).</strong> No se ha podido cargar la base
@@ -2244,6 +2254,7 @@ function advSessionSnapshot() {
     eleccion: select('#adv-election')?.value || '',
     config: _advConfig,
     ediciones: _advEdits,
+    oscilacion: typeof advOscAnotar === 'function' ? advOscAnotar() : null,
     candidaturas: _advCustomParties,
     colores: _advPartyColors,
     candados: _advLocks,
@@ -2289,6 +2300,7 @@ async function advApplySession(s) {
   }
 
   _advEdits         = s.ediciones    || {};
+  if (typeof advOscRecuperar === 'function') advOscRecuperar(s.oscilacion);
   _advCustomParties = s.candidaturas || {};
   _advPartyColors   = s.colores      || {};
   _advLocks         = s.candados     || {};

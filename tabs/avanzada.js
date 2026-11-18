@@ -356,6 +356,24 @@ registerTab('advanced', 'tab-content', String.raw`
               </div>
             </section>
 
+            <section class="adv-cfg" data-section="oscilacion" id="adv-osc-sec">
+              <header class="adv-cfg-head">
+                <button type="button" class="adv-cfg-toggle">
+                  <span class="adv-cfg-titleline"><span class="adv-cfg-caret">▸</span><span class="adv-cfg-name">Oscilación</span></span>
+                  <span class="adv-cfg-summary" id="adv-sum-oscilacion">—</span>
+                </button>
+              </header>
+              <div class="adv-cfg-content">
+                <div class="adv-field">
+                  <label>Subir o bajar candidaturas, en puntos</label>
+                  <small>El cambio se aplica por igual en todas las circunscripciones, como se leen las encuestas. Lo que una candidatura gana o pierde lo absorben las demás, así que los votos válidos no cambian.</small>
+                </div>
+                <div id="adv-osc-lista" class="adv-osc-lista"></div>
+                <p class="adv-osc-suma" id="adv-osc-suma"></p>
+                <button type="button" class="adv-mini-btn" id="adv-osc-reset" hidden>Dejarlo todo a cero</button>
+              </div>
+            </section>
+
             <section class="adv-cfg adv-only" data-section="datos">
               <header class="adv-cfg-head">
                 <button type="button" class="adv-cfg-toggle">

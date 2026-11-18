@@ -78,6 +78,21 @@ async function usar(page, tab) {
     await espera(300);
     const dentro = await page.evaluate(() => document.querySelector('.adv-ccaa-body[data-relleno]')?.querySelectorAll('.adv-district').length || 0);
     if (!dentro) throw new Error('al desplegar una comunidad no aparece ninguna circunscripción');
+    // La oscilación mueve escaños y vuelve a dejarlos como estaban.
+    const osc = await page.evaluate(async () => {
+      const antes = JSON.stringify((_advResult.national || []).map(p => p.seats));
+      const claves = [...document.querySelectorAll('.adv-osc-fila')].map(f => f.dataset.oscKey);
+      if (claves.length < 2) return { error: 'no hay deslizadores de oscilación' };
+      advOscPoner(claves[1], 5); advOscPoner(claves[0], -5);
+      await new Promise(r => setTimeout(r, 400));
+      const movido = JSON.stringify((_advResult.national || []).map(p => p.seats));
+      advOscReset();
+      await new Promise(r => setTimeout(r, 400));
+      return { error: null, cambia: movido !== antes, vuelve: JSON.stringify((_advResult.national || []).map(p => p.seats)) === antes };
+    });
+    if (osc.error) throw new Error(osc.error);
+    if (!osc.cambia) throw new Error('mover la oscilación cinco puntos no cambia ningún escaño');
+    if (!osc.vuelve) throw new Error('dejar la oscilación a cero no devuelve el reparto original');
   } else if (tab === 'map') {
     await page.waitForFunction(() => document.querySelectorAll('#mapa-lienzo svg path').length > 20, { timeout: 60000 });
   } else if (tab === 'systems') {
