@@ -1,7 +1,7 @@
 // Versión de la caché: súbela cuando cambie algo que deba reemplazarse sí o sí.
 // No hace falta tocar los ?v= de los scripts: el servidor de red va primero y la
 // caché se busca sin parámetros, así que una URL con o sin ?v= es el mismo archivo.
-const CACHE = 'calculadora-electoral-v17';
+const CACHE = 'calculadora-electoral-v18';
 const ASSETS = [
   './',
   './index.html',
@@ -13,6 +13,7 @@ const ASSETS = [
   './css/tema-oscuro.css',
   './css/components.css',
   './css/impresion.css',
+  './css/sistemas.css',
   './css/header-tabs.css',
   './css/layout.css',
   './css/mapa.css',
@@ -27,6 +28,7 @@ const ASSETS = [
   './js/advanced-exportar.js',
   './js/basica-ui.js',
   './js/basica-exportar.js',
+  './js/sistemas-ui.js',
   './js/carga-avanzada.js',
   './js/advanced-compensation.js',
   './js/advanced-data.js',
@@ -73,6 +75,7 @@ const ASSETS = [
   './tabs/calculadora.js',
   './tabs/mapa.js',
   './tabs/pactometro.js',
+  './tabs/sistemas.js',
   './tabs/teoria.js',
   './icons/apple-touch-icon.png',
   './icons/icon-192.png',

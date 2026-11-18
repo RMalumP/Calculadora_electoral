@@ -1,14 +1,19 @@
 /**
  * experimental.js
- * Funciones ya programadas y probadas, pero apagadas en la interfaz porque aún
- * no hay datos con los que usarlas. Cada bandera se enciende a mano:
+ * Banderas para encender a mano lo que todavía no puede salir solo.
  *
- *   mixtos       MMP y paralelo (algorithms-mixtos.js): necesita el voto uninominal.
- *   preferencial listas abiertas, STV y voto alternativo (algorithms-preferencial.js):
- *                necesita votos por candidato o papeletas con preferencias.
+ * Los sistemas mixtos (algorithms-mixtos.js) y preferenciales
+ * (algorithms-preferencial.js) ya tienen interfaz: la pestaña «Otros
+ * sistemas», donde los datos se meten a mano. Lo que sigue apagado es su uso
+ * automático desde la base de datos, que no trae ni el voto uninominal por
+ * distrito ni las papeletas con preferencias:
  *
- * El navegador puede activarlas para probar con `CE_EXPERIMENTAL.mixtos = true`
- * en la consola, o con localStorage 'ce-experimental' = '{"mixtos":true}'.
+ *   mixtos       que la calculadora avanzada ofrezca MMP y paralelo en las
+ *                elecciones reales, con el voto uninominal de cada distrito.
+ *   preferencial lo mismo con votos por candidato o papeletas ordenadas.
+ *
+ * Se pueden encender para probar con `CE_EXPERIMENTAL.mixtos = true` en la
+ * consola, o con localStorage 'ce-experimental' = '{"mixtos":true}'.
  */
 const CE_EXPERIMENTAL = { mixtos: false, preferencial: false };
 

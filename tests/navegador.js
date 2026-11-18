@@ -4,8 +4,8 @@
  *
  * Las pruebas de Node cubren el motor y las de Python el editor, pero nada
  * abría la página: un error de JavaScript al abrir una pestaña, o una tabla
- * que se sale de la pantalla en un móvil, pasaban el CI enteras. Esto abre las
- * cinco pestañas en dos anchos, toca lo principal de cada una y falla si hay
+ * que se sale de la pantalla en un móvil, pasaban el CI enteras. Esto abre
+ * todas las pestañas en dos anchos, toca lo principal de cada una y falla si hay
  * un error de consola o un desborde horizontal.
  *
  * Necesita Playwright y un Chromium:
@@ -49,7 +49,7 @@ const ANCHOS = [
   ['móvil', { width: 390, height: 844 }],
   ['escritorio', { width: 1400, height: 900 }]
 ];
-const PESTANAS = ['calculator', 'pactometer', 'advanced', 'map', 'theory'];
+const PESTANAS = ['calculator', 'pactometer', 'advanced', 'map', 'systems', 'theory'];
 
 /** Lo que se toca en cada pestaña, además de abrirla. */
 async function usar(page, tab) {
@@ -80,6 +80,21 @@ async function usar(page, tab) {
     if (!dentro) throw new Error('al desplegar una comunidad no aparece ninguna circunscripción');
   } else if (tab === 'map') {
     await page.waitForFunction(() => document.querySelectorAll('#mapa-lienzo svg path').length > 20, { timeout: 60000 });
+  } else if (tab === 'systems') {
+    await page.waitForSelector('#sis-panel-mixto', { timeout: 60000 });
+    await espera(500);
+    // El ejemplo de arranque (Bundestag 2021) tiene que dar una cámara repartida.
+    const total = await page.evaluate(() =>
+      [...document.querySelectorAll('#sis-mix-salida tbody tr')]
+        .reduce((s, tr) => s + (parseInt(tr.children[tr.children.length - 2].textContent.replace(/\D/g, '')) || 0), 0));
+    if (total < 300) throw new Error(`el ejemplo mixto reparte ${total} escaños, que son pocos`);
+    // Y las papeletas ordenadas tienen que dar un ganador.
+    await page.evaluate(() => document.querySelector('[data-sis-modo="ordinal"]')?.click());
+    await espera(500);
+    const ganador = await page.evaluate(() => document.querySelector('#sis-ord-salida .sis-electos li')?.textContent.trim() || '');
+    if (!ganador) throw new Error('el recuento STV de ejemplo no elige a nadie');
+    await page.evaluate(() => document.querySelector('[data-sis-modo="mixto"]')?.click());
+    await espera(300);
   } else {
     await espera(400);
   }
@@ -119,7 +134,7 @@ async function usar(page, tab) {
       }
     }
     if (errores.length) fallos.push(`${nombre}: ${[...new Set(errores)].join(' · ')}`);
-    else console.log(`${nombre}: las cinco pestañas, sin errores ni desbordes`);
+    else console.log(`${nombre}: las ${PESTANAS.length} pestañas, sin errores ni desbordes`);
     await ctx.close();
   }
 

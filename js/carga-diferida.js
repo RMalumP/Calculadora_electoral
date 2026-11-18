@@ -101,6 +101,42 @@ function teoriaCargarModulos() {
   return _teoriaPromesa;
 }
 
+/* ── Otros sistemas ──────────────────────────────────────────── */
+
+const SISTEMAS_MODULOS = [
+  'js/algorithms-mixtos.js',
+  'js/algorithms-preferencial.js',
+  'tabs/sistemas.js',
+  'js/sistemas-ui.js'
+];
+
+let _sistemasPromesa = null;
+
+/**
+ * Los motores de los sistemas mixtos y preferenciales y la pestaña que los
+ * usa. Antes los dos motores se descargaban siempre y no los llamaba nadie.
+ */
+function sistemasCargarModulos() {
+  if (_sistemasPromesa) return _sistemasPromesa;
+  _sistemasPromesa = Promise.all([
+    ceCargarCSS('css/sistemas.css'),
+    ...SISTEMAS_MODULOS.map(ceCargarScript)
+  ]).catch(err => { _sistemasPromesa = null; throw err; });
+  return _sistemasPromesa;
+}
+
+/**
+ * «Probarlo en Otros sistemas», desde las fichas de la pestaña Teoría. Como
+ * la pestaña puede no estar descargada todavía, aquí hay una versión que
+ * primero la trae; js/sistemas-ui.js sustituye esta función por la de verdad
+ * en cuanto se ejecuta.
+ */
+function sisProbar(modo, metodo) {
+  sistemasCargarModulos()
+    .then(() => { if (typeof sisVerModo === 'function') sisProbar(modo, metodo); })
+    .catch(() => {});
+}
+
 /* ── Pestañas que se descargan solas ─────────────────────────── */
 
 /**
@@ -108,8 +144,9 @@ function teoriaCargarModulos() {
  * su archivo de tabs/ llama a registerTab() y la sección se vuelca sola.
  */
 const TABS_DIFERIDAS = {
-  map:    mapaCargarModulos,
-  theory: teoriaCargarModulos
+  map:     mapaCargarModulos,
+  theory:  teoriaCargarModulos,
+  systems: sistemasCargarModulos
 };
 
 /** ¿Esta pestaña está todavía sin descargar? */
@@ -126,5 +163,6 @@ window.addEventListener('load', () => {
   ceCuandoOcioso(() => {
     mapaCargarModulos().catch(() => {});
     teoriaCargarModulos().catch(() => {});
+    sistemasCargarModulos().catch(() => {});
   });
 });

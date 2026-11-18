@@ -9,6 +9,7 @@ Aplicación web (sin servidor ni instalación) para calcular el reparto de esca�
 | **Calculadora** | Metes votos de partidos y obtienes el reparto con D'Hondt, Sainte-Laguë, Hare, Droop, Imperiali, mayoritarios…, con barrera, bono de mayoría y compensatorios. |
 | **Pactómetro** | Ves qué bloques suman mayoría con los escaños calculados. Por defecto usa la calculadora básica; el selector «Origen de los escaños» permite usar la avanzada, el lado A o B del comparador, o los dos a la vez (dos columnas de escaños y una barra por lado que dice qué pactos dan mayoría en A y en B). Los bloques se recuerdan por partido al cambiar de origen. En «A y B», el botón «B≠» de cada partido permite ponerlo en B en otro bloque (por defecto, el mismo que en A). |
 | **Calculadora avanzada** | Elecciones reales (Congreso, Senado, Europeas, Cabildos…) con su base de datos: cambias circunscripción, fórmula, barreras, escaños, bono y compensación. Modos Sencillo y Avanzado. |
+| **Otros sistemas** | Los sistemas que no salen de una tabla de votos: mixtos (MMP compensatorio, con excedentes o de tamaño fijo, y paralelo) y preferenciales (listas abiertas, desbloqueadas y cerradas; STV, voto alternativo, Borda y Condorcet). Los datos se meten a mano, porque ni el voto uninominal por distrito ni las papeletas ordenadas están en la base de datos. Cada ficha de Teoría tiene un botón para probar su sistema aquí. |
 | **Teoría** | Descripción, fórmula y ejemplo de cada sistema, de las barreras, los indicadores, la segunda vuelta, las coaliciones y los sistemas mixtos y preferenciales. |
 
 En la avanzada:
@@ -36,7 +37,7 @@ Novedades de sistemas electorales:
 - **Segunda vuelta**: reglas de acceso (dos primeros, Francia), simulador manual en la calculadora y reparto real en la avanzada con los votos de la vuelta 2 de la hoja (o simulado si faltan). Formato de datos en [`datos/SEGUNDA_VUELTA.md`](datos/SEGUNDA_VUELTA.md); EE. UU. y Reino Unido (sin segunda vuelta) en [`datos/OTROS_SISTEMAS.md`](datos/OTROS_SISTEMAS.md).
 - **Coaliciones**: lista conjunta que pasa la barrera con la suma, reparto interno y comparación juntos o separados, en la calculadora y en la avanzada (`js/coaliciones*.js`).
 - **Prorrateo** entre circunscripciones (Hare, D'Hondt, Webster, Adams, Huntington-Hill) y medida de la desigualdad del voto (`js/prorrateo.js`).
-- **Apagado hasta que haya datos** (`js/experimental.js`): sistemas mixtos MMP y paralelo (`algorithms-mixtos.js`) y listas abiertas, STV, voto alternativo, Borda y Condorcet (`algorithms-preferencial.js`). Están programados y probados, sin interfaz.
+- **Mixtos y preferenciales** (`algorithms-mixtos.js`, `algorithms-preferencial.js`): se usan desde la pestaña «Otros sistemas», con los datos a mano. Lo que sigue apagado (`js/experimental.js`) es ofrecerlos en la calculadora avanzada sobre elecciones reales, que necesita un voto uninominal por distrito y unas papeletas ordenadas que la base de datos no tiene.
 
 La interfaz tiene tema claro y oscuro (botón 🌓: automático, claro u oscuro) y se adapta a móvil y tablet. En la calculadora básica, por debajo de 1100 px los partidos pasan a tarjetas (acciones tras «⋯»), el censo se pliega y los parámetros se abren en un panel lateral desde una barra con resumen y botón «Calcular»; en horizontal, votos a la izquierda y parámetros con resultados a la derecha.
 
@@ -51,6 +52,8 @@ js/                   Lógica
                         salvo advanced-compensation.js, que usa también la calculadora normal
   mapa-*.js             Mapa; se cargan al abrir su pestaña (carga-diferida.js), y por detrás
                         en cuanto el navegador está ocioso
+  sistemas-ui.js        Pestaña «Otros sistemas»; con ella se cargan algorithms-mixtos.js
+                        y algorithms-preferencial.js, que antes se descargaban siempre
   accesibilidad.js      ARIA, teclado y tema
 css/                  Estilos (tema-oscuro.css sobreescribe las variables de variables.css)
 datos/                Base de datos electoral (ver datos/LEEME.md)
@@ -84,4 +87,4 @@ Las de Node cargan los scripts del proyecto tal cual y comprueban, entre otras c
 
 ### Qué se descarga al arrancar
 
-Sólo lo que hace falta para la calculadora básica (unos 420 KB en 40 peticiones). La calculadora avanzada (`js/carga-avanzada.js`), el mapa y la teoría (`js/carga-diferida.js`) se piden al abrir su pestaña y, si no, en cuanto el navegador está ocioso.
+Sólo lo que hace falta para la calculadora básica (unos 420 KB en 40 peticiones). La calculadora avanzada (`js/carga-avanzada.js`), el mapa, la teoría y «Otros sistemas» (`js/carga-diferida.js`) se piden al abrir su pestaña y, si no, en cuanto el navegador está ocioso.

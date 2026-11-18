@@ -2,9 +2,10 @@
  * algorithms-mixtos.js
  * Sistemas mixtos: proporcional personalizado (MMP) y paralelo. Sin DOM.
  *
- * ESTADO: motor listo y probado, pero DESACTIVADO en la interfaz (véase
- * CE_EXPERIMENTAL en experimental.js) hasta que la base de datos tenga el voto
- * uninominal por distrito. Cuando lo tenga, basta con llamar a estas funciones.
+ * Lo usa la pestaña «Otros sistemas» (tabs/sistemas.js), donde los votos de
+ * lista y los distritos ganados se meten a mano. En la calculadora avanzada
+ * sigue sin ofrecerse, porque la base de datos no trae el voto uninominal por
+ * distrito (véase CE_EXPERIMENTAL en experimental.js).
  *
  * Entrada común: partidos [{ name, listVotes, direct }], donde `direct` son los
  * distritos uninominales ganados por el partido y `listVotes` sus votos de lista.

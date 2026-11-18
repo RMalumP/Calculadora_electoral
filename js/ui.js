@@ -72,6 +72,7 @@ const TAB_SLUGS = {
   pactometer: 'pactometro',
   advanced:   'avanzada',
   map:        'mapa',
+  systems:    'otros-sistemas',
   theory:     'teoria'
 };
 const SLUG_TO_TAB = Object.fromEntries(Object.entries(TAB_SLUGS).map(([k, v]) => [v, k]));
@@ -109,8 +110,9 @@ function tabAvisoCargando(tabName, texto) {
 function switchTab(tabName, updateHash = true) {
   if (!TAB_SLUGS[tabName]) return;
 
-  // El mapa y la teoría no vienen en el arranque: se piden al abrirlas (o
-  // antes, si el navegador ha tenido un rato libre). Ver js/carga-diferida.js.
+  // El mapa, la teoría y «Otros sistemas» no vienen en el arranque: se piden
+  // al abrirlas (o antes, si el navegador ha tenido un rato libre). Ver
+  // js/carga-diferida.js.
   if (!select(`#${tabName}-tab`) && typeof tabDiferidaPendiente === 'function'
       && tabDiferidaPendiente(tabName)) {
     tabAvisoCargando(tabName, 'Cargando…');
