@@ -300,7 +300,7 @@ function displayResults(allocated, totalValid, totalSeats, formula, excludedBarr
   const card = document.getElementById('results-card');
   card.style.display = 'block';
   card.classList.add('visible');
-  card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  desplazarA(card);
 
   showHemicycleToggle();
   updateHemicycleIfVisible();

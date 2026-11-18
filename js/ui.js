@@ -387,16 +387,33 @@ function showTheorySystem(systemId) {
     );
   }
 
+  /**
+   * Arrastre con eventos de puntero: el mismo código vale para ratón, dedo y
+   * lápiz. Con `mousedown` el dedo no llegaba a disparar nada y reordenar era
+   * imposible en un móvil. El asa lleva `touch-action: none` en el CSS para que
+   * el navegador no entienda el gesto como un desplazamiento de la página.
+   */
   function attachHandle(handle, tr) {
-    handle.addEventListener('mousedown', function (e) {
-      if (e.button !== 0) return;
+    handle.addEventListener('pointerdown', function (e) {
+      if (e.button > 0 || !e.isPrimary) return;
       e.preventDefault();
       dragSrc = tr;
       tr.classList.add('dragging');
+      try { handle.setPointerCapture(e.pointerId); } catch (err) { /* el puntero ya se ha soltado */ }
 
-      function onMouseMove(ev) {
+      // Al arrastrar con el dedo la lista suele ser más larga que la pantalla:
+      // cerca de los bordes se desplaza sola para poder llegar al sitio.
+      function autoScroll(y) {
+        const margen = 60;
+        const alto = window.innerHeight;
+        if (y < margen) window.scrollBy(0, -Math.ceil((margen - y) / 4));
+        else if (y > alto - margen) window.scrollBy(0, Math.ceil((y - (alto - margen)) / 4));
+      }
+
+      function onPointerMove(ev) {
         clearDragStyles();
         tr.classList.add('dragging');
+        autoScroll(ev.clientY);
         for (const row of getRows()) {
           if (row === dragSrc) continue;
           const rect = row.getBoundingClientRect();
@@ -407,20 +424,26 @@ function showTheorySystem(systemId) {
         }
       }
 
-      function onMouseUp() {
-        document.removeEventListener('mousemove', onMouseMove);
-        document.removeEventListener('mouseup', onMouseUp);
+      function onPointerUp(ev) {
+        handle.removeEventListener('pointermove', onPointerMove);
+        handle.removeEventListener('pointerup', onPointerUp);
+        handle.removeEventListener('pointercancel', onPointerUp);
+        try { handle.releasePointerCapture(ev.pointerId); } catch (err) { /* ya soltado */ }
         if (!dragSrc) { clearDragStyles(); return; }
 
         const tbody = select('#votes-body');
         const above = tbody?.querySelector('.drag-over-above');
         const below = tbody?.querySelector('.drag-over-below');
 
-        if (above && above !== dragSrc && tbody) {
-          tbody.insertBefore(dragSrc, above);
-        } else if (below && below !== dragSrc && tbody) {
-          const next = below.nextElementSibling;
-          if (next) tbody.insertBefore(dragSrc, next);
+        // Cancelado (otra ventana, llamada entrante): no se mueve nada.
+        if (ev.type !== 'pointercancel') {
+          if (above && above !== dragSrc && tbody) {
+            tbody.insertBefore(dragSrc, above);
+          } else if (below && below !== dragSrc && tbody) {
+            const next = below.nextElementSibling;
+            if (next) tbody.insertBefore(dragSrc, next);
+            else tbody.appendChild(dragSrc);
+          }
         }
 
         clearDragStyles();
@@ -429,8 +452,11 @@ function showTheorySystem(systemId) {
         updateTotals();
       }
 
-      document.addEventListener('mousemove', onMouseMove);
-      document.addEventListener('mouseup', onMouseUp);
+      // Con el puntero capturado los eventos siguen llegando al asa aunque el
+      // dedo salga de ella, así que no hace falta escuchar en todo el documento.
+      handle.addEventListener('pointermove', onPointerMove);
+      handle.addEventListener('pointerup', onPointerUp);
+      handle.addEventListener('pointercancel', onPointerUp);
     });
   }
 

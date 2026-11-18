@@ -85,7 +85,7 @@ window.addEventListener('load', () => {
     if (window.matchMedia('(max-width: 1099px)').matches) {
       basPanel(false);
       const card = document.getElementById('results-card');
-      if (card && card.offsetParent !== null) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      desplazarA(card, { forzar: true, block: 'start' });
     }
     return r;
   };

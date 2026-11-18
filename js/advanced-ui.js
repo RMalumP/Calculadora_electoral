@@ -119,7 +119,8 @@ async function advLoadElection(force, eleccionKey, conservar) {
     _advPartyColors = {};
     _advLocks = {};
   }
-  const key = select('#adv-election')?.value || ADV_ELECTIONS[0].key;
+  const key = select('#adv-election')?.value ||
+    (typeof advAmbitoPorDefecto === 'function' ? advAmbitoPorDefecto() : ADV_ELECTIONS[0].key);
   advRenderStatus(`<div class="adv-loading"><span class="adv-spinner"></span>Cargando datos electorales…</div>`);
   select('#adv-results').innerHTML = '';
   select('#adv-summary').innerHTML = '';
@@ -322,6 +323,10 @@ function advBuildElectionOptions() {
     o.value = e.key; o.textContent = e.label;
     sel.appendChild(o);
   });
+  // Sin esto el navegador se queda con la primera del índice, que por orden
+  // alfabético es Brasil; se arranca en el Congreso de España.
+  const porDefecto = typeof advAmbitoPorDefecto === 'function' ? advAmbitoPorDefecto() : null;
+  if (porDefecto) sel.value = porDefecto;
 }
 
 /** Vuelca la configuración actual en los controles del formulario. */

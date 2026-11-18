@@ -481,7 +481,7 @@ function mapaSimAbrirDistrito(id) {
   const buscar = (intentos) => {
     const el = document.querySelector('[data-district-id="' + CSS.escape(id) + '"]');
     if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      desplazarA(el, { forzar: true, block: 'center' });
       el.classList.add('adv-resaltada');
       setTimeout(() => el.classList.remove('adv-resaltada'), 2600);
       return;

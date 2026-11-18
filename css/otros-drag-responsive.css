@@ -222,6 +222,9 @@ tr[data-is-otros="true"] td input[type=color] {
   transition: color var(--transition), background var(--transition);
   user-select: none;
   line-height: 1;
+  /* El gesto sobre el asa es un arrastre, no un desplazamiento de la página:
+     sin esto el navegador se queda el toque y en móvil no se puede reordenar. */
+  touch-action: none;
 }
 .drag-handle:hover { color: var(--accent-light); background: var(--accent-pale); }
 .drag-handle:active { cursor: grabbing; }

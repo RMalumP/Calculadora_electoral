@@ -92,6 +92,18 @@ const ADV_ELECTIONS_OCULTAS = [];
   });
 })();
 
+/**
+ * Ámbito con el que arranca la pestaña cuando no hay sesión guardada. Los
+ * ámbitos van en el orden del índice, que es alfabético, así que sin esto
+ * la avanzada abría en «Brasil · Presidenciales». Se prefiere el Congreso de
+ * España, y si no está, lo primero que haya de España.
+ */
+function advAmbitoPorDefecto() {
+  if (!ADV_ELECTIONS.length) return null;
+  const porClave = k => ADV_ELECTIONS.find(e => String(e.ambito || e.key).toLowerCase().includes(k));
+  return (porClave('españa.congreso') || porClave('españa') || ADV_ELECTIONS[0]).key;
+}
+
 /** Configuración de un ámbito, visible o de respaldo. */
 function _advCfg(key) {
   return ADV_ELECTIONS.find(e => e.key === key) || ADV_ELECTIONS_OCULTAS.find(e => e.key === key) ||
@@ -999,6 +1011,7 @@ function advClearCache() {
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     advParseTable, advFetchTable, advGetElectionData, advGetElectionIndex,
-    advGetLayout, advElectionKey, advClearCache, ADV_ELECTIONS, advModeloLocal
+    advGetLayout, advElectionKey, advClearCache, ADV_ELECTIONS, advModeloLocal,
+    advAmbitoPorDefecto
   };
 }
