@@ -1002,6 +1002,8 @@ function advNationalCard() {
             <button type="button" role="menuitem" data-adv-popup="mapa">Mapa de esta simulación</button>
             <button type="button" role="menuitem" data-adv-popup="last">Último escaño</button>
             <button type="button" role="menuitem" data-adv-popup="coef">Coeficientes</button>
+            <button type="button" role="menuitem" id="adv-a-basica"
+                    title="Copia estas candidaturas, sus votos y los ajustes a la calculadora normal">Llevar a la calculadora</button>
           </span>
         </span>
         <span class="menu-dd">

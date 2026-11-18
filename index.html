@@ -36,6 +36,7 @@
   <link rel="stylesheet" href="css/advanced.css">
   <link rel="stylesheet" href="css/basica.css">
   <link rel="stylesheet" href="css/tema-oscuro.css">
+  <link rel="stylesheet" href="css/impresion.css" media="print">
   <script>try{var t=localStorage.getItem('ce-tema');if(t=='dark'||t=='light')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
 </head>
 <body>
@@ -91,6 +92,10 @@
 
 <!-- ══ PESTAÑAS: registro (js/tabs.js) y marcado de cada sección ══ -->
 <!-- El mapa y la teoría se descargan al abrirlas: js/carga-diferida.js -->
+
+<!-- Pie que sólo sale al imprimir: procedencia, reglas y fecha. -->
+<div id="print-pie" hidden></div>
+
 <script src="js/tabs.js" defer></script>
 <script src="js/carga-diferida.js" defer></script>
 <script src="tabs/calculadora.js" defer></script>
@@ -122,6 +127,8 @@
 <script src="js/carga-avanzada.js" defer></script>
 <script src="js/advanced-compensation.js" defer></script>
 <script src="js/session.js" defer></script>
+<!-- Lee la sesión compartida de la URL antes de que ui.js reconstruya las filas -->
+<script src="js/basica-exportar.js" defer></script>
 <script src="js/autosave.js" defer></script>
 <script src="js/ui.js" defer></script>
 <script src="js/accesibilidad.js" defer></script>

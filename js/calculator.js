@@ -245,6 +245,8 @@ function _applyCompensation(allocated, totalValid, formula, barrier) {
 /* ── VISUALIZACIÓN DE RESULTADOS ───────────────────────────── */
 
 function displayResults(allocated, totalValid, totalSeats, formula, excludedBarrier, noSeatsEligible, allParties = [], baseSeats = null) {
+  // Lo que se acaba de calcular, para exportarlo sin volver a leer la tabla.
+  window.lastBasicResult = { allocated, totalValid, totalSeats, formula };
   const tbody = document.getElementById('results-body');
   tbody.innerHTML = '';
 

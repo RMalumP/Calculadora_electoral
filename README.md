@@ -19,6 +19,14 @@ En la avanzada:
 - **Exportar**: CSV del recuento (y del desglose territorial) e imagen PNG.
 - **Compartir** (🔗): copia un enlace con la configuración en la URL; al abrirlo carga el mismo ámbito y opciones.
 - **Sesión**: se guarda sola en el navegador; también se puede guardar y cargar en un archivo `.json`.
+- **Llevar a la calculadora** (menú «Ver»): vuelca el recuento (candidaturas, votos, colores, escaños, fórmula y barrera) en la calculadora básica, para jugar con datos reales sin montar la avanzada entera.
+
+En la calculadora básica, el menú **Exportar** del resultado da lo mismo sin depender de la avanzada:
+
+- **CSV (Excel)**: una fila por candidatura con votos, porcentajes, escaños y la diferencia en puntos; separador `;` y BOM, que es lo que entiende Excel en español.
+- **Imagen**: PNG del reparto, dibujado a doble resolución.
+- **🔗 Copiar enlace**: mete la sesión entera (partidos, votos, colores, parámetros y pactómetro) en el propio enlace, sin servidor. Si no cabe, avisa y remite al botón 💾 de la cabecera.
+- **Imprimir o PDF**: `css/impresion.css` deja en el papel sólo el resultado (fuera cabecera, pestañas, parámetros, tabla de entrada y botones), en blanco y negro salvo los colores de partido, y añade un pie con la fórmula, los totales y la fecha. Vale igual para la avanzada: lo que esté plegado no se imprime.
 
 Novedades de sistemas electorales:
 

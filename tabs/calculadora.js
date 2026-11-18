@@ -26,7 +26,7 @@ registerTab('calculator', 'tab-content active', String.raw`
       <main class="main-left">
 
       <!-- Tabla de votos -->
-      <div class="card">
+      <div class="card" id="votes-card">
         <div class="card-header">
           <span class="dot"></span>Resultados electorales
           <button onclick="resetCalculator()" class="ghost-btn" style="margin-left:auto">Reiniciar</button>
@@ -259,7 +259,17 @@ registerTab('calculator', 'tab-content active', String.raw`
         <div class="card" id="results-card">
           <div class="card-header">
             <span class="dot"></span><span id="results-title">Distribución de escaños</span>
-            <span id="formula-tag-display" class="formula-tag" style="margin-left:auto"></span>
+            <span class="menu-dd" style="margin-left:auto">
+              <button type="button" class="adv-tool-btn menu-dd-btn" aria-haspopup="true" aria-expanded="false"
+                      title="Descargar o compartir este reparto">Exportar ▾</button>
+              <span class="menu-dd-list" role="menu" hidden>
+                <button type="button" role="menuitem" onclick="basExportarCSV()">CSV (Excel)</button>
+                <button type="button" role="menuitem" onclick="basExportarPNG()">Imagen</button>
+                <button type="button" role="menuitem" onclick="basEnlaceSesion()">🔗 Copiar enlace</button>
+                <button type="button" role="menuitem" onclick="window.print()">Imprimir o PDF</button>
+              </span>
+            </span>
+            <span id="formula-tag-display" class="formula-tag"></span>
           </div>
           <table id="results-table">
             <thead>
