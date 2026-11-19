@@ -389,6 +389,25 @@ tr.in-group { background: var(--accent-bg); }
   text-transform: uppercase; color: var(--text-muted); border-bottom: 1px solid var(--border-light); margin-bottom: 4px;
 }
 
+.theory-wrap { padding: 40px; max-width: 1200px; margin: 0 auto; }
+.theory-h2 { font-family: 'Libre Baskerville', serif; color: var(--text); margin-bottom: 30px; font-size: 1.8rem; }
+.theory-layout { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 20px; }
+.theory-content { padding: 30px; overflow-wrap: anywhere; }
+.theory-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 0.92rem; }
+.theory-nav { padding: 8px; }
+.theory-table-wrap { overflow-x: auto; }
+@media (max-width: 760px) {
+  .theory-wrap { padding: 16px 12px; }
+  .theory-h2 { font-size: 1.4rem; margin-bottom: 16px; }
+  .theory-layout { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .theory-content { padding: 16px; }
+  .theory-nav { max-height: 42vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .theory-title { font-size: 1.25rem; }
+  .theory-formula { padding: 10px; font-size: 0.85rem; }
+  .theory-table { min-width: 460px; }
+  .theory-td, .theory-th { padding: 6px 8px; }
+}
+
 /* ── ACCESIBILIDAD: foco visible y objetivos táctiles ────────── */
 button:focus-visible, select:focus-visible, summary:focus-visible, a:focus-visible,
 .tab:focus-visible, [role="tab"]:focus-visible, input[type="color"]:focus-visible {
