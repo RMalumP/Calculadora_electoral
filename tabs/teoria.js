@@ -9,16 +9,16 @@
  */
 
 registerTab('theory', 'tab-content', String.raw`
-    <div style="padding:40px;max-width:1200px;margin:0 auto">
-      <h2 style="font-family:'Libre Baskerville',serif;color:var(--text);margin-bottom:30px;font-size:1.8rem">Teoría Electoral</h2>
+    <div class="theory-wrap">
+      <h2 class="theory-h2">Teoría Electoral</h2>
 
-      <div style="display:grid;grid-template-columns:200px 1fr;gap:20px">
+      <div class="theory-layout">
 
         <!-- Sidebar: lista de sistemas -->
         <div>
           <div class="card">
             <div class="card-header"><span class="dot"></span>Fórmulas de reparto</div>
-            <div style="padding:8px">
+            <div class="theory-nav">
 
               <div class="theory-group">Sistemas mayoritarios</div>
               <button class="theory-system-btn" data-system="majority"        onclick="showTheorySystem('majority')"       >Mayoritario (1ª vuelta)</button>
@@ -64,7 +64,7 @@ registerTab('theory', 'tab-content', String.raw`
 
         <!-- Contenido principal de teoría -->
         <div class="card">
-          <div id="theory-content" style="padding:30px">
+          <div id="theory-content" class="theory-content">
 
             <div id="theory-dhondt" class="theory-content-section" style="display:block">
               <h3 class="theory-title">Método D'Hondt</h3>
@@ -186,14 +186,14 @@ registerTab('theory', 'tab-content', String.raw`
               <h4 class="theory-h4">Fórmula</h4>
               <div class="theory-formula">Objetivo(partido) = reparto proporcional del total T según los votos nacionales<br>Compensatorios(partido) = Objetivo(partido) − Escaños directos(partido)<br>Solo reciben compensación los partidos con Compensatorios &gt; 0 y que superan la barrera de acceso</div>
               <h4 class="theory-h4">Ventajas e inconvenientes</h4>
-              <table style="width:100%;border-collapse:collapse;margin-bottom:15px;font-size:0.92rem">
+              <div class="theory-table-wrap"><table class="theory-table">
                 <thead><tr><th class="theory-th"></th><th class="theory-th">Ventajas</th><th class="theory-th">Inconvenientes</th></tr></thead>
                 <tbody>
                   <tr><td class="theory-td"><b>Justicia</b></td><td class="theory-td">Máxima justicia electoral: cada voto vale lo mismo, sin importar el distrito donde se emita.</td><td class="theory-td">Complejidad: el cálculo es difícil de entender para el votante medio.</td></tr>
                   <tr><td class="theory-td"><b>Voto</b></td><td class="theory-td">Evita el voto útil: los votantes de partidos minoritarios saben que su voto contará en la compensación global.</td><td class="theory-td">Parlamentos de tamaño variable: en algunos casos el número total de diputados puede crecer en exceso.</td></tr>
                   <tr><td class="theory-td"><b>Pluralismo</b></td><td class="theory-td">Fomenta el pluralismo: facilita la entrada de nuevas fuerzas políticas al parlamento.</td><td class="theory-td">Inestabilidad: puede atomizar el parlamento y dificultar mayorías de gobierno estables.</td></tr>
                 </tbody>
-              </table>
+              </table></div>
               <h4 class="theory-h4">Dónde se utilizan</h4>
               <p class="theory-p">Alemania y Nueva Zelanda (sistema proporcional mixto, MMP) y los países escandinavos (escaños de nivelación). Mira las fichas «Modelo alemán / MMP» y «Modelo nórdico». En la Calculadora avanzada puedes simular ambos modelos en la pestaña «Compensación».</p>
             </div>
