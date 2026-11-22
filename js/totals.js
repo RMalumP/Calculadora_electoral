@@ -57,6 +57,9 @@ function updateTotals() {
   }
 
   updateText(select('#total-valid'), totalValid.toLocaleString('es-ES'));
+  // El total de emitidos se calculaba y se guardaba, pero no se escribía en su
+  // hueco de la franja, así que marcaba siempre 0.
+  updateText(select('#total-all'), totalAll.toLocaleString('es-ES'));
   updateText(select('#blank-pct'), totalValid > 0 ? pctBar(blank / totalValid * 100) : '—');
   updateText(select('#null-pct'), totalAll > 0 ? pctBar(nullv / totalAll * 100) : '—');
 

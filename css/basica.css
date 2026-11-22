@@ -138,3 +138,20 @@
     mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
   }
 }
+
+/* Aviso dentro de la tabla de resultados cuando no se reparte ningún escaño. */
+.results-empty-note {
+  padding: 18px 14px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+/* Aviso de que el desglose de cocientes se ha recortado. */
+.breakdown-note {
+  margin: 8px 12px 10px;
+  color: var(--text-muted);
+  font-size: 0.74rem;
+  line-height: 1.4;
+}

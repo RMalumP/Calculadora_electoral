@@ -7,7 +7,7 @@
  * regla en SV_REGLAS:
  *
  *   id, name, desc
- *   pasan            cuántos candidatos pasan como máximo
+ *   pasan            cuántos candidatos pasan como máximo (null = los que pasen el umbral)
  *   umbralAcceso     % mínimo para pasar (0 = sin umbral)
  *   baseUmbral       'validos' | 'censo' (sobre qué se mide ese %)
  *   mayoriaAbsoluta  true: quien supere el 50 % de los votos válidos gana en la primera
@@ -25,7 +25,10 @@ const SV_REGLAS = {
     desc: 'Siempre hay segunda vuelta entre los dos primeros.'
   },
   francia: {
-    id: 'francia', name: 'Francia: mayoría absoluta o 12,5 % del censo', pasan: 2, umbralAcceso: 12.5,
+    // `pasan: null` porque en las legislativas francesas pasan TODOS los que
+    // superan el umbral, no solo dos: de ahí las triangulares y las
+    // cuadrangulares. Con el tope en 2 no podía salir ninguna.
+    id: 'francia', name: 'Francia: mayoría absoluta o 12,5 % del censo', pasan: null, umbralAcceso: 12.5,
     baseUmbral: 'censo', mayoriaAbsoluta: true, mayoriaSimple: false,
     desc: 'Gana en la primera quien supere el 50 % de los válidos. Si no, pasan los que alcancen el 12,5 % del censo (siempre al menos dos).'
   },
@@ -56,8 +59,9 @@ function svPrimeraRonda(partidos, regla, censo) {
   }
   const base = r.baseUmbral === 'censo' && censo > 0 ? censo : total;
   const pasan = lista.filter(p => !(r.umbralAcceso > 0) || p.votes >= base * r.umbralAcceso / 100);
-  // Siempre hay al menos dos finalistas; nunca más de los permitidos.
-  let finalistas = pasan.slice(0, r.pasan);
+  // Siempre hay al menos dos finalistas; nunca más de los permitidos. Si la
+  // regla no pone tope (`pasan: null`), pasan todos los que lleguen al umbral.
+  let finalistas = r.pasan > 0 ? pasan.slice(0, r.pasan) : pasan.slice();
   if (finalistas.length < 2) finalistas = lista.slice(0, Math.min(2, lista.length));
   return { ...vacio, finalistas, eliminados: lista.filter(p => !finalistas.includes(p)),
     motivo: r.umbralAcceso > 0 && pasan.length < 2 ? 'Menos de dos candidatos alcanzan el umbral: pasan los dos primeros.' : '' };

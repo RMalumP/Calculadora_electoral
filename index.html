@@ -71,18 +71,18 @@
     </span>
 
     <!-- Sesión guardada automáticamente en este navegador. -->
-    <button class="save-icon-btn" id="auto-clear-btn"
+    <button type="button" class="save-icon-btn" id="auto-clear-btn"
             title="Borrar la sesión guardada en este navegador y empezar de cero"
             aria-label="Nueva sesión">🗑<span class="cab-rotulo"> Nueva sesión</span></button>
 
     <!-- Calculadora y pactómetro: copia autónoma de la página. -->
-    <button class="save-icon-btn" id="save-html-btn" onclick="saveHTML()"
+    <button type="button" class="save-icon-btn" id="save-html-btn" onclick="saveHTML()"
             title="Guardar la calculadora y el pactómetro en un archivo HTML que funciona por sí solo">💾</button>
 
     <!-- Calculadora avanzada: sólo los datos de la sesión, en un .json. -->
-    <button class="save-icon-btn adv-session-btn" id="adv-save-btn" hidden
+    <button type="button" class="save-icon-btn adv-session-btn" id="adv-save-btn" hidden
             title="Guardar en un archivo la configuración, las ediciones y los candados de esta sesión">💾 Guardar información</button>
-    <button class="save-icon-btn adv-session-btn" id="adv-load-btn" hidden
+    <button type="button" class="save-icon-btn adv-session-btn" id="adv-load-btn" hidden
             title="Cargar una sesión guardada">📂 Cargar</button>
     <input type="file" id="adv-session-file" accept=".json,application/json" hidden>
   </div>
@@ -90,12 +90,12 @@
 
 <!-- ══ TABS ══ -->
 <div class="tabs-container">
-  <button class="tab active" data-tab="calculator"  onclick="switchTab('calculator')">Calculadora</button>
-  <button class="tab"        data-tab="pactometer"  onclick="switchTab('pactometer')">Pactómetro</button>
-  <button class="tab"        data-tab="advanced"    onclick="switchTab('advanced')">Calculadora avanzada</button>
-  <button class="tab"        data-tab="map"        onclick="switchTab('map')">Mapa</button>
-  <button class="tab"        data-tab="systems"    onclick="switchTab('systems')">Otros sistemas</button>
-  <button class="tab"        data-tab="theory"      onclick="switchTab('theory')">Teoría</button>
+  <button type="button" class="tab active" data-tab="calculator"  onclick="switchTab('calculator')">Calculadora</button>
+  <button type="button" class="tab"        data-tab="pactometer"  onclick="switchTab('pactometer')">Pactómetro</button>
+  <button type="button" class="tab"        data-tab="advanced"    onclick="switchTab('advanced')">Calculadora avanzada</button>
+  <button type="button" class="tab"        data-tab="map"        onclick="switchTab('map')">Mapa</button>
+  <button type="button" class="tab"        data-tab="systems"    onclick="switchTab('systems')">Otros sistemas</button>
+  <button type="button" class="tab"        data-tab="theory"      onclick="switchTab('theory')">Teoría</button>
 </div>
 
 <div class="main">

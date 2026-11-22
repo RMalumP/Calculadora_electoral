@@ -39,7 +39,15 @@ function allocateSeats(parties, totalSeats, formula, out) {
   const info = out || {};
   info.lastSeat = null;
   info.sorteo = null;
-  if (!parties.length || totalSeats === 0) return parties.map(p => ({ ...p, seats: 0 }));
+  // Sin escaños que repartir (o con un número negativo, que no significa
+  // nada) no se reparte: antes un total negativo llegaba a las fórmulas.
+  if (!parties.length || !(totalSeats > 0)) return parties.map(p => ({ ...p, seats: 0 }));
+  // Sin un solo voto no hay reparto posible. Las fórmulas de resto mayor ya lo
+  // comprobaban y las de media más alta no, así que las dos familias daban
+  // resultados distintos ante los mismos datos.
+  if (!(parties.reduce((t, p) => t + (p.votes > 0 ? p.votes : 0), 0) > 0)) {
+    return parties.map(p => ({ ...p, seats: 0 }));
+  }
   switch (formula) {
     case 'dhondt':
     case 'highest_avg':

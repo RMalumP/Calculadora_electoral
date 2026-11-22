@@ -14,10 +14,16 @@ test('Mayoría absoluta en la primera: no hay segunda vuelta', () => {
   assert.equal(r.ganadorPrimera.name, 'A');
 });
 
-test('Francia: pasan los dos que superan el 12,5 % del censo', () => {
-  // Censo 1000: umbral 125 votos.
+test('Francia: pasan todos los que superan el 12,5 % del censo (triangular)', () => {
+  // Censo 1000: umbral 125 votos. A, B y C lo superan; D no.
   const r = plano(ctx.svPrimeraRonda([P('A', 300), P('B', 250), P('C', 200), P('D', 100)], 'francia', 1000));
   assert.equal(r.ganadorPrimera, null);
+  assert.deepEqual(r.finalistas.map(f => f.name), ['A', 'B', 'C']);
+  assert.deepEqual(r.eliminados.map(f => f.name), ['D']);
+});
+
+test('Top 2 sí tiene tope de dos finalistas', () => {
+  const r = plano(ctx.svPrimeraRonda([P('A', 300), P('B', 250), P('C', 200), P('D', 100)], 'top2', 1000));
   assert.deepEqual(r.finalistas.map(f => f.name), ['A', 'B']);
   assert.deepEqual(r.eliminados.map(f => f.name), ['C', 'D']);
 });

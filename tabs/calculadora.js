@@ -29,7 +29,7 @@ registerTab('calculator', 'tab-content active', String.raw`
       <div class="card" id="votes-card">
         <div class="card-header">
           <span class="dot"></span>Resultados electorales
-          <button onclick="resetCalculator()" class="ghost-btn" style="margin-left:auto">Reiniciar</button>
+          <button type="button" onclick="resetCalculator()" class="ghost-btn" style="margin-left:auto">Reiniciar</button>
         </div>
         <div class="votes-table-scroll">
         <table id="votes-table">
@@ -38,11 +38,11 @@ registerTab('calculator', 'tab-content active', String.raw`
               <th style="width:10px"></th>
               <th style="width:10px;text-align:center"></th>
               <th style="text-align:center;padding:2px 4px">
-                <button id="siglas-toggle-btn" onclick="toggleSiglasVisibility()" style="font-size:0.6rem;font-weight:700;letter-spacing:0.02em;padding:2px 5px;border:1px solid var(--border);border-radius:3px;background:none;cursor:pointer;color:var(--text-muted);white-space:nowrap;line-height:1.5">Siglas ▼</button>
-                <button id="groupings-toggle-btn" onclick="toggleGroupingsVisibility()" style="font-size:0.6rem;font-weight:700;letter-spacing:0.02em;padding:2px 5px;border:1px solid var(--border);border-radius:3px;background:none;cursor:pointer;color:var(--text-muted);white-space:nowrap;line-height:1.5;margin-left:3px">Agrupación ▼</button>
+                <button type="button" id="siglas-toggle-btn" onclick="toggleSiglasVisibility()" style="font-size:0.6rem;font-weight:700;letter-spacing:0.02em;padding:2px 5px;border:1px solid var(--border);border-radius:3px;background:none;cursor:pointer;color:var(--text-muted);white-space:nowrap;line-height:1.5">Siglas ▼</button>
+                <button type="button" id="groupings-toggle-btn" onclick="toggleGroupingsVisibility()" style="font-size:0.6rem;font-weight:700;letter-spacing:0.02em;padding:2px 5px;border:1px solid var(--border);border-radius:3px;background:none;cursor:pointer;color:var(--text-muted);white-space:nowrap;line-height:1.5;margin-left:3px">Agrupación ▼</button>
               </th>
               <th class="group-col" style="width:28px;text-align:center;padding:2px 2px;font-size:0.6rem;color:var(--text-muted);font-weight:700">#</th>
-              <th>Candidatura / Partido <button id="hide-names-btn" onclick="toggleHideNames()" style="display:none;font-size:0.58rem;font-weight:700;letter-spacing:0.02em;padding:2px 5px;border:1px solid #8b3131;border-radius:3px;background:none;cursor:pointer;color:#8b3131;white-space:nowrap;line-height:1.5;margin-left:6px">Ocultar nombre</button></th>
+              <th>Candidatura / Partido <button type="button" id="hide-names-btn" onclick="toggleHideNames()" style="display:none;font-size:0.58rem;font-weight:700;letter-spacing:0.02em;padding:2px 5px;border:1px solid #8b3131;border-radius:3px;background:none;cursor:pointer;color:#8b3131;white-space:nowrap;line-height:1.5;margin-left:6px">Ocultar nombre</button></th>
               <th style="text-align:right;width:120px">Votos</th>
               <th style="text-align:right;width:70px">%</th>
             </tr>
@@ -64,7 +64,7 @@ registerTab('calculator', 'tab-content active', String.raw`
           </tbody>
         </table>
         </div>
-        <button class="add-row-btn" onclick="addRow()">
+        <button type="button" class="add-row-btn" onclick="addRow()">
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="5.5" stroke="currentColor" stroke-width="1.1"/><path d="M6 3v6M3 6h6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
           Añadir partido
         </button>
@@ -152,7 +152,7 @@ registerTab('calculator', 'tab-content active', String.raw`
       <!-- ── ASIDE: desglose de cocientes ── -->
       <aside class="breakdown-aside">
         <div id="breakdown-section" style="display:none">
-          <button id="breakdown-toggle" onclick="toggleBreakdown()"
+          <button type="button" id="breakdown-toggle" onclick="toggleBreakdown()"
             style="width:100%;background:none;color:var(--text-muted);border:none;padding:8px 12px;font-family:'Source Sans 3',sans-serif;font-size:0.8rem;font-weight:600;cursor:pointer;margin-bottom:8px;text-align:left;transition:color 0.15s">
             ▼ Mostrar desglose de cocientes
           </button>
@@ -164,6 +164,7 @@ registerTab('calculator', 'tab-content active', String.raw`
                 <tbody id="breakdown-body"></tbody>
               </table>
             </div>
+            <p id="breakdown-note" class="breakdown-note" style="display:none"></p>
           </div>
         </div>
       </aside><!-- /breakdown-aside -->
@@ -200,11 +201,11 @@ registerTab('calculator', 'tab-content active', String.raw`
               <div id="bonus-input-wrap" style="display:none">
                 <input type="number" id="majority-bonus" value="0" min="0" max="100">
                 <div style="margin-top:8px;display:flex;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;font-size:0.72rem;font-weight:600;letter-spacing:0.03em;">
-                  <button id="bonus-btn-included" onclick="setBonusMode('included')" class="bonus-active"
+                  <button type="button" id="bonus-btn-included" onclick="setBonusMode('included')" class="bonus-active"
                     style="flex:1;padding:5px 4px;border:none;cursor:pointer;font-family:'Source Sans 3',sans-serif;font-size:0.72rem;font-weight:600;letter-spacing:0.03em;border-right:1px solid var(--border);transition:background 0.15s,color 0.15s;">
                     Incluido
                   </button>
-                  <button id="bonus-btn-extra" onclick="setBonusMode('extra')"
+                  <button type="button" id="bonus-btn-extra" onclick="setBonusMode('extra')"
                     style="flex:1;padding:5px 4px;border:none;cursor:pointer;font-family:'Source Sans 3',sans-serif;font-size:0.72rem;font-weight:600;letter-spacing:0.03em;transition:background 0.15s,color 0.15s;">
                     Extra
                   </button>
@@ -240,7 +241,7 @@ registerTab('calculator', 'tab-content active', String.raw`
               <div class="formula-desc" id="formula-desc"></div>
             </div>
 
-            <button class="calc-btn" onclick="calculate()">▶ Calcular</button>
+            <button type="button" class="calc-btn" onclick="calculate()">▶ Calcular</button>
 
           </div>
         </div>
@@ -249,7 +250,7 @@ registerTab('calculator', 'tab-content active', String.raw`
       <!-- Resultados -->
       <article class="results-area">
         <div id="last-seat-container" style="display:none;margin-bottom:8px">
-          <button id="last-seat-toggle" onclick="toggleLastSeat()"
+          <button type="button" id="last-seat-toggle" onclick="toggleLastSeat()"
             style="width:100%;background:none;color:var(--text-muted);border:none;padding:8px 12px;font-family:'Source Sans 3',sans-serif;font-size:0.8rem;font-weight:600;cursor:pointer;text-align:left;transition:color 0.15s"
             onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">
             ▼ Mostrar análisis del último <span id="last-seat-word-toggle">escaño</span>
@@ -289,7 +290,7 @@ registerTab('calculator', 'tab-content active', String.raw`
 
       <!-- Hemiciclo Representación visual - Toggle -->
       <div id="hemicycle-toggle-container" style="display:none;margin-bottom:8px">
-        <button id="hemicycle-toggle" onclick="toggleHemicycleVisual()"
+        <button type="button" id="hemicycle-toggle" onclick="toggleHemicycleVisual()"
           style="width:100%;background:none;color:var(--text-muted);border:none;padding:8px 12px;font-family:'Source Sans 3',sans-serif;font-size:0.8rem;font-weight:600;cursor:pointer;text-align:left;transition:color 0.15s"
           onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">
           ▼ Representación visual
@@ -300,7 +301,7 @@ registerTab('calculator', 'tab-content active', String.raw`
       <div id="hemicycle-window" class="hemicycle-window" style="display:none">
         <div id="hemicycle-header" class="hemicycle-window-header">
           <span>Representación visual</span>
-          <button onclick="closeHemicycleWindow()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1rem;padding:0;line-height:1">✕</button>
+          <button type="button" onclick="closeHemicycleWindow()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1rem;padding:0;line-height:1">✕</button>
         </div>
         <div style="padding:20px 20px 24px">
           <div id="hemicycle-chart"></div>

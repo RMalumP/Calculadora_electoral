@@ -44,13 +44,16 @@ function calculate() {
 
   // Segunda vuelta: flujo simplificado sin lógica de absorción
   if (formula === 'majority_round2') {
-    const totalSeats      = parseInt(document.getElementById('seats').value) || 350;
+    const totalSeats      = parseIntField(document.getElementById('seats').value, 350);
     const bonus           = parseInt(document.getElementById('majority-bonus').value) || 0;
     const bonusMode       = getBonusMode();
-    const seatsToAllocate = bonusMode === 'included' ? totalSeats - bonus : totalSeats;
+    // El bono «incluido» sale de los escaños en juego, así que nunca puede
+    // pasarse de ellos: sin tope el reparto se haría sobre un número negativo.
+    const bonusApplied    = bonusMode === 'included' ? Math.min(bonus, totalSeats) : bonus;
+    const seatsToAllocate = bonusMode === 'included' ? totalSeats - bonusApplied : totalSeats;
     const allocated       = majorityRound2(seatsToAllocate);
     const totalValid      = allocated.reduce((s, p) => s + p.votes, 0);
-    applyBonus(allocated, bonus);
+    applyBonus(allocated, bonusApplied);
     displayResults(allocated, totalValid, totalSeats, formula, [], [], allocated);
     return;
   }
@@ -106,13 +109,15 @@ function calculate() {
   let totalValid = normalParties.reduce((s, p) => s + p.votes, 0) + otrosManualVotes + blank;
   if (totalValid === 0) { alert('Introduce al menos algunos votos.'); return; }
 
-  const totalSeats      = parseInt(document.getElementById('seats').value) || 350;
+  const totalSeats      = parseIntField(document.getElementById('seats').value, 350);
   const barrier         = parseFloat(document.getElementById('barrier').value) || 0;
   const bonus           = parseInt(document.getElementById('majority-bonus').value) || 0;
   const bonusMode       = getBonusMode();
   const barrierVotes    = totalValid * barrier / 100;
   const minorThreshold  = totalValid * 0.005;
-  const seatsToAllocate = bonusMode === 'included' ? totalSeats - bonus : totalSeats;
+  // Tope del bono «incluido»: no puede llevarse más escaños de los que hay.
+  const bonusApplied    = bonusMode === 'included' ? Math.min(bonus, totalSeats) : bonus;
+  const seatsToAllocate = bonusMode === 'included' ? totalSeats - bonusApplied : totalSeats;
 
   // ── PASO 3: Primera asignación (sobre partidos efectivos) ──
   const eligible        = effectiveParties.filter(p => p.votes >= barrierVotes && p.votes > 0);
@@ -122,7 +127,7 @@ function calculate() {
     eligible.map(p => ({ name: p.name, siglas: p.siglas, votes: p.votes, color: p.color })),
     seatsToAllocate, formula
   );  // esta primera asignación sólo sirve para decidir qué partidos se absorben
-  applyBonus(allocated, bonus);
+  applyBonus(allocated, bonusApplied);
 
   // ── PASO 4: Identificar partidos minoritarios a absorber ──
   const allocatedSeatsMap = new Map(allocated.map(p => [p.name, p.seats]));
@@ -180,7 +185,7 @@ function calculate() {
     eligible2.map(p => ({ name: p.name, siglas: p.siglas, votes: p.votes, color: p.color })),
     seatsToAllocate, formula, _calcSeatOut
   );
-  applyBonus(allocated, bonus);
+  applyBonus(allocated, bonusApplied);
 
   excludedBarrier2.forEach(p => allocated.push({ ...p, seats: 0, excludedBarrier: true }));
   noVotes2.forEach(p => allocated.push({ ...p, seats: 0, noVotes: true }));
@@ -191,7 +196,7 @@ function calculate() {
     individuales: remainingNormal.filter(p => !p.isGroup).map(p => ({ name: p.name, votes: p.votes })),
     grupos: syntheticGroups.map(g => ({ name: g.name, members: g.members })),
     otros: otrosAccumulatedVotes, blancos: blank,
-    escanos: seatsToAllocate, bono: bonus, formula, barrera: barrier
+    escanos: seatsToAllocate, bono: bonusApplied, formula, barrera: barrier
   } : null;
 
   // ── PASO 7b: Escaños compensatorios (opcional) ──
@@ -225,14 +230,17 @@ function _applyCompensation(allocated, totalValid, formula, barrier) {
   if (modo === 'bolsa' && bolsa <= 0) return null;
 
   const withVotes = allocated.filter(p => p.votes > 0);
+  // La clave es la posición en la lista, nunca el nombre: dos candidaturas
+  // pueden llamarse igual y un índice por nombre se queda con una sola, de
+  // modo que una se llevaría los escaños de la otra.
   const result = advApplyCompensation(
-    withVotes.map(p => ({ key: p.name, name: p.name, siglas: p.siglas, votes: p.votes, seats: p.seats, votePct: totalValid > 0 ? p.votes / totalValid * 100 : 0 })),
+    withVotes.map((p, i) => ({ key: 'fila-' + i, name: p.name, siglas: p.siglas, votes: p.votes, seats: p.seats, votePct: totalValid > 0 ? p.votes / totalValid * 100 : 0 })),
     { modo: modo === 'bolsa' ? 'bolsa' : 'ampliacion', formula: advCompFormulaFor(formula), barrera: barrier, bolsa, tope: 0 },
     totalValid
   );
-  const byName = new Map(result.national.map(r => [r.name, r]));
-  allocated.forEach(p => {
-    const r = byName.get(p.name);
+  const byKey = new Map(result.national.map(r => [r.key, r]));
+  withVotes.forEach((p, i) => {
+    const r = byKey.get('fila-' + i);
     if (!r) return;
     p.directSeats = r.directSeats;
     p.compSeats   = r.compSeats;
@@ -275,7 +283,7 @@ function displayResults(allocated, totalValid, totalSeats, formula, excludedBarr
       <td class="pct-cell" style="font-size:0.82rem">${votePct}%</td>
       <td>
         <div class="seats-bar-wrap">
-          <span class="result-badge" style="background:${escapeHtml(color)}">${p.seats}</span>
+          <span class="result-badge" style="background:${escapeHtml(colorLegibleParaBlanco(color))}">${p.seats}</span>
           ${p.compSeats > 0 ? `<span class="comp-note" title="Escaños directos + compensatorios">${p.directSeats}+${p.compSeats}</span>` : ''}
           <div class="seats-bar-outer">
             <div class="seats-bar" style="width:${barPct}%;background:${escapeHtml(color)};opacity:0.6"></div>
@@ -286,6 +294,19 @@ function displayResults(allocated, totalValid, totalSeats, formula, excludedBarr
       <td style="text-align:right;font-size:0.82rem;font-variant-numeric:tabular-nums;${diffColor}">${diffSign}${diff}</td>`;
     tbody.appendChild(tr);
   });
+
+  // Sin esto la tarjeta se quedaba con la cabecera y ninguna fila, sin decir
+  // por qué: pasa con la barrera al 100 %, sin votos o con cero escaños.
+  if (!allocated.some(p => p.seats > 0)) {
+    const motivo = totalSeats <= 0
+      ? 'No hay escaños que repartir: revisa el número de escaños.'
+      : excludedBarrier.length
+        ? 'Ninguna candidatura llega a la barrera electoral, así que no se reparte ningún escaño. Baja la barrera para ver un reparto.'
+        : 'Ninguna candidatura obtiene escaños con estos datos.';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td colspan="6" class="results-empty-note">${escapeHtml(motivo)}</td>`;
+    tbody.appendChild(tr);
+  }
 
   highlightInputTable(allocated, formula);
   displayLastSeatInfo();
@@ -433,7 +454,21 @@ function buildBreakdownTable(parties, allocated, totalSeats, formula) {
 
   const divFn = getDivFn(formula);
   const maxSeats = Math.max(...eligibleParties.map(p => allocated.find(a => a.name === p.name)?.seats || 0));
-  const numCols  = maxSeats + 3;
+  // El desglose es para seguir el reparto con la vista, no para listarlo
+  // entero: sin tope, dos candidaturas y 9.999 escaños construían 6.004
+  // columnas y 12.006 celdas en cada recálculo, estuviera plegado o no.
+  const MAX_COLS = 60;
+  const numColsIdeal = maxSeats + 3;
+  const numCols  = Math.min(numColsIdeal, MAX_COLS);
+  const recortado = numColsIdeal > numCols;
+
+  const nota = document.getElementById('breakdown-note');
+  if (nota) {
+    nota.textContent = recortado
+      ? `Se muestran las ${numCols} primeras divisiones de cada candidatura, de ${numColsIdeal}.`
+      : '';
+    nota.style.display = recortado ? 'block' : 'none';
+  }
 
   const allQuotients = [];
   eligibleParties.forEach(party => {

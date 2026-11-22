@@ -6,12 +6,14 @@
   --mapa-tierra: #f0ece4;
   --mapa-tierra-hover: #e4dacb;
   --mapa-linea: #b3a89a;
+  --mapa-sin-datos: #d3ccc0;
 }
 
 :root[data-theme="dark"] {
   --mapa-tierra: #272019;
   --mapa-tierra-hover: #3e3025;
   --mapa-linea: #5d5248;
+  --mapa-sin-datos: #4a4138;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -19,6 +21,7 @@
     --mapa-tierra: #272019;
     --mapa-tierra-hover: #3e3025;
     --mapa-linea: #5d5248;
+    --mapa-sin-datos: #4a4138;
   }
 }
 
@@ -218,7 +221,10 @@
   paint-order: stroke;
 }
 
-.mapa-pieza.sin-datos { fill: var(--mapa-tierra); opacity: 0.55; }
+/* Una pieza sin dato se pintaba del color de la tierra a media opacidad, así
+   que quedaba más pálida que el fondo y no se distinguía del mar. Ahora lleva
+   un gris propio, para que se vea que no hay dato y no que no hay pieza. */
+.mapa-pieza.sin-datos { fill: var(--mapa-sin-datos); opacity: 1; }
 
 @media (max-width: 980px) {
   .mapa-cuerpo { grid-template-columns: minmax(0, 1fr); }
@@ -652,3 +658,10 @@
 .mapa-cmp-tabla td.num b { display: block; }
 .mapa-cmp-pct { display: block; font-size: 0.68rem; color: var(--text-muted); font-weight: 400; }
 .mapa-cmp-total td { font-weight: 700; border-top: 1px solid var(--border); }
+
+/* A 320 px los tres botones de nivel no caben en una línea y se salían del
+   ancho de la ventana, que no tiene desplazamiento horizontal: se recortaban. */
+@media (max-width: 380px) {
+  .mapa-niveles { flex-wrap: wrap; }
+  .mapa-nivel-btn { padding: 7px 9px; font-size: 0.76rem; }
+}

@@ -282,3 +282,11 @@ input.names-hidden-mode.names-has-value { color: #8b3131 !important; } /* rojo o
   color: var(--text-muted);
   font-style: italic;
 }
+
+/* Dentro de una cabecera de tabla con fondo oscuro, el gris atenuado se
+   sustituye por su variante clara: así lo heredan también los estilos en
+   línea que usan var(--text-muted). Las cabeceras de fondo claro se quedan
+   con el gris de siempre. */
+thead tr th { --text-muted: var(--text-muted-head); }
+.adv-terr-table thead th,
+.adv-popup-table thead th { --text-muted: #6e6860; }

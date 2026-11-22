@@ -81,8 +81,21 @@ function mapaRango(porPieza, medir) {
     min = Math.min(min, v);
     max = Math.max(max, v);
   });
-  if (!Number.isFinite(min)) return { min: 0, max: 1, ancho: 1 };
-  return { min, max, ancho: (max - min) || 1 };
+  if (!Number.isFinite(min)) return { min: 0, max: 1, ancho: 1, plano: true };
+  return { min, max, ancho: (max - min) || 1, plano: max === min };
+}
+
+/**
+ * Dónde cae un valor dentro del rango, de 0 (el más bajo) a 1 (el más alto).
+ *
+ * Cuando todas las piezas valen lo mismo (el nivel nacional es una sola pieza)
+ * el rango no tiene anchura y la cuenta daba 0, es decir el tono más pálido de
+ * la rampa: España entera salía casi en blanco. En ese caso se usa un tono
+ * intermedio, que es el único que no afirma nada falso.
+ */
+function mapaPos(r, v) {
+  if (r.plano) return 0.62;
+  return (v - r.min) / r.ancho;
 }
 
 const mapaPct = v => (v * 100).toFixed(1).replace('.', ',') + ' %';
@@ -96,7 +109,7 @@ function mapaModoPorcentaje(id, label, color, medir, texto, sirve) {
       const salida = {};
       porPieza.forEach((agregado, codigo) => {
         const v = medir(agregado);
-        if (Number.isFinite(v)) salida[codigo] = mapaIntensidad(color, (v - r.min) / r.ancho);
+        if (Number.isFinite(v)) salida[codigo] = mapaIntensidad(color, mapaPos(r, v));
       });
       return salida;
     },
@@ -106,7 +119,9 @@ function mapaModoPorcentaje(id, label, color, medir, texto, sirve) {
     },
     resumen(agregado) {
       const v = medir(agregado);
-      if (!Number.isFinite(v)) return '';
+      // La hoja no trae estos votos en todas las convocatorias: al Senado de
+      // 1977 le faltan en 42 de sus 58 circunscripciones.
+      if (!Number.isFinite(v)) return '<i>Sin datos en la hoja</i>';
       return texto + ': <b>' + (v * 100).toFixed(1).replace('.', ',') + ' %</b>';
     },
   };
@@ -187,7 +202,7 @@ MAPA_MODOS.push({
     const color = partido.color || '#888';
     const salida = {};
     porPieza.forEach((agregado, codigo) => {
-      salida[codigo] = mapaIntensidad(color, (medir(agregado) - r.min) / r.ancho);
+      salida[codigo] = mapaIntensidad(color, mapaPos(r, medir(agregado)));
     });
     return salida;
   },
@@ -248,7 +263,7 @@ MAPA_MODOS.push({
       const m = mapaMargen(agregado);
       if (!g || !Number.isFinite(m)) return;
       // El color es el del ganador; lo que cambia es cuánto se nota.
-      salida[codigo] = mapaIntensidad(g.color || '#888', (m - r.min) / r.ancho);
+      salida[codigo] = mapaIntensidad(g.color || '#888', mapaPos(r, m));
     });
     return salida;
   },

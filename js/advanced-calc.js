@@ -596,6 +596,32 @@ function advSegundaVuelta(d, config, contenders, partyMeta) {
  * calculadora básica: «incluido» lo descuenta de los escaños que se reparten,
  * y «extra» lo añade por encima.
  */
+/**
+ * ¿Hay que repartir con los escaños que guarda la hoja en vez de calcularlos?
+ *
+ * El voto limitado reparte por votos de partido, así que da el máximo al más
+ * votado y el resto al segundo: en una circunscripción de cuatro siempre sale
+ * 3-1. En la realidad hay 2-2 cuando los electores cruzan la papeleta, cosa
+ * que los votos de partido no pueden expresar. Por eso, mientras no se esté
+ * simulando nada, se usan los escaños que se repartieron de verdad.
+ *
+ * En cuanto se toca algo (votos, coaliciones, bono, barreras que dejen fuera a
+ * alguien con escaños, u otro reparto de escaños) se vuelve a la fórmula, que
+ * es lo que el usuario está pidiendo ver.
+ */
+function _advRepartirConReales(d, contenders, aRepartir, o) {
+  if (o.formula !== 'limited_vote') return false;
+  if (o.bono > 0 || o.hayCoaliciones) return false;
+  if (o.editedKeys.size || o.removedKeys.size) return false;
+  if (!d.realSeats || !d.realSeats.size) return false;
+  let suma = 0;
+  d.realSeats.forEach(v => { suma += v; });
+  if (suma !== aRepartir) return false;
+  const claves = new Set(contenders.map(c => c.key));
+  for (const k of d.realSeats.keys()) if (!claves.has(k)) return false;
+  return true;
+}
+
 function advAllocateDistrict(d, { config, edits, locks, partyMeta, eligibility, blockedBy }) {
   const removedKeys = new Set(edits?.[d.id]?.removed || []);
   const editedKeys = new Set(
@@ -617,18 +643,30 @@ function advAllocateDistrict(d, { config, edits, locks, partyMeta, eligibility, 
   }
   const bono = config.bono?.activa ? Math.max(0, parseInt(config.bono.escanos) || 0) : 0;
   const bonoExtra = bono > 0 && config.bono?.modo === 'extra';
-  const aRepartir = bonoExtra ? d.seats : Math.max(0, d.seats - bono);
+  // En el modo «incluido» el bono sale de los escaños de la circunscripción,
+  // así que no puede ser mayor que ellos: si lo fuera, el recorte de
+  // `aRepartir` se comía el reparto y el bono se sumaba igual por encima.
+  const bonoAplicado = bonoExtra ? bono : Math.min(bono, d.seats);
+  const aRepartir = bonoExtra ? d.seats : Math.max(0, d.seats - bonoAplicado);
 
   // El último escaño y los cocientes se guardan en la circunscripción para las
   // ventanas de análisis.
   const seatOut = {};
-  const allocated = aRepartir > 0 && contendersAll.length
-    ? allocateSeats(contendersAll, aRepartir, formula, seatOut)
-    : contendersAll.map(p => ({ ...p, seats: 0 }));
-  d.lastSeat = aRepartir > 0 && seatOut.lastSeat ? { ...seatOut.lastSeat } : null;
-  d.sorteo = aRepartir > 0 ? seatOut.sorteo : null;
+  const conReales = _advRepartirConReales(d, contendersAll, aRepartir, {
+    formula, bono: bonoAplicado, editedKeys, removedKeys,
+    hayCoaliciones: !!(config.coaliciones && config.coaliciones.length)
+  });
+  d.repartoReal = conReales;
+  const allocated = conReales
+    ? contendersAll.map(p => ({ ...p, seats: d.realSeats.get(p.key) || 0 }))
+    : (aRepartir > 0 && contendersAll.length
+      ? allocateSeats(contendersAll, aRepartir, formula, seatOut)
+      : contendersAll.map(p => ({ ...p, seats: 0 })));
+  d.lastSeat = !conReales && aRepartir > 0 && seatOut.lastSeat ? { ...seatOut.lastSeat } : null;
+  d.sorteo = !conReales && aRepartir > 0 ? seatOut.sorteo : null;
   d.analysis = {
     formula,
+    fuente: conReales ? 'reales' : 'formula',
     toAllocate: aRepartir,
     quota: seatOut.quota ?? null,
     parties: contendersAll.map(c => ({
@@ -636,7 +674,7 @@ function advAllocateDistrict(d, { config, edits, locks, partyMeta, eligibility, 
       seats: allocated.find(a => a.key === c.key)?.seats || 0
     }))
   };
-  if (bono > 0 && contendersAll.length) applyBonus(allocated, bono);
+  if (bonoAplicado > 0 && contendersAll.length) applyBonus(allocated, bonoAplicado);
 
   d.formulaUsada = d.segundaVuelta ? 'majority_round2' : formula;
   // Los que suma el bono por encima del tamaño de la circunscripción: en el

@@ -33,7 +33,8 @@ function toggleSiglasVisibility() {
     if (siglasVisible && el.dataset.siglas) _updateSiglasText(el);
   });
 
-  selectAll('.otros-siglas').forEach(span => setDisplay(span, siglasVisible));
+  // Las filas del desplegable de «Otros» llevan clases acabadas en -input
+  // (js/rows.js): los selectores sin ese sufijo no encontraban nada.
   selectAll('.otros-siglas-input').forEach(input => setDisplay(input, siglasVisible));
 
   if (!siglasVisible && namesHidden) {
@@ -51,7 +52,7 @@ function toggleHideNames() {
   updateText(select('#hide-names-btn'), namesHidden ? 'Mostrar nombre' : 'Ocultar nombre');
 
   updateNameElements('#votes-body .name-input', namesHidden);
-  updateNameSpans('.otros-item-name', namesHidden);
+  updateNameElements('.otros-item-name-input', namesHidden);
 
   selectAll('.result-party-name').forEach(el => setDisplay(el, !namesHidden));
   selectAll('.result-siglas-prefix').forEach(el => _updateSiglasText(el));
@@ -242,7 +243,7 @@ function onCompModeChange() {
   setDisplay(select('#comp-bolsa-wrap'), modo === 'bolsa');
   const bolsa = select('#comp-bolsa');
   if (modo === 'bolsa' && bolsa && !(parseInt(bolsa.value) > 0)) {
-    const total = parseInt(select('#seats')?.value) || 0;
+    const total = parseIntField(select('#seats')?.value, 0);
     bolsa.value = Math.max(1, Math.round(total * 0.1));
   }
 }
