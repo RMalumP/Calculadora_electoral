@@ -43,18 +43,18 @@ registerTab('pactometer', 'tab-content', String.raw`
         <div class="card-header">
           <span class="dot"></span>Partidos con representación
           <div class="pacto-card-actions">
-            <button id="pact-lock-btn" onclick="togglePactLock()" class="ghost-btn" title="Bloquear actualización desde calculadora">🔓 Bloquear</button>
-            <button onclick="resetPactometer()"       class="ghost-btn">Reiniciar</button>
-            <button onclick="clearPactometerSeats()"  class="ghost-btn">Borrar <span class="seat-name-ref">escaños</span></button>
-            <button onclick="clearPactometerBlocks()" class="ghost-btn">Borrar bloques</button>
+            <button type="button" id="pact-lock-btn" onclick="togglePactLock()" class="ghost-btn" title="Bloquear actualización desde calculadora">🔓 Bloquear</button>
+            <button type="button" onclick="resetPactometer()"       class="ghost-btn">Reiniciar</button>
+            <button type="button" onclick="clearPactometerSeats()"  class="ghost-btn">Borrar <span class="seat-name-ref">escaños</span></button>
+            <button type="button" onclick="clearPactometerBlocks()" class="ghost-btn">Borrar bloques</button>
           </div>
         </div>
         <table id="pactometer-table">
           <thead>
             <tr>
               <th style="width:30px"></th>
-              <th style="width:50px;text-align:center"><button id="pact-siglas-toggle-btn" onclick="togglePactSiglasVisibility()" style="font-size:0.6rem;font-weight:700;letter-spacing:0.02em;padding:2px 5px;border:1px solid var(--border);border-radius:3px;background:none;cursor:pointer;color:var(--text-muted);white-space:nowrap;line-height:1.5">Siglas ▼</button></th>
-              <th>Partido <button id="pact-hide-names-btn" onclick="togglePactHideNames()" style="display:none;font-size:0.58rem;font-weight:700;letter-spacing:0.02em;padding:2px 5px;border:1px solid #8b3131;border-radius:3px;background:none;cursor:pointer;color:#8b3131;white-space:nowrap;line-height:1.5;margin-left:6px">Ocultar nombre</button></th>
+              <th style="width:50px;text-align:center"><button type="button" id="pact-siglas-toggle-btn" onclick="togglePactSiglasVisibility()" style="font-size:0.6rem;font-weight:700;letter-spacing:0.02em;padding:2px 5px;border:1px solid var(--border);border-radius:3px;background:none;cursor:pointer;color:var(--text-muted);white-space:nowrap;line-height:1.5">Siglas ▼</button></th>
+              <th>Partido <button type="button" id="pact-hide-names-btn" onclick="togglePactHideNames()" style="display:none;font-size:0.58rem;font-weight:700;letter-spacing:0.02em;padding:2px 5px;border:1px solid #8b3131;border-radius:3px;background:none;cursor:pointer;color:#8b3131;white-space:nowrap;line-height:1.5;margin-left:6px">Ocultar nombre</button></th>
               <th style="text-align:center;width:120px" id="pact-seats-header">Escaños</th>
               <th class="pact-b-cell" style="text-align:center;width:120px" id="pact-seats-b-header">Escaños B</th>
               <th style="width:100px;text-align:center">Bloque</th>
@@ -62,7 +62,7 @@ registerTab('pactometer', 'tab-content', String.raw`
           </thead>
           <tbody id="pactometer-body"></tbody>
         </table>
-        <button class="add-row-btn" onclick="addPactometerRow()">
+        <button type="button" class="add-row-btn" onclick="addPactometerRow()">
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="5.5" stroke="currentColor" stroke-width="1.1"/><path d="M6 3v6M3 6h6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
           Añadir partido
         </button>
@@ -91,14 +91,14 @@ registerTab('pactometer', 'tab-content', String.raw`
         <div class="card-header"><span class="dot"></span>Hemiciclo</div>
         <div class="pacto-hemi-body">
 
-          <button id="voting-panel-toggle" onclick="toggleVotingPanel()"
-            style="display:none;width:700px;background:none;color:var(--text-muted);border:none;padding:2px 4px;font-family:'Source Sans 3',sans-serif;font-size:0.78rem;font-weight:600;cursor:pointer;text-align:left;transition:color 0.15s;margin:0"
+          <button type="button" id="voting-panel-toggle" onclick="toggleVotingPanel()"
+            style="display:none;width:100%;max-width:700px;background:none;color:var(--text-muted);border:none;padding:2px 4px;font-family:'Source Sans 3',sans-serif;font-size:0.78rem;font-weight:600;cursor:pointer;text-align:left;transition:color 0.15s;margin:0"
             onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">&#9650; Configuración de votación</button>
-          <div id="voting-panel-wrapper" style="display:none;flex-direction:column;align-items:center;gap:10px;width:700px">
-            <div id="combined-settings" style="display:none;width:700px;padding:4px 20px;background:var(--accent-bg);border:1px solid var(--border);border-radius:var(--radius)">
-              <div style="display:flex;align-items:center;gap:15px">
+          <div id="voting-panel-wrapper" style="display:none;flex-direction:column;align-items:center;gap:10px;width:100%;max-width:700px">
+            <div id="combined-settings" style="display:none;width:100%;max-width:700px;padding:4px 20px;background:var(--accent-bg);border:1px solid var(--border);border-radius:var(--radius)">
+              <div style="display:flex;align-items:center;gap:15px;flex-wrap:wrap">
                 <span id="settings-label" style="font-size:0.85rem;font-weight:600;color:var(--text-muted)">Mayoría requerida:</span>
-                <select id="settings-select" aria-labelledby="settings-label" onchange="updateHemicycle()" style="padding:6px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:0.85rem;background:var(--surface);font-family:'Source Sans 3',sans-serif">
+                <select id="settings-select" aria-labelledby="settings-label" onchange="updateHemicycle()" style="padding:6px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:0.85rem;background:var(--surface);font-family:'Source Sans 3',sans-serif;min-width:0;max-width:100%">
                   <option value="simple">Mayoría simple (&gt; 50%)</option>
                   <option value="absolute">Mayoría absoluta (≥ mitad + 1)</option>
                   <option value="3/5">Mayoría cualificada 3/5 (≥ 60%)</option>
@@ -110,7 +110,7 @@ registerTab('pactometer', 'tab-content', String.raw`
           </div>
 
           <div class="pacto-hemi-wrap">
-            <div id="hemicycle-legend" style="width:700px;display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+            <div id="hemicycle-legend" style="width:100%;max-width:700px;display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
               <div style="display:flex;align-items:center;gap:6px">
                 <span id="hemicycle-left-label" style="font-size:0.7rem;font-weight:700;color:var(--text-muted);letter-spacing:0.05em">IZQ</span>
                 <div id="hemicycle-left-swatches" style="display:flex;gap:3px;flex-wrap:wrap"></div>
@@ -121,7 +121,7 @@ registerTab('pactometer', 'tab-content', String.raw`
               </div>
             </div>
 
-            <div id="hemicycle-container" style="width:700px;height:120px;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);position:relative;overflow:hidden">
+            <div id="hemicycle-container" style="width:100%;max-width:700px;height:120px;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);position:relative;overflow:hidden">
               <div id="left-block"  style="position:absolute;left:0;bottom:0;height:100%;background:transparent;transition:width 0.3s"></div>
               <div id="right-block" style="position:absolute;right:0;bottom:0;height:100%;background:transparent;transition:width 0.3s"></div>
               <div id="majority-line" style="position:absolute;top:0;bottom:0;width:2px;background:var(--accent);z-index:10;left:50%"></div>

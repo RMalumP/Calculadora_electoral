@@ -133,10 +133,10 @@ function _buildGroupHeaderRow(groupNum, members) {
   tr.innerHTML = `
     <td colspan="7" class="group-header-cell">
       <div class="group-header-content">
-        <button class="group-collapse-btn" title="${isCollapsed ? 'Expandir' : 'Colapsar'}">${isCollapsed ? '▶' : '▼'}</button>
+        <button type="button" class="group-collapse-btn" title="${isCollapsed ? 'Expandir' : 'Colapsar'}">${isCollapsed ? '▶' : '▼'}</button>
         <span class="group-header-name">Agrupación ${groupNum}</span>
         <span class="group-header-votes">(${totalVotes.toLocaleString('es-ES')} votos)</span>
-        <button class="del-btn group-del-btn" title="Eliminar agrupación">✕</button>
+        <button type="button" class="del-btn group-del-btn" title="Eliminar agrupación">✕</button>
       </div>
     </td>`;
 
@@ -175,9 +175,15 @@ function _setGroupRowsVisibility(groupNum, visible) {
 
 /* ── Eliminar agrupación ── */
 
+/**
+ * Deshace una agrupación y deja sus candidaturas sueltas en la tabla.
+ *
+ * Antes, si la agrupación estaba plegada, el mismo botón borraba las filas de
+ * dentro en vez de sacarlas, sin preguntar: el resultado dependía de si la
+ * agrupación se veía abierta o cerrada. Ahora hace siempre lo mismo.
+ */
 function deleteGroup(groupNum) {
-  const isCollapsed = groupingStates[groupNum]?.collapsed || false;
-  const tbody       = document.getElementById('votes-body');
+  const tbody = document.getElementById('votes-body');
   if (!tbody) return;
 
   [...tbody.children].forEach(tr => {
@@ -185,16 +191,12 @@ function deleteGroup(groupNum) {
       tr.remove();
     } else if (!tr.classList.contains('group-header-row') &&
                parseInt(tr.dataset.groupNum || '0') === groupNum) {
-      if (isCollapsed) {
-        tr.remove();
-      } else {
-        tr.dataset.groupNum = '0';
-        const btn = tr.querySelector('.group-num-btn');
-        if (btn) { btn.textContent = '0'; btn.classList.remove('group-num-active'); }
-        tr.classList.remove('in-group');
-        tr.style.display = '';
-        _updateRowActionsForGroup(tr, 0);
-      }
+      tr.dataset.groupNum = '0';
+      const btn = tr.querySelector('.group-num-btn');
+      if (btn) { btn.textContent = '0'; btn.classList.remove('group-num-active'); }
+      tr.classList.remove('in-group');
+      tr.style.display = '';
+      _updateRowActionsForGroup(tr, 0);
     }
   });
 

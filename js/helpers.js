@@ -41,6 +41,61 @@ function parseVoteValue(val) {
   return parseInt(String(val || '').replace(/[^\d]/g, ''), 10) || 0;
 }
 
+/**
+ * Entero de un campo numérico, admitiendo lo que el navegador admite.
+ *
+ * `parseInt` corta en el primer carácter que no es cifra, así que un campo
+ * `type="number"` con «1e3» —que el navegador acepta y vale mil— se leía como
+ * un 1 sin avisar de nada. `Number` lo interpreta como lo que es.
+ */
+function parseIntField(val, porDefecto = 0) {
+  const n = Number(String(val ?? '').trim());
+  if (!Number.isFinite(n)) return porDefecto;
+  const entero = Math.trunc(n);
+  return entero === 0 && porDefecto !== 0 && String(val ?? '').trim() === '' ? porDefecto : entero;
+}
+
+/* ── Contraste del texto sobre un color de partido ─────────────── */
+
+function _canalLineal(c) {
+  const v = c / 255;
+  return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+}
+
+/** Luminancia relativa de un color (WCAG 2.1). */
+function luminanciaRelativa(r, g, b) {
+  return 0.2126 * _canalLineal(r) + 0.7152 * _canalLineal(g) + 0.0722 * _canalLineal(b);
+}
+
+function _rgbDeHex(hex) {
+  let h = String(hex || '').trim().replace('#', '');
+  if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+  if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+  return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+}
+
+/**
+ * El mismo color, oscurecido lo justo para que el texto blanco encima llegue
+ * al contraste mínimo de WCAG AA.
+ *
+ * Las pastillas de escaños llevan el color de la candidatura, que lo elige
+ * quien usa la aplicación o viene de los datos: con un azul o un verde medios
+ * el blanco encima se quedaba en 2,4 de contraste. Oscurecer mantiene el tono
+ * del partido, que es lo que identifica la pastilla.
+ */
+function colorLegibleParaBlanco(hex, minimo = 4.5) {
+  const rgb = _rgbDeHex(hex);
+  if (!rgb) return hex;
+  let [r, g, b] = rgb;
+  for (let i = 0; i < 30; i++) {
+    const contraste = 1.05 / (luminanciaRelativa(r, g, b) + 0.05);
+    if (contraste >= minimo) break;
+    r *= 0.92; g *= 0.92; b *= 0.92;
+  }
+  const dos = n => Math.round(n).toString(16).padStart(2, '0');
+  return '#' + dos(r) + dos(g) + dos(b);
+}
+
 function formatVotes(n) {
   return String(Math.floor(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }

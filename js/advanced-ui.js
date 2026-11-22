@@ -985,7 +985,7 @@ function advNationalCard() {
       <td class="adv-num">${advPct(p.votePct)}</td>
       ${showComp ? `<td class="adv-num">${p.directSeats}</td><td class="adv-num">${p.compSeats > 0 ? `<b>+${p.compSeats}</b>` : '·'}</td>` : ''}
       <td><div class="adv-seat-wrap">
-        <span class="adv-seat-badge" style="background:${color}">${p.seats}</span>
+        <span class="adv-seat-badge" style="background:${colorLegibleParaBlanco(color)}">${p.seats}</span>
         <div class="adv-bar-outer"><div class="adv-bar" style="width:${(p.seats / maxSeats * 100).toFixed(1)}%;background:${color}"></div></div>
       </div></td>
       <td class="adv-num">${advPct(p.seatPct)}</td>
@@ -1114,7 +1114,7 @@ function advDistrictsCard() {
 
     return `<div class="adv-ccaa${allLocked ? ' adv-locked' : ''}">
       <div class="adv-ccaa-headrow">
-      <button class="adv-ccaa-header" data-ccaa="${advEscape(ccaa)}" aria-expanded="${open}">
+      <button type="button" class="adv-ccaa-header" data-ccaa="${advEscape(ccaa)}" aria-expanded="${open}">
         <span class="adv-ccaa-arrow">${open ? '▼' : '▶'}</span>
         <span class="adv-ccaa-name">${advEscape(ccaa)}</span>
         <span class="adv-ccaa-meta">${advEscape(meta)}</span>
@@ -1141,8 +1141,8 @@ function advDistrictsCard() {
   return `<div class="card">
     <div class="card-header"><span class="dot"></span>${title}
       <span class="adv-toolbar">
-        <button class="adv-mini-btn" id="adv-expand-all">Expandir todo</button>
-        <button class="adv-mini-btn" id="adv-collapse-all">Colapsar todo</button>
+        <button type="button" class="adv-mini-btn" id="adv-expand-all">Expandir todo</button>
+        <button type="button" class="adv-mini-btn" id="adv-collapse-all">Colapsar todo</button>
         <button type="button" class="adv-lock adv-lock-master" data-lock-all="1"
           title="Candado maestro de todas las circunscripciones. Clic derecho o pulsación larga para elegir qué cubre y en cuáles."
         >🔐</button>
@@ -1248,7 +1248,7 @@ function advDistrictHTML(d, alwaysFull, hideHead) {
       </div></td>
       <td class="adv-num">${votesCell}</td>
       <td class="adv-num">${advPct(p.pct)}</td>
-      <td class="adv-num">${p.seats > 0 ? `<span class="adv-seat-badge" style="background:${color}">${p.seats}</span>` : '—'}</td>
+      <td class="adv-num">${p.seats > 0 ? `<span class="adv-seat-badge" style="background:${colorLegibleParaBlanco(color)}">${p.seats}</span>` : '—'}</td>
       ${showReal ? `<td class="adv-num adv-real-delta ${p.seats > p.realSeats ? 'up' : p.seats < p.realSeats ? 'down' : ''}">${p.realSeats || '—'}</td>` : ''}
     </tr>`;
   };
@@ -1310,11 +1310,11 @@ function advDistrictHTML(d, alwaysFull, hideHead) {
       ${foot}
     </table>
     </div>
-    ${(_advEditMode && !lockedEdit) ? `<button class="adv-add-btn" data-district="${advEscape(d.id)}">
+    ${(_advEditMode && !lockedEdit) ? `<button type="button" class="adv-add-btn" data-district="${advEscape(d.id)}">
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="5.5" stroke="currentColor" stroke-width="1.1"/><path d="M6 3v6M3 6h6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
         Añadir candidatura</button>` : ''}
-    ${hidden > 0 ? `<button class="adv-more-btn" data-district="${advEscape(d.id)}">▼ Ver ${hidden} candidatura${hidden === 1 ? '' : 's'} más</button>` : ''}
-    ${expanded && !alwaysFull && rows.length > ADV_VISIBLE_ROWS ? `<button class="adv-more-btn" data-district="${advEscape(d.id)}">▲ Ocultar</button>` : ''}
+    ${hidden > 0 ? `<button type="button" class="adv-more-btn" data-district="${advEscape(d.id)}">▼ Ver ${hidden} candidatura${hidden === 1 ? '' : 's'} más</button>` : ''}
+    ${expanded && !alwaysFull && rows.length > ADV_VISIBLE_ROWS ? `<button type="button" class="adv-more-btn" data-district="${advEscape(d.id)}">▲ Ocultar</button>` : ''}
   </div>`;
 }
 

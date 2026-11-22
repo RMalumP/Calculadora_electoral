@@ -6,6 +6,10 @@
   --border-light: #ebe6df;
   --text: #18181a;
   --text-muted: #6e6860;
+  /* El mismo gris atenuado, pero legible sobre la barra oscura de las
+     cabeceras de tabla (#2e2622), donde el de arriba se queda en 2,69 de
+     contraste y no llega al mínimo AA. */
+  --text-muted-head: #a89e92;
   --accent: #8b1f1f;
   --accent-light: #b03535;
   --accent-pale: #f4e6e6;

@@ -152,7 +152,8 @@ function advOscFilaHTML(p) {
       </span>
       <input type="range" class="adv-osc-rango" min="-${ADV_OSC_MAX}" max="${ADV_OSC_MAX}" step="0.1"
              value="${v}" aria-label="Oscilación de ${advEscape(p.name)} en puntos">
-      <input type="number" class="adv-osc-num" min="-${ADV_OSC_MAX}" max="${ADV_OSC_MAX}" step="0.1" value="${v}">
+      <input type="number" class="adv-osc-num" min="-${ADV_OSC_MAX}" max="${ADV_OSC_MAX}" step="0.1" value="${v}"
+             aria-label="Oscilación de ${advEscape(p.name)} en puntos, en cifras">
       <span class="adv-osc-pct">${advNum1(p.pct)} → <b>${advNum1(nuevo)}</b> %</span>
     </div>`;
 }

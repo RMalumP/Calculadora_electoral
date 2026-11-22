@@ -171,12 +171,17 @@ function _sesionRecuperarCalculadora(c) {
 
   _sesionAplicaCampos(c.campos);
   _censusAutoTracking = c.censoAutomatico !== false;
+  // El modo de compensación se repone con los demás campos, pero los campos
+  // que ese modo enseña u oculta sólo se mueven desde su propio manejador.
+  if (typeof onCompModeChange === 'function') onCompModeChange();
 
   // La fórmula manda sobre el número de escaños: al pasar a un sistema
   // mayoritario se fuerza a 1, así que el valor guardado se repone después.
-  _seatsBeforeMajority = c.escanosAntesDeMayoria || 350;
   const formula = select('#formula-select');
   if (formula && c.formula) { formula.value = c.formula; updateFormulaDesc(); }
+  // Después de updateFormulaDesc, que escribe en _seatsBeforeMajority: si se
+  // repone antes, la propia restauración lo pierde.
+  _seatsBeforeMajority = c.escanosAntesDeMayoria || 350;
   _sesionAplicaCampos({ seats: c.campos?.seats });
 
   if (c.agrupaciones) toggleGroupingsVisibility();

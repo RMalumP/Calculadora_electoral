@@ -24,7 +24,7 @@ function addPactometerRow(name = '', seats = '', color = '', block = '', siglas 
   const bSel = tr.dataset.bdiff ? tr.dataset.blockB : '';
   const btnCss = on => `padding:4px 8px;border:1px solid var(--border);background:${on?'var(--accent)':'var(--surface)'};color:${on?'white':'var(--text-muted)'};border-radius:3px;cursor:pointer;font-size:0.7rem;font-weight:600;font-family:'Source Sans 3',sans-serif;min-width:40px`;
   tr.innerHTML = `
-    <td><button class="del-btn" onclick="delPactometerRow(this)" title="Eliminar">✕</button></td>
+    <td><button type="button" class="del-btn" onclick="delPactometerRow(this)" title="Eliminar">✕</button></td>
     <td style="text-align:center;padding:4px 6px"><input type="color" value="${escapeHtml(colorVal)}" title="Color del partido" onchange="updateHemicycle()"></td>
     <td><div style="display:flex;align-items:center;gap:4px;width:100%">
       <input type="text" class="pact-siglas-input" placeholder="Sig." maxlength="6" value="${escapeHtml(siglas)}" style="width:44px;flex-shrink:0;font-size:0.8rem;border:none;background:transparent;font-family:'Source Sans 3',sans-serif;outline:none;text-transform:uppercase;${pactSiglasVisible ? '' : 'display:none'}" oninput="this.value=this.value.toUpperCase()">
@@ -34,15 +34,15 @@ function addPactometerRow(name = '', seats = '', color = '', block = '', siglas 
     <td class="pact-b-cell" style="text-align:center"><input type="number" min="0" class="pact-seats-b" placeholder="0" value="${escapeHtml(seatsB)}" title="Escaños en B" style="text-align:center;font-size:1.1rem;font-weight:600" oninput="updateHemicycle()"></td>
     <td style="text-align:center">
       <div class="pact-blk-a" style="display:flex;gap:4px;justify-content:center">
-        <button onclick="setBlock(this,'left')"  style="padding:4px 8px;border:1px solid var(--border);background:${block==='left'?'var(--accent)':'var(--surface)'};color:${block==='left'?'white':'var(--text-muted)'};border-radius:3px;cursor:pointer;font-size:0.7rem;font-weight:600;font-family:'Source Sans 3',sans-serif;min-width:40px" class="block-btn-left">${escapeHtml(currentLeftLabel)}</button>
-        <button onclick="setBlock(this,'right')" style="padding:4px 8px;border:1px solid var(--border);background:${block==='right'?'var(--accent)':'var(--surface)'};color:${block==='right'?'white':'var(--text-muted)'};border-radius:3px;cursor:pointer;font-size:0.7rem;font-weight:600;font-family:'Source Sans 3',sans-serif;min-width:40px" class="block-btn-right">${escapeHtml(currentRightLabel)}</button>
+        <button type="button" onclick="setBlock(this,'left')"  style="padding:4px 8px;border:1px solid var(--border);background:${block==='left'?'var(--accent)':'var(--surface)'};color:${block==='left'?'white':'var(--text-muted)'};border-radius:3px;cursor:pointer;font-size:0.7rem;font-weight:600;font-family:'Source Sans 3',sans-serif;min-width:40px" class="block-btn-left">${escapeHtml(currentLeftLabel)}</button>
+        <button type="button" onclick="setBlock(this,'right')" style="padding:4px 8px;border:1px solid var(--border);background:${block==='right'?'var(--accent)':'var(--surface)'};color:${block==='right'?'white':'var(--text-muted)'};border-radius:3px;cursor:pointer;font-size:0.7rem;font-weight:600;font-family:'Source Sans 3',sans-serif;min-width:40px" class="block-btn-right">${escapeHtml(currentRightLabel)}</button>
       </div>
     
       <button type="button" class="pact-bdiff-btn pact-ab-only${tr.dataset.bdiff ? ' activo' : ''}" onclick="togglePactBDiff(this)" aria-pressed="${tr.dataset.bdiff ? 'true' : 'false'}" title="En B este partido va en otro bloque">B≠</button>
       <div class="pact-blk-b pact-ab-only"${tr.dataset.bdiff ? '' : ' hidden'}>
         <span class="pact-blk-b-etq">En B:</span>
-        <button onclick="setBlockB(this,'left')"  style="${btnCss(bSel==='left')}" class="block-btn-left">${escapeHtml(currentLeftLabel)}</button>
-        <button onclick="setBlockB(this,'right')" style="${btnCss(bSel==='right')}" class="block-btn-right">${escapeHtml(currentRightLabel)}</button>
+        <button type="button" onclick="setBlockB(this,'left')"  style="${btnCss(bSel==='left')}" class="block-btn-left">${escapeHtml(currentLeftLabel)}</button>
+        <button type="button" onclick="setBlockB(this,'right')" style="${btnCss(bSel==='right')}" class="block-btn-right">${escapeHtml(currentRightLabel)}</button>
       </div>
     </td>`;
   tbody.appendChild(tr);

@@ -400,8 +400,8 @@ registerTab('advanced', 'tab-content', String.raw`
             </section>
 
             <div class="adv-row adv-cfg-actions">
-              <button class="adv-mini-btn" id="adv-reset">Valores originales</button>
-              <button class="adv-mini-btn" id="adv-reload">Recargar datos</button>
+              <button type="button" class="adv-mini-btn" id="adv-reset">Valores originales</button>
+              <button type="button" class="adv-mini-btn" id="adv-reload">Recargar datos</button>
             </div>
 
           </div>

@@ -85,7 +85,7 @@ function _buildRow(name, votes, color, isOtros) {
 
   const deleteButton = isOtros
     ? '<span style="width:24px;display:inline-block"></span>'
-    : '<button class="del-btn" onclick="delRow(this)" title="Eliminar">✕</button>';
+    : '<button type="button" class="del-btn" onclick="delRow(this)" title="Eliminar">✕</button>';
 
   const nameCell = isOtros
     ? `<div class="otros-name-cell">
@@ -102,8 +102,8 @@ function _buildRow(name, votes, color, isOtros) {
 
   const actionsCell = isOtros ? '' :
     '<div class="row-actions">' +
-    '<button class="row-btn btn-to-otros" title="Mover a Otros partidos">\u2192</button>' +
-    '<button class="row-btn btn-lock" title="Bloquear absorci\u00f3n autom\u00e1tica">\uD83D\uDD12</button>' +
+    '<button type="button" class="row-btn btn-to-otros" title="Mover a Otros partidos">\u2192</button>' +
+    '<button type="button" class="row-btn btn-lock" title="Bloquear absorci\u00f3n autom\u00e1tica">\uD83D\uDD12</button>' +
     '</div>';
 
   const dragHandle = isOtros
@@ -117,7 +117,7 @@ function _buildRow(name, votes, color, isOtros) {
   const groupCell = isOtros
     ? `<td class="group-col"></td>`
     : `<td class="group-col" style="text-align:center;padding:2px 3px">
-         <button class="group-num-btn" onclick="cycleGroupNum(this)" title="Número de agrupación (0 = sin grupo)">0</button>
+         <button type="button" class="group-num-btn" onclick="cycleGroupNum(this)" title="Número de agrupación (0 = sin grupo)">0</button>
        </td>`;
 
   tr.innerHTML = `
@@ -303,6 +303,7 @@ function updateOtrosDropdown() {
 
     if (!p.isManual) {
       const ejectBtn = document.createElement('button');
+      ejectBtn.type = 'button';
       ejectBtn.className = 'otros-eject-btn';
       ejectBtn.textContent = '←';
       ejectBtn.title = 'Sacar a la tabla principal';

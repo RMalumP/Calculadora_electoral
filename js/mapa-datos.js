@@ -64,9 +64,81 @@ const MAPA_DATOS = (() => {
     })).filter(a => a.elecciones.length);
   }
 
+  /* ── Color de cada candidatura ─────────────────────────────────── */
+
+  // La tabla de colores viene de la hoja y está guardada por siglas exactas,
+  // así que no reconocía ni las variantes territoriales («PSOE-A», «PSE-PSOE»,
+  // «CIU» frente a «CiU») ni los partidos desaparecidos (UCD, AP, CDS). La
+  // pieza se quedaba sin pintar y no se distinguía del mar: en 1977 eran 43 de
+  // las 52 provincias. Aquí se normaliza antes de buscar, se prueba por partes
+  // y, si aun así no hay color, se saca uno estable de las propias siglas,
+  // para que ninguna pieza se quede en blanco.
+
+  let _coloresNorm = null;
+
+  /** Deja «E.A.J.-P.N.V.» en «EAJPNV», para comparar siglas escritas de formas distintas. */
+  function _limpiaSiglas(s) {
+    return String(s || '').toUpperCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^A-Z0-9]/g, '');
+  }
+
+  function _indiceColores() {
+    if (_coloresNorm) return _coloresNorm;
+    _coloresNorm = new Map();
+    Object.entries(indice?.colores || {}).forEach(([k, v]) => {
+      const n = _limpiaSiglas(k);
+      if (n && v && !_coloresNorm.has(n)) _coloresNorm.set(n, v);
+    });
+    return _coloresNorm;
+  }
+
+  function _hslAHex(h, s, l) {
+    const c = (1 - Math.abs(2 * l - 1)) * s;
+    const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+    const m = l - c / 2;
+    const [r, g, b] = h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x]
+      : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x];
+    const dos = v => Math.round((v + m) * 255).toString(16).padStart(2, '0');
+    return '#' + dos(r) + dos(g) + dos(b);
+  }
+
+  /**
+   * Un color estable sacado de las propias siglas, para las candidaturas que
+   * no están en la tabla. El tono sale del nombre, así que dos candidaturas
+   * distintas casi nunca coinciden, y la saturación es baja a propósito: se ve
+   * que no es el color oficial del partido, pero la pieza se distingue.
+   */
+  function _colorDeReserva(siglas) {
+    const t = _limpiaSiglas(siglas) || '?';
+    let h = 0;
+    for (let i = 0; i < t.length; i++) h = (Math.imul(h, 31) + t.charCodeAt(i)) >>> 0;
+    // El tono sale del hash entero y la claridad de otro trozo suyo: así dos
+    // siglas parecidas no acaban en el mismo color.
+    const tono = h % 360;
+    const claridad = [0.44, 0.52, 0.60][(h >>> 9) % 3];
+    return _hslAHex(tono, 0.36, claridad);
+  }
+
   function colorPartido(siglas) {
+    if (siglas == null || siglas === '') return null;
     const c = indice?.colores || {};
-    return c[String(siglas).toUpperCase()] || c[siglas] || null;
+    const directo = c[String(siglas).toUpperCase()] || c[siglas];
+    if (directo) return directo;
+
+    const tabla = _indiceColores();
+    const limpia = _limpiaSiglas(siglas);
+    if (tabla.has(limpia)) return tabla.get(limpia);
+
+    // Por partes: «PSE-PSOE» encuentra PSOE, «PP-PAR» encuentra PP.
+    const partes = String(siglas).split(/[^A-Za-z0-9ÁÉÍÓÚÑáéíóúñ.]+/)
+      .map(_limpiaSiglas).filter(Boolean)
+      .sort((x, y) => y.length - x.length);
+    for (const parte of partes) {
+      if (tabla.has(parte)) return tabla.get(parte);
+    }
+
+    return _colorDeReserva(siglas);
   }
 
   /* ── Emparejado con las piezas del mapa ────────────────────────── */

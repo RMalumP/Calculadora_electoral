@@ -21,43 +21,43 @@ registerTab('theory', 'tab-content', String.raw`
             <div class="theory-nav">
 
               <div class="theory-group">Sistemas mayoritarios</div>
-              <button class="theory-system-btn" data-system="majority"        onclick="showTheorySystem('majority')"       >Mayoritario (1ª vuelta)</button>
-              <button class="theory-system-btn" data-system="majority-round2" onclick="showTheorySystem('majority-round2')">Mayoritario (2ª vuelta)</button>
-              <button class="theory-system-btn theory-btn-gap" data-system="limited-vote" onclick="showTheorySystem('limited-vote')">Mayoritario plurinominal parcial</button>
+              <button type="button" class="theory-system-btn" data-system="majority"        onclick="showTheorySystem('majority')"       >Mayoritario (1ª vuelta)</button>
+              <button type="button" class="theory-system-btn" data-system="majority-round2" onclick="showTheorySystem('majority-round2')">Mayoritario (2ª vuelta)</button>
+              <button type="button" class="theory-system-btn theory-btn-gap" data-system="limited-vote" onclick="showTheorySystem('limited-vote')">Mayoritario plurinominal parcial</button>
 
               <div class="theory-group">Proporcionales · Resto mayor</div>
-              <button class="theory-system-btn" data-system="imperiali"  onclick="showTheorySystem('imperiali')" >Cuota Imperiali</button>
-              <button class="theory-system-btn" data-system="droop"      onclick="showTheorySystem('droop')"     >Cuota de Droop</button>
-              <button class="theory-system-btn" data-system="hagenbach"  onclick="showTheorySystem('hagenbach')" >Hagenbach-Bischoff</button>
-              <button class="theory-system-btn theory-btn-gap" data-system="hare"       onclick="showTheorySystem('hare')"      >Cociente Hare</button>
+              <button type="button" class="theory-system-btn" data-system="imperiali"  onclick="showTheorySystem('imperiali')" >Cuota Imperiali</button>
+              <button type="button" class="theory-system-btn" data-system="droop"      onclick="showTheorySystem('droop')"     >Cuota de Droop</button>
+              <button type="button" class="theory-system-btn" data-system="hagenbach"  onclick="showTheorySystem('hagenbach')" >Hagenbach-Bischoff</button>
+              <button type="button" class="theory-system-btn theory-btn-gap" data-system="hare"       onclick="showTheorySystem('hare')"      >Cociente Hare</button>
 
               <div class="theory-group">Proporcionales · Media más alta</div>
-              <button class="theory-system-btn active" data-system="dhondt"          onclick="showTheorySystem('dhondt')"         >D'Hondt</button>
-              <button class="theory-system-btn" data-system="sainte-lague-mod" onclick="showTheorySystem('sainte-lague-mod')">Sainte-Laguë mod.</button>
-              <button class="theory-system-btn" data-system="sainte-lague"     onclick="showTheorySystem('sainte-lague')"    >Sainte-Laguë</button>
-              <button class="theory-system-btn" data-system="adams"            onclick="showTheorySystem('adams')"           >Media más elevada (Adams)</button>
+              <button type="button" class="theory-system-btn active" data-system="dhondt"          onclick="showTheorySystem('dhondt')"         >D'Hondt</button>
+              <button type="button" class="theory-system-btn" data-system="sainte-lague-mod" onclick="showTheorySystem('sainte-lague-mod')">Sainte-Laguë mod.</button>
+              <button type="button" class="theory-system-btn" data-system="sainte-lague"     onclick="showTheorySystem('sainte-lague')"    >Sainte-Laguë</button>
+              <button type="button" class="theory-system-btn" data-system="adams"            onclick="showTheorySystem('adams')"           >Media más elevada (Adams)</button>
 
               <div class="theory-group">Compensación de escaños</div>
-              <button class="theory-system-btn" data-system="compensatorios" onclick="showTheorySystem('compensatorios')">Escaños compensatorios</button>
-              <button class="theory-system-btn" data-system="mmp" onclick="showTheorySystem('mmp')">Modelo alemán / MMP</button>
-              <button class="theory-system-btn theory-btn-gap" data-system="nordico" onclick="showTheorySystem('nordico')">Modelo nórdico</button>
+              <button type="button" class="theory-system-btn" data-system="compensatorios" onclick="showTheorySystem('compensatorios')">Escaños compensatorios</button>
+              <button type="button" class="theory-system-btn" data-system="mmp" onclick="showTheorySystem('mmp')">Modelo alemán / MMP</button>
+              <button type="button" class="theory-system-btn theory-btn-gap" data-system="nordico" onclick="showTheorySystem('nordico')">Modelo nórdico</button>
 
               <div class="theory-group">Indicadores de proporcionalidad</div>
-              <button class="theory-system-btn" data-system="ind-gallagher" onclick="showTheorySystem('ind-gallagher')">Gallagher y Loosemore-Hanby</button>
-              <button class="theory-system-btn theory-btn-gap" data-system="ind-enp" onclick="showTheorySystem('ind-enp')">Nº efectivo de partidos</button>
+              <button type="button" class="theory-system-btn" data-system="ind-gallagher" onclick="showTheorySystem('ind-gallagher')">Gallagher y Loosemore-Hanby</button>
+              <button type="button" class="theory-system-btn theory-btn-gap" data-system="ind-enp" onclick="showTheorySystem('ind-enp')">Nº efectivo de partidos</button>
               <div class="theory-group">Barreras electorales</div>
-              <button class="theory-system-btn theory-btn-gap" data-system="barreras" onclick="showTheorySystem('barreras')">Barreras y umbral variable</button>
+              <button type="button" class="theory-system-btn theory-btn-gap" data-system="barreras" onclick="showTheorySystem('barreras')">Barreras y umbral variable</button>
               <div class="theory-group">Dos vueltas</div>
-              <button class="theory-system-btn theory-btn-gap" data-system="dos-vueltas" onclick="showTheorySystem('dos-vueltas')">Segunda vuelta con transferencias</button>
+              <button type="button" class="theory-system-btn theory-btn-gap" data-system="dos-vueltas" onclick="showTheorySystem('dos-vueltas')">Segunda vuelta con transferencias</button>
               <div class="theory-group">Coaliciones</div>
-              <button class="theory-system-btn theory-btn-gap" data-system="coaliciones" onclick="showTheorySystem('coaliciones')">Coaliciones y listas conjuntas</button>
+              <button type="button" class="theory-system-btn theory-btn-gap" data-system="coaliciones" onclick="showTheorySystem('coaliciones')">Coaliciones y listas conjuntas</button>
               <div class="theory-group">Prorrateo de escaños</div>
-              <button class="theory-system-btn theory-btn-gap" data-system="prorrateo" onclick="showTheorySystem('prorrateo')">Prorrateo entre circunscripciones</button>
+              <button type="button" class="theory-system-btn theory-btn-gap" data-system="prorrateo" onclick="showTheorySystem('prorrateo')">Prorrateo entre circunscripciones</button>
               <div class="theory-group">Mixtos y preferenciales</div>
-              <button class="theory-system-btn" data-system="paralelo" onclick="showTheorySystem('paralelo')">Sistema paralelo</button>
-              <button class="theory-system-btn" data-system="preferencial" onclick="showTheorySystem('preferencial')">Listas abiertas y preferencial</button>
-              <button class="theory-system-btn" data-system="stv" onclick="showTheorySystem('stv')">STV (voto único transferible)</button>
-              <button class="theory-system-btn theory-btn-gap" data-system="av" onclick="showTheorySystem('av')">Voto alternativo, Borda, Condorcet</button>
+              <button type="button" class="theory-system-btn" data-system="paralelo" onclick="showTheorySystem('paralelo')">Sistema paralelo</button>
+              <button type="button" class="theory-system-btn" data-system="preferencial" onclick="showTheorySystem('preferencial')">Listas abiertas y preferencial</button>
+              <button type="button" class="theory-system-btn" data-system="stv" onclick="showTheorySystem('stv')">STV (voto único transferible)</button>
+              <button type="button" class="theory-system-btn theory-btn-gap" data-system="av" onclick="showTheorySystem('av')">Voto alternativo, Borda, Condorcet</button>
             </div>
           </div>
         </div>
